@@ -1,0 +1,78 @@
+name: Build and Test
+
+on:
+  push:
+    branches: ["*"]
+  pull_request:
+    branches: ["main", "master"]
+
+concurrency:
+  group: build-and-test-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build-test-checksecurity:
+    name: Build test and check security
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+          cache-dependency-path: go.sum
+
+      # Cache bin folder (Go tools and built binaries)
+      - name: Cache bin folder
+        uses: actions/cache@v4
+        with:
+          path: bin
+          key: ${{ runner.os }}-bin-${{ hashFiles('go.mod', 'go.sum', 'Makefile') }}
+          restore-keys: |
+            ${{ runner.os }}-bin-
+
+      - name: Install dependencies
+        run: |
+          go mod download
+
+      - name: Build
+        run: |
+          VERSION="${{ github.ref_type == 'tag' && github.ref_name || '0.0.0' }}"
+          VERSION="${VERSION#v*}"
+          echo "Version $VERSION"
+          make build
+
+      - name: Format
+        run: |
+          make fmt
+
+      - name: Vet
+        run: |
+          make vet
+
+      - name: Lint
+        run: |
+          make lint
+
+      - name: Run tests
+        run: |
+          make test
+          go tool cover -func=coverage.out
+
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage.out
+          retention-days: 7
+
+      - name: Run security scan
+        run: |
+          make go-security-scan

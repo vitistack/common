@@ -1,0 +1,45 @@
+name: Security Scan
+
+on:
+  schedule:
+    - cron: "0 0 * * 1" # Run weekly on Mondays
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+          cache-dependency-path: go.sum
+
+      - name: Install dependencies
+        run: |
+          go mod download
+
+      - name: Cache govulncheck
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/govulncheck
+            ~/.cache/go-build
+            ~/go/bin/govulncheck
+          key: ${{ runner.os }}-govulncheck-${{ hashFiles('go.mod', 'go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-govulncheck-
+
+      - name: Run security scan
+        run: |
+          GOBIN=$HOME/go/bin go install golang.org/x/vuln/cmd/govulncheck@latest
+          $HOME/go/bin/govulncheck ./...
