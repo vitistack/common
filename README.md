@@ -54,8 +54,10 @@ import (
 )
 
 func main() {
-	_ = vlog.Setup(vlog.Options{ Level: "info", ColorizeLine: true, AddCaller: true })
-	defer vlog.Sync()
+	_ = vlog.Setup(vlog.Options{Level: "info", ColorizeLine: true, AddCaller: true})
+	defer func() {
+		_ = vlog.Sync()
+	}()
 
 	ctrl.SetLogger(vlog.Logr())
 
