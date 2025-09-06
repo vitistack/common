@@ -28,6 +28,9 @@ func main() {
 	vlog.Warn("This is a warning message")
 	vlog.Error("This is an error message")
 
+	test := 42
+	vlog.Debug("Log line ", "with extra parameters ", test)
+
 	// Initialize Kubernetes client
 	k8sclient.Init()
 	vlog.Info("Kubernetes client initialized successfully")
