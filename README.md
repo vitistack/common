@@ -5,6 +5,7 @@ Small, focused helpers shared across Vitistack projects:
 - Logging: `vlog` — thin Zap setup with nice console colors and JSON mode, plus a logr adapter for controller-runtime.
 - Serialization: `serialize` — tiny helpers to turn Go values into JSON strings/bytes quickly.
 - K8s client helper: `k8sclient` — convenience initializer around client-go/controller-runtime config.
+- Operator utils: `crdcheck` — verify required CRDs/API resources exist during startup and panic if missing.
 
 ## Install
 
@@ -125,6 +126,35 @@ func main() {
 ```
 
 See `cmd/examples/main.go` for a runnable sample combining `vlog`, `serialize`, and the k8s client.
+
+## Operator prerequisite: ensure CRDs installed
+
+Use `crdcheck` to verify a set of CRD-backed API resources are served by the cluster before your operator starts reconciling. It uses the Discovery API and will log and panic when required CRDs are missing.
+
+```go
+import (
+	"context"
+	"github.com/vitistack/common/pkg/clients/k8sclient"
+	"github.com/vitistack/common/pkg/loggers/vlog"
+	"github.com/vitistack/common/pkg/operator/crdcheck"
+)
+
+func main() {
+	_ = vlog.Setup(vlog.Options{Level: "info", ColorizeLine: true})
+	defer vlog.Sync()
+
+	// Initialize k8s clients (KUBECONFIG or in-cluster)
+	k8sclient.Init()
+
+	// Panic if these CRDs/resources are not available
+	crdcheck.MustEnsureInstalled(context.TODO(),
+		crdcheck.Ref{Group: "apiextensions.k8s.io", Version: "v1", Resource: "customresourcedefinitions"}, // example core CRD API
+		crdcheck.Ref{Group: "example.com", Version: "v1alpha1", Resource: "widgets"},                      // your CRD plural
+	)
+
+	// continue with manager/controllers...
+}
+```
 
 ## Troubleshooting
 
