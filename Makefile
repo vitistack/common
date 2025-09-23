@@ -32,7 +32,7 @@ GOSEC ?= $(LOCALBIN)/gosec
 # Use the Go toolchain version declared in go.mod when building tools
 GO_VERSION := $(shell awk '/^go /{print $$2}' go.mod)
 GO_TOOLCHAIN := go$(GO_VERSION)
-GOSEC_VERSION ?= v2.22.8
+GOSEC_VERSION ?= latest
 
 
 ##@ Help
