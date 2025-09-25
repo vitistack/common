@@ -55,11 +55,12 @@ func Setup(opts Options) error {
 	}
 
 	var h slog.Handler
-	if opts.JSON {
+	switch {
+	case opts.JSON:
 		h = slog.NewJSONHandler(os.Stdout, handlerOpts)
-	} else if opts.ColorizeLine {
+	case opts.ColorizeLine:
 		h = newColorTextHandler(os.Stdout, handlerOpts)
-	} else {
+	default:
 		h = slog.NewTextHandler(os.Stdout, handlerOpts)
 	}
 
@@ -261,6 +262,7 @@ func (h *colorTextHandler) Enabled(ctx context.Context, level slog.Level) bool {
 	return th.Enabled(ctx, level)
 }
 
+//nolint:gocritic // slog.Handler requires a value parameter for Record
 func (h *colorTextHandler) Handle(ctx context.Context, r slog.Record) error {
 	// Render the record using a TextHandler into a buffer
 	var buf bytes.Buffer
@@ -282,15 +284,25 @@ func (h *colorTextHandler) Handle(ctx context.Context, r slog.Record) error {
 	color := levelColorSlog(r.Level)
 	// Wrap entire line in color, ensuring reset before trailing newline.
 	if n := len(b); n > 0 && b[n-1] == '\n' {
-		h.w.WriteString(color)
-		h.w.Write(b[:n-1])
-		h.w.WriteString(ansiReset)
+		if _, err := h.w.WriteString(color); err != nil {
+			return err
+		}
+		if _, err := h.w.Write(b[:n-1]); err != nil {
+			return err
+		}
+		if _, err := h.w.WriteString(ansiReset); err != nil {
+			return err
+		}
 		_, err := h.w.Write([]byte{'\n'})
 		return err
 	}
-	h.w.WriteString(color)
-	_, err := h.w.Write(b)
-	h.w.WriteString(ansiReset)
+	if _, err := h.w.WriteString(color); err != nil {
+		return err
+	}
+	if _, err := h.w.Write(b); err != nil {
+		return err
+	}
+	_, err := h.w.WriteString(ansiReset)
 	return err
 }
 
