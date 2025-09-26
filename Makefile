@@ -65,6 +65,21 @@ test: ## Run unit tests.
 	go test -v ./... -coverprofile coverage.out
 	go tool cover -html=coverage.out -o coverage.html
 
+.PHONY: bench
+bench: ## Run benchmarks (override with BENCH=<regex>, PKG=<package pattern>, COUNT=<n>)
+	@bench_regex=$${BENCH:-.}; \
+	pkg_pattern=$${PKG:-./...}; \
+	count=$${COUNT:-1}; \
+	echo "Running benchmarks: regex=$${bench_regex} packages=$${pkg_pattern} count=$${count}"; \
+	go test -run=^$$ -bench=$${bench_regex} -benchmem -count=$${count} $${pkg_pattern}
+
+.PHONY: bench-profile
+bench-profile: ## Run benchmarks with CPU & memory profiles (outputs bench.cpu, bench.mem)
+	@bench_regex=$${BENCH:-.}; \
+	pkg_pattern=$${PKG:-./pkg/loggers/vlog}; \
+	echo "Profiling benchmarks: regex=$${bench_regex} packages=$${pkg_pattern}"; \
+	go test -run=^$$ -bench=$${bench_regex} -cpuprofile bench.cpu -memprofile bench.mem -benchmem $${pkg_pattern}
+
 deps: ## Download and verify dependencies
 	@echo "Downloading dependencies..."
 	@go mod download

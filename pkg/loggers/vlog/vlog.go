@@ -3,12 +3,17 @@ package vlog
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
+
+	"gopkg.in/yaml.v3"
 
 	"log/slog"
 
@@ -18,8 +23,10 @@ import (
 
 // Package-level logger with lazy default initialization.
 var (
-	base *slog.Logger
-	once sync.Once
+	base      *slog.Logger
+	once      sync.Once
+	addCaller bool
+	doUnescape bool
 )
 
 // Options configures the vlog logger (now backed by Go's slog).
@@ -36,12 +43,18 @@ type Options struct {
 	DisableStacktrace bool
 	// ColorizeLine is kept for compatibility; not applied with slog's standard handlers.
 	ColorizeLine bool
+	// UnescapeMultiline when true will post-process console (non-JSON) lines to turn escaped \n inside
+	// msg="..." into real multi-line output (removing surrounding quotes). Adds a small per-log overhead.
+	// Default: false (favor performance); can be enabled when human readability of large multi-line messages matters.
+	UnescapeMultiline bool
 }
 
 // Setup initializes the global slog-based logger with the provided options.
 func Setup(opts Options) error {
+	addCaller = opts.AddCaller
+	doUnescape = opts.UnescapeMultiline
 	handlerOpts := &slog.HandlerOptions{
-		AddSource: opts.AddCaller,
+		AddSource: false, // we add caller manually to control the skip depth
 		Level:     slogLevelFromString(opts.Level),
 		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
 			// Format time as RFC3339 to match previous output style
@@ -77,11 +90,12 @@ func ensure() {
 		if base != nil {
 			return
 		}
-		_ = Setup(Options{ // defaults: console text, info level
-			Level:        "info",
-			JSON:         false,
-			AddCaller:    false,
-			ColorizeLine: false,
+		_ = Setup(Options{ // defaults: JSON (efficient), info level
+			Level:             "info",
+			JSON:              true,
+			AddCaller:         false,
+			ColorizeLine:      false,
+			UnescapeMultiline: false,
 		})
 	})
 }
@@ -190,12 +204,61 @@ func logArgs(level slog.Level, args ...any) {
 	if len(args) == 0 {
 		return
 	}
-	base.Log(context.Background(), level, fmt.Sprint(args...))
+	writeRecord(base, level, fmt.Sprint(args...))
 }
 
 func logMsg(level slog.Level, msg string) {
 	ensure()
-	base.Log(context.Background(), level, msg)
+	writeRecord(base, level, msg)
+}
+
+// writeRecord constructs a slog.Record with a caller pointing at the first frame outside this package.
+func writeRecord(logger *slog.Logger, level slog.Level, msg string) {
+	h := logger.Handler()
+	pc := uintptr(0)
+	file := ""
+	line := 0
+	if addCaller {
+		pc, file, line = findExternalCaller()
+	}
+	rec := slog.NewRecord(time.Now(), level, msg, pc)
+	if addCaller && file != "" {
+		short := shortenPath(file)
+		rec.AddAttrs(slog.String("caller", fmt.Sprintf("%s:%d", short, line)))
+	}
+	_ = h.Handle(context.Background(), rec)
+}
+
+// findExternalCaller returns the (pc,file,line) for the first stack frame not in this vlog package.
+func findExternalCaller() (uintptr, string, int) {
+	// Skip: runtime.Callers, findExternalCaller, writeRecord/logArgs/logMsg wrappers.
+	const skip = 4
+	pcs := make([]uintptr, 32)
+	n := runtime.Callers(skip, pcs)
+	frames := runtime.CallersFrames(pcs[:n])
+	for {
+		fr, more := frames.Next()
+		if fr.Function == "" || !strings.Contains(fr.Function, "/pkg/loggers/vlog.") {
+			return fr.PC, fr.File, fr.Line
+		}
+		if !more {
+			break
+		}
+	}
+	return 0, "", 0
+}
+
+// shortenPath returns last two path components for brevity.
+func shortenPath(p string) string {
+	if p == "" {
+		return p
+	}
+	p = filepath.ToSlash(p)
+	parts := strings.Split(p, "/")
+	if len(parts) <= 2 {
+		return p
+	}
+	return strings.Join(parts[len(parts)-2:], "/")
 }
 
 func slogLevelFromString(lvl string) slog.Leveler {
@@ -219,6 +282,83 @@ func convertKVs(kv []any) []any {
 		kv = append(kv, "<missing>")
 	}
 	return kv
+}
+
+// Pretty wraps any value and, when logged, attempts to pretty-print JSON or YAML (structs, maps, slices, or raw JSON/YAML strings).
+// Usage: vlog.Info("object", vlog.Pretty(obj))
+// Works for both text and JSON logging modes (in JSON mode the pretty text is still embedded as the message or value string).
+func Pretty(v any) any { return prettyValue{v: v} }
+
+type prettyValue struct{ v any }
+
+func (p prettyValue) String() string {
+	if p.v == nil {
+		return "null"
+	}
+	// If it's already a string that looks like JSON or YAML, try to reformat.
+	if s, ok := p.v.(string); ok {
+		trimmed := strings.TrimSpace(s)
+		if strings.HasPrefix(trimmed, "{") || strings.HasPrefix(trimmed, "[") { // JSON guess
+			if pretty, ok := reformatJSONBytes([]byte(trimmed)); ok {
+				return pretty
+			}
+		}
+		if looksLikeYAML(trimmed) {
+			if pretty, ok := reformatYAMLBytes([]byte(trimmed)); ok {
+				return pretty
+			}
+		}
+		// fallback original
+		return s
+	}
+
+	// Try JSON marshal with indent first.
+	if b, err := json.MarshalIndent(p.v, "", "  "); err == nil {
+		return string(b)
+	}
+	// Try YAML marshal.
+	if b, err := yaml.Marshal(p.v); err == nil {
+		return string(b)
+	}
+	// Fallback verbose formatting.
+	return fmt.Sprintf("%+v", p.v)
+}
+
+func reformatJSONBytes(b []byte) (string, bool) {
+	var anyVal any
+	if err := json.Unmarshal(b, &anyVal); err != nil {
+		return "", false
+	}
+	out, err := json.MarshalIndent(anyVal, "", "  ")
+	if err != nil {
+		return "", false
+	}
+	return string(out), true
+}
+
+func reformatYAMLBytes(b []byte) (string, bool) {
+	var anyVal any
+	if err := yaml.Unmarshal(b, &anyVal); err != nil {
+		return "", false
+	}
+	// Marshal back to YAML (yaml lib already emits multi-line with indentation)
+	out, err := yaml.Marshal(anyVal)
+	if err != nil {
+		return "", false
+	}
+	return string(out), true
+}
+
+func looksLikeYAML(s string) bool {
+	// Heuristic: contains ':' early (key: value) and not pure JSON braces.
+	if strings.HasPrefix(s, "{") || strings.HasPrefix(s, "[") {
+		return false
+	}
+	colon := strings.IndexByte(s, ':')
+	if colon > 0 && colon < 80 { // arbitrary small window
+		return true
+	}
+	return false
 }
 
 // --- colorized text handler for slog ---
@@ -281,29 +421,17 @@ func (h *colorTextHandler) Handle(ctx context.Context, r slog.Record) error {
 		return err
 	}
 	b := buf.Bytes()
+	// Optional multiline unescape (enabled only when UnescapeMultiline option is set and using text mode).
+	if doUnescape {
+		b = unescapeMultilineMsg(b)
+	}
 	color := levelColorSlog(r.Level)
-	// Wrap entire line in color, ensuring reset before trailing newline.
-	if n := len(b); n > 0 && b[n-1] == '\n' {
-		if _, err := h.w.WriteString(color); err != nil {
-			return err
-		}
-		if _, err := h.w.Write(b[:n-1]); err != nil {
-			return err
-		}
-		if _, err := h.w.WriteString(ansiReset); err != nil {
-			return err
-		}
-		_, err := h.w.Write([]byte{'\n'})
-		return err
-	}
-	if _, err := h.w.WriteString(color); err != nil {
-		return err
-	}
+	// If multi-line, ensure each line starts with color and ends with reset to keep coloring consistent.
+	b = applyMultilineColor(b, color)
 	if _, err := h.w.Write(b); err != nil {
 		return err
 	}
-	_, err := h.w.WriteString(ansiReset)
-	return err
+	return nil
 }
 
 func (h *colorTextHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
@@ -334,6 +462,112 @@ func (s *syncWriter) WriteString(str string) (int, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	return s.w.Write([]byte(str))
+}
+
+// applyMultilineColor wraps each line (including last even if empty) with color/reset.
+func applyMultilineColor(b []byte, color string) []byte {
+	if len(b) == 0 {
+		return b
+	}
+	// Remove trailing newline, remember to re-add.
+	hadNL := false
+	if b[len(b)-1] == '\n' {
+		b = b[:len(b)-1]
+		hadNL = true
+	}
+	lines := bytes.Split(b, []byte{'\n'})
+	out := make([]byte, 0, len(b)+len(lines)*len(color)+len(lines)*len(ansiReset)+2)
+	for i, ln := range lines {
+		out = append(out, color...)
+		out = append(out, ln...)
+		out = append(out, ansiReset...)
+		if i < len(lines)-1 {
+			out = append(out, '\n')
+		}
+	}
+	if hadNL {
+		out = append(out, '\n')
+	}
+	return out
+}
+
+// unescapeMultilineMsg finds the msg="..." segment, and if it contains escaped newlines (\n),
+// it replaces the quoted, escaped content with an unquoted, real multiline block.
+func unescapeMultilineMsg(b []byte) []byte {
+	key := []byte(" msg=\"")
+	idx := bytes.Index(b, key)
+	if idx == -1 {
+		return b
+	}
+	start := idx + len(key)
+	end := findClosingQuote(b, start)
+	if end == -1 {
+		return b
+	}
+	segment := b[start:end]
+	if !bytes.Contains(segment, []byte(`\n`)) {
+		return b
+	}
+	expanded := unescapeMsgSegment(segment)
+	return rebuildMultilineLine(b, idx, end, expanded)
+}
+
+func findClosingQuote(b []byte, start int) int {
+	esc := false
+	for i := start; i < len(b); i++ {
+		c := b[i]
+		if esc {
+			esc = false
+			continue
+		}
+		if c == '\\' {
+			esc = true
+			continue
+		}
+		if c == '"' {
+			return i
+		}
+	}
+	return -1
+}
+
+func unescapeMsgSegment(seg []byte) []byte {
+	var out bytes.Buffer
+	out.Grow(len(seg) + 8)
+	esc := false
+	for i := 0; i < len(seg); i++ {
+		c := seg[i]
+		if esc {
+			switch c {
+			case 'n':
+				out.WriteByte('\n')
+			case 't':
+				out.WriteByte('\t')
+			case '\\', '"':
+				out.WriteByte(c)
+			default:
+				out.WriteByte(c)
+			}
+			esc = false
+			continue
+		}
+		if c == '\\' {
+			esc = true
+			continue
+		}
+		out.WriteByte(c)
+	}
+	return out.Bytes()
+}
+
+func rebuildMultilineLine(orig []byte, keyIdx, end int, expanded []byte) []byte {
+	var rebuilt bytes.Buffer
+	rebuilt.Grow(len(orig) + len(expanded))
+	_, _ = rebuilt.Write(orig[:keyIdx])
+	_, _ = rebuilt.WriteString(" msg=")
+	_, _ = rebuilt.Write(expanded)
+	_, _ = rebuilt.Write(orig[end+1:])
+	return rebuilt.Bytes()
 }
 
 // slogSink adapts slog.Logger to logr.LogSink for controller-runtime compatibility.

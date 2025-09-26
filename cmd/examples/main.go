@@ -13,10 +13,12 @@ import (
 func main() {
 	// Initialize the logger
 	err := vlog.Setup(vlog.Options{
-		Level:        "debug", // debug|info|warn|error|dpanic|panic|fatal
-		ColorizeLine: true,    // whole-line color
-		JSON:         false,   // console output (supports ANSI colors)
-		AddCaller:    true,
+		Level:             "debug", // debug|info|warn|error|dpanic|panic|fatal
+		ColorizeLine:      true,    // whole-line color
+		JSON:              false,   // console output (supports ANSI colors)
+		AddCaller:         true,
+		DisableStacktrace: false,
+		UnescapeMultiline: true, // unescape multiline messages (makes them more readable)
 	})
 	if err != nil {
 		panic(err)
@@ -44,4 +46,26 @@ func main() {
 		vlog.Debug("Pod:", pod.Name, "Pod labels:", serialize.Pretty(pod.Labels))
 	}
 	vlog.Info("Number of pods in default namespace:", len(pods.Items))
+
+	// create test struct and log it
+	testStruct := TestStruct{
+		Field1: "value1",
+		Field2: 123,
+		Field3: TestStruct2{
+			SubField1: "subvalue1",
+			SubField2: 456,
+		},
+	}
+	vlog.Info("Test struct:", serialize.Pretty(testStruct))
+}
+
+type TestStruct struct {
+	Field1 string      `json:"field1,omitempty"`
+	Field2 int         `json:"field2,omitempty"`
+	Field3 TestStruct2 `json:"field3,omitempty"`
+}
+
+type TestStruct2 struct {
+	SubField1 string `json:"subField1,omitempty"`
+	SubField2 int    `json:"subField2,omitempty"`
 }

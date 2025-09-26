@@ -15,18 +15,19 @@ go get github.com/vitistack/common@latest
 
 ## Logging with vlog
 
-Initialize once at startup, then use the package-level functions.
+Initialize once at startup, then use the package-level functions. Defaults now favor structured JSON output for efficiency.
 
 ```go
 import "github.com/vitistack/common/pkg/loggers/vlog"
 
 func main() {
 	_ = vlog.Setup(vlog.Options{
-		Level:         "info",   // debug|info|warn|error|dpanic|panic|fatal
-		JSON:          false,     // console encoder when false; JSON when true
-		AddCaller:     true,      // include caller file:line
-		DisableStacktrace: false, // disable automatic stack traces for Error+
-		ColorizeLine:  true,      // colorize whole line (console only)
+		Level:             "info", // debug|info|warn|error|dpanic|panic|fatal
+		JSON:              true,    // default: structured JSON (fastest to parse)
+		AddCaller:         true,    // include caller file:line
+		DisableStacktrace: false,
+		ColorizeLine:      false,   // set true only for human console viewing
+		UnescapeMultiline: false,   // set true only if you need pretty multi-line msg rendering in text mode
 	})
 	defer vlog.Sync()
 
@@ -39,10 +40,11 @@ func main() {
 ### Options
 
 - Level: string — one of `debug`, `info`, `warn` (or `warning`), `error`, `dpanic`, `panic`, `fatal` (default: `info`).
-- JSON: bool — switch to JSON encoder (no ANSI colors).
+- JSON: bool — switch to JSON encoder (no ANSI colors). Default: true.
 - AddCaller: bool — include short caller information.
 - DisableStacktrace: bool — turn off auto stack traces at Error+.
 - ColorizeLine: bool — when using console encoder, colorize the entire line by level.
+- UnescapeMultiline: bool — when using console text mode, turn escaped '\n' inside msg="..." into real multi-line output (costs a tiny bit of CPU). Default: false.
 
 ### Use with controller-runtime (Kubebuilder)
 
