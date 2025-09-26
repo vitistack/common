@@ -23,9 +23,9 @@ import (
 
 // Package-level logger with lazy default initialization.
 var (
-	base      *slog.Logger
-	once      sync.Once
-	addCaller bool
+	base       *slog.Logger
+	once       sync.Once
+	addCaller  bool
 	doUnescape bool
 )
 
