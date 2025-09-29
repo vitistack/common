@@ -12,6 +12,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+const (
+	trueString  = "true"
+	falseString = "false"
+)
+
 func main() {
 	dotenv.LoadDotEnv()
 
@@ -30,12 +35,12 @@ func main() {
 
 	// Initialize the logger
 	err := vlog.Setup(vlog.Options{
-		Level:             logLevel,                     // debug|info|warn|error|dpanic|panic|fatal
-		ColorizeLine:      logColorizeEnabled == "true", // whole-line color
-		JSON:              logJsonEnabled == "true",     // console output (supports ANSI colors)
-		AddCaller:         logAddCaller == "true",
-		DisableStacktrace: logDisableStacktrace == "true",
-		UnescapeMultiline: logUnescapeMultiline == "true", // unescape multiline messages (makes them more readable)
+		Level:             logLevel,                         // debug|info|warn|error|dpanic|panic|fatal
+		ColorizeLine:      logColorizeEnabled == trueString, // whole-line color
+		JSON:              logJsonEnabled == trueString,     // console output (supports ANSI colors)
+		AddCaller:         logAddCaller == trueString,
+		DisableStacktrace: logDisableStacktrace == trueString,
+		UnescapeMultiline: logUnescapeMultiline == trueString, // unescape multiline messages (makes them more readable)
 	})
 	if err != nil {
 		panic(err)
