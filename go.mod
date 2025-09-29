@@ -4,6 +4,7 @@ go 1.25.1
 
 require (
 	github.com/go-logr/logr v1.4.3
+	github.com/joho/godotenv v1.5.1
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/apimachinery v0.34.1
 	k8s.io/client-go v0.34.1

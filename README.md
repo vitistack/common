@@ -6,6 +6,7 @@ Small, focused helpers shared across Vitistack projects:
 - Serialization: `serialize` — tiny helpers to turn Go values into JSON strings/bytes quickly.
 - K8s client helper: `k8sclient` — convenience initializer around client-go/controller-runtime config.
 - Operator utils: `crdcheck` — verify required CRDs/API resources exist during startup and panic if missing.
+- Environment config: `dotenv` — smart .env file loading with environment-specific overrides and directory traversal.
 
 ## Install
 
@@ -157,6 +158,133 @@ func main() {
 	// continue with manager/controllers...
 }
 ```
+
+## Environment configuration with dotenv
+
+The `dotenv` package provides smart `.env` file loading with environment-specific overrides and upward directory searching. It follows the principle of not overriding existing OS environment variables.
+
+```go
+import "github.com/vitistack/common/pkg/settings/dotenv"
+
+func main() {
+	// Load .env files - call this early in main()
+	dotenv.LoadDotEnv()
+
+	// Now you can use environment variables as usual
+	dbURL := os.Getenv("DATABASE_URL")
+	port := os.Getenv("PORT")
+}
+```
+
+### How it works
+
+1. **File discovery**: Searches for `.env` files starting from the current working directory and executable directory, walking upwards until found.
+
+2. **Environment-specific files**: Environment-specific `.env-<ENV>` files (e.g., `.env-production`, `.env-development`) are **only loaded when the `ENV` environment variable is set**. Without setting `ENV`, only the base `.env` file will be loaded.
+
+3. **Load order and precedence**:
+
+   - Base `.env` file is loaded first
+   - Environment-specific `.env-<ENV>` file overrides base file values
+   - Existing OS environment variables are **never overridden**
+
+4. **Example file structure**:
+   ```
+   project/
+   ├── .env              # Base configuration
+   ├── .env-development  # Development overrides
+   ├── .env-production   # Production overrides
+   └── cmd/app/main.go
+   ```
+
+### Example .env files
+
+**.env** (base configuration):
+
+```bash
+PORT=3000
+DATABASE_URL=postgresql://localhost:5432/myapp
+LOG_LEVEL=info
+DEBUG=false
+```
+
+**.env-development**:
+
+```bash
+DATABASE_URL=postgresql://localhost:5432/myapp_dev
+LOG_LEVEL=debug
+DEBUG=true
+```
+
+**.env-production**:
+
+```bash
+DATABASE_URL=postgresql://prod-server:5432/myapp_prod
+LOG_LEVEL=warn
+```
+
+### Usage patterns
+
+**Basic usage** (loads only `.env`):
+
+```go
+func main() {
+	dotenv.LoadDotEnv()
+
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080" // fallback
+	}
+}
+```
+
+**With environment switching** (loads `.env` + `.env-<ENV>`):
+
+```bash
+# Development - loads .env and .env-development
+ENV=development go run main.go
+
+# Production - loads .env and .env-production
+ENV=production go run main.go
+```
+
+> **Important**: Environment-specific files like `.env-production` are only loaded when you set the `ENV` environment variable. Without `ENV` set, only the base `.env` file will be loaded.
+
+**Integration with vlog**:
+
+```go
+import (
+	"os"
+	"github.com/vitistack/common/pkg/settings/dotenv"
+	"github.com/vitistack/common/pkg/loggers/vlog"
+)
+
+func main() {
+	// Load environment first
+	dotenv.LoadDotEnv()
+
+	// Configure logging based on environment
+	logLevel := os.Getenv("LOG_LEVEL")
+	if logLevel == "" {
+		logLevel = "info"
+	}
+
+	_ = vlog.Setup(vlog.Options{
+		Level: logLevel,
+		JSON:  os.Getenv("ENV") == "production",
+	})
+	defer vlog.Sync()
+
+	vlog.Info("application starting")
+}
+```
+
+### Notes
+
+- Files are searched upwards from both the current working directory and the executable directory
+- Missing `.env` files are silently ignored
+- Successfully loaded files are logged at info level showing their paths
+- Based on [joho/godotenv](https://github.com/joho/godotenv) library
 
 ## Troubleshooting
 

@@ -2,23 +2,40 @@ package main
 
 import (
 	"context"
+	"os"
 
 	"github.com/vitistack/common/pkg/clients/k8sclient"
 	"github.com/vitistack/common/pkg/loggers/vlog"
 	"github.com/vitistack/common/pkg/serialize"
 
+	"github.com/vitistack/common/pkg/settings/dotenv"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func main() {
+	dotenv.LoadDotEnv()
+
+	logJsonEnabled := os.Getenv("LOG_JSON_ENABLED") // example usage of an env var loaded from .env
+	vlog.Infof("LOG_JSON_ENABLED: %s", logJsonEnabled)
+	logColorizeEnabled := os.Getenv("LOG_COLORIZE_ENABLED")
+	vlog.Infof("LOG_COLORIZE_ENABLED: %s", logColorizeEnabled)
+	logAddCaller := os.Getenv("LOG_ADD_CALLER")
+	vlog.Infof("LOG_ADD_CALLER: %s", logAddCaller)
+	logLevel := os.Getenv("LOG_LEVEL")
+	vlog.Infof("LOG_LEVEL: %s", logLevel)
+	logUnescapeMultiline := os.Getenv("LOG_UNESCAPE_MULTILINE")
+	vlog.Infof("LOG_UNESCAPE_MULTILINE: %s", logUnescapeMultiline)
+	logDisableStacktrace := os.Getenv("LOG_DISABLE_STACKTRACE")
+	vlog.Infof("LOG_DISABLE_STACKTRACE: %s", logDisableStacktrace)
+
 	// Initialize the logger
 	err := vlog.Setup(vlog.Options{
-		Level:             "debug", // debug|info|warn|error|dpanic|panic|fatal
-		ColorizeLine:      true,    // whole-line color
-		JSON:              false,   // console output (supports ANSI colors)
-		AddCaller:         true,
-		DisableStacktrace: false,
-		UnescapeMultiline: true, // unescape multiline messages (makes them more readable)
+		Level:             logLevel,                     // debug|info|warn|error|dpanic|panic|fatal
+		ColorizeLine:      logColorizeEnabled == "true", // whole-line color
+		JSON:              logJsonEnabled == "true",     // console output (supports ANSI colors)
+		AddCaller:         logAddCaller == "true",
+		DisableStacktrace: logDisableStacktrace == "true",
+		UnescapeMultiline: logUnescapeMultiline == "true", // unescape multiline messages (makes them more readable)
 	})
 	if err != nil {
 		panic(err)
