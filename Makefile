@@ -33,7 +33,7 @@ GOSEC ?= $(LOCALBIN)/gosec
 GO_VERSION := $(shell awk '/^go /{print $$2}' go.mod)
 GO_TOOLCHAIN := go$(GO_VERSION)
 GOSEC_VERSION ?= latest
-
+GOLANGCI_LINT_VERSION ?= latest
 
 ##@ Help
 .PHONY: help
@@ -103,8 +103,6 @@ uninstall-crds: ## Uninstall CRDs from a Kubernetes cluster.
 	kubectl delete -f crds
 
 ##@ Tools
-
-GOLANGCI_LINT_VERSION ?= v2.4.0
 
 .PHONY: golangci-lint
 golangci-lint: $(LOCALBIN) ## Download golangci-lint locally if necessary.
