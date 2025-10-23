@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 
 	"github.com/joho/godotenv"
-	"github.com/vitistack/common/pkg/loggers/vlog"
 )
 
 // loadDotEnv loads .env and optional .env-<ENV> without overriding existing OS env vars.
@@ -43,11 +42,6 @@ func LoadDotEnv() {
 		if _, exists := os.LookupEnv(k); !exists {
 			_ = os.Setenv(k, v)
 		}
-	}
-
-	// Minimal debug: report which dotenv files were used (paths only, no values)
-	if len(loadedFrom) > 0 {
-		vlog.Infof("dotenv loaded from: %v\n", loadedFrom)
 	}
 }
 
