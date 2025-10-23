@@ -9,7 +9,7 @@ import (
 )
 
 // prepare a sample encoded slog text line similar to what the TextHandler would emit.
-// We'll focus on the post-processing steps: unescapeMultilineMsg + applyMultilineColor.
+// We'll focus on the post-processing steps: unescapeMultilineAttrs + applyMultilineColor.
 func sampleLine(single bool) []byte {
 	if single {
 		return []byte("time=2025-09-26T12:00:00Z level=INFO msg=\"hello world\"\n")
@@ -21,14 +21,14 @@ func sampleLine(single bool) []byte {
 func BenchmarkUnescapeSingleLine(b *testing.B) {
 	line := sampleLine(true)
 	for i := 0; i < b.N; i++ {
-		_ = unescapeMultilineMsg(line)
+		_ = unescapeMultilineAttrs(line)
 	}
 }
 
 func BenchmarkUnescapeMultiline(b *testing.B) {
 	line := sampleLine(false)
 	for i := 0; i < b.N; i++ {
-		_ = unescapeMultilineMsg(line)
+		_ = unescapeMultilineAttrs(line)
 	}
 }
 

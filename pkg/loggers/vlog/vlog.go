@@ -94,7 +94,7 @@ func Setup(opts Options) error {
 	case opts.ColorizeLine:
 		h = newColorTextHandler(os.Stdout, handlerOpts)
 	default:
-		h = slog.NewTextHandler(os.Stdout, handlerOpts)
+		h = newPlainTextHandler(os.Stdout, handlerOpts)
 	}
 
 	base = slog.New(h)
@@ -467,6 +467,86 @@ func levelColorSlog(lvl slog.Level) string {
 	}
 }
 
+type plainTextHandler struct {
+	w        *syncWriter
+	opts     *slog.HandlerOptions
+	attrs    []slog.Attr
+	groups   []string
+	unescape bool
+}
+
+func newPlainTextHandler(w io.Writer, opts *slog.HandlerOptions) slog.Handler {
+	if !doUnescape {
+		return slog.NewTextHandler(w, opts)
+	}
+	return &plainTextHandler{w: &syncWriter{w: w}, opts: opts, unescape: true}
+}
+
+func (h *plainTextHandler) Enabled(ctx context.Context, level slog.Level) bool {
+	// Delegate to an inner TextHandler for level filtering
+	var th slog.Handler = slog.NewTextHandler(io.Discard, h.opts)
+	return th.Enabled(ctx, level)
+}
+
+//nolint:gocritic // slog.Handler requires a value parameter for Record
+func (h *plainTextHandler) Handle(ctx context.Context, r slog.Record) error {
+	// Render the record using a TextHandler into a buffer
+	var buf bytes.Buffer
+	var th slog.Handler = slog.NewTextHandler(&buf, h.opts)
+	// Apply accumulated groups and attrs
+	for _, g := range h.groups {
+		th = th.WithGroup(g)
+	}
+	if len(h.attrs) > 0 {
+		th = th.WithAttrs(h.attrs)
+	}
+	if !th.Enabled(ctx, r.Level) {
+		return nil
+	}
+	if err := th.Handle(ctx, r); err != nil {
+		return err
+	}
+	b := buf.Bytes()
+	// Optional multiline unescape (enabled only when UnescapeMultiline option is set and using text mode).
+	if h.unescape {
+		b = unescapeMultilineAttrs(b)
+	}
+	if _, err := h.w.Write(b); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (h *plainTextHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
+	nh := *h
+	nh.attrs = append(append([]slog.Attr(nil), h.attrs...), attrs...)
+	return &nh
+}
+
+func (h *plainTextHandler) WithGroup(name string) slog.Handler {
+	nh := *h
+	nh.groups = append(append([]string(nil), h.groups...), name)
+	return &nh
+}
+
+// syncWriter serializes writes to avoid color interleaving across goroutines.
+type syncWriter struct {
+	mu sync.Mutex
+	w  io.Writer
+}
+
+func (s *syncWriter) Write(p []byte) (int, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.w.Write(p)
+}
+
+func (s *syncWriter) WriteString(str string) (int, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.w.Write([]byte(str))
+}
+
 type colorTextHandler struct {
 	w      *syncWriter
 	opts   *slog.HandlerOptions
@@ -505,7 +585,7 @@ func (h *colorTextHandler) Handle(ctx context.Context, r slog.Record) error {
 	b := buf.Bytes()
 	// Optional multiline unescape (enabled only when UnescapeMultiline option is set and using text mode).
 	if doUnescape {
-		b = unescapeMultilineMsg(b)
+		b = unescapeMultilineAttrs(b)
 	}
 	color := levelColorSlog(r.Level)
 	// If multi-line, ensure each line starts with color and ends with reset to keep coloring consistent.
@@ -526,24 +606,6 @@ func (h *colorTextHandler) WithGroup(name string) slog.Handler {
 	nh := *h
 	nh.groups = append(append([]string(nil), h.groups...), name)
 	return &nh
-}
-
-// syncWriter serializes writes to avoid color interleaving across goroutines.
-type syncWriter struct {
-	mu sync.Mutex
-	w  io.Writer
-}
-
-func (s *syncWriter) Write(p []byte) (int, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	return s.w.Write(p)
-}
-
-func (s *syncWriter) WriteString(str string) (int, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	return s.w.Write([]byte(str))
 }
 
 // applyMultilineColor wraps each line (including last even if empty) with color/reset.
@@ -573,25 +635,34 @@ func applyMultilineColor(b []byte, color string) []byte {
 	return out
 }
 
-// unescapeMultilineMsg finds the msg="..." segment, and if it contains escaped newlines (\n),
-// it replaces the quoted, escaped content with an unquoted, real multiline block.
-func unescapeMultilineMsg(b []byte) []byte {
-	key := []byte(" msg=\"")
-	idx := bytes.Index(b, key)
-	if idx == -1 {
+// unescapeMultilineAttrs scans for key="value" segments containing escaped newlines and expands them.
+func unescapeMultilineAttrs(b []byte) []byte {
+	// Fast path: if there's no \" or \n, nothing to do.
+	if !bytes.Contains(b, []byte(`\n`)) {
 		return b
 	}
-	start := idx + len(key)
-	end := findClosingQuote(b, start)
-	if end == -1 {
-		return b
+	cursor := 0
+	for cursor < len(b) {
+		eqIdx := bytes.Index(b[cursor:], []byte(`="`))
+		if eqIdx == -1 {
+			break
+		}
+		eqIdx += cursor
+		valStart := eqIdx + 2
+		end := findClosingQuote(b, valStart)
+		if end == -1 {
+			break
+		}
+		segment := b[valStart:end]
+		if !bytes.Contains(segment, []byte(`\n`)) {
+			cursor = end + 1
+			continue
+		}
+		expanded := unescapeMsgSegment(segment)
+		b = rebuildMultilineValue(b, eqIdx, end, expanded)
+		cursor = eqIdx + 1 + len(expanded)
 	}
-	segment := b[start:end]
-	if !bytes.Contains(segment, []byte(`\n`)) {
-		return b
-	}
-	expanded := unescapeMsgSegment(segment)
-	return rebuildMultilineLine(b, idx, end, expanded)
+	return b
 }
 
 func findClosingQuote(b []byte, start int) int {
@@ -642,11 +713,10 @@ func unescapeMsgSegment(seg []byte) []byte {
 	return out.Bytes()
 }
 
-func rebuildMultilineLine(orig []byte, keyIdx, end int, expanded []byte) []byte {
+func rebuildMultilineValue(orig []byte, eqIdx, end int, expanded []byte) []byte {
 	var rebuilt bytes.Buffer
 	rebuilt.Grow(len(orig) + len(expanded))
-	_, _ = rebuilt.Write(orig[:keyIdx])
-	_, _ = rebuilt.WriteString(" msg=")
+	_, _ = rebuilt.Write(orig[:eqIdx+1])
 	_, _ = rebuilt.Write(expanded)
 	_, _ = rebuilt.Write(orig[end+1:])
 	return rebuilt.Bytes()
