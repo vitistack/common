@@ -24,7 +24,6 @@ func LoadDotEnv() {
 	// Resolve each file by searching upwards from CWD and executable dir; ignore if missing
 	// Merge values so that later files override earlier file values, but never override existing OS env
 	merged := map[string]string{}
-	loadedFrom := []string{}
 	for _, f := range candidates {
 		// Find file if it exists
 		if p, ok := findFileIfExists(f); ok {
@@ -32,7 +31,6 @@ func LoadDotEnv() {
 			if kv, err := godotenv.Read(p); err == nil {
 				// Merge with precedence: later files override earlier file values
 				maps.Copy(merged, kv)
-				loadedFrom = append(loadedFrom, p)
 			}
 		}
 	}
