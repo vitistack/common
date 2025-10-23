@@ -79,15 +79,37 @@ func main() {
 		},
 	}
 	vlog.Info("Test struct:", serialize.Pretty(testStruct))
+
+	// Demonstrate auto-formatting of JSON structures (new feature)
+	vlog.Info("Auto-formatted struct", "data", testStruct)
+
+	// Demonstrate auto-formatted map
+	configMap := map[string]any{
+		"database": map[string]string{
+			"host": "localhost",
+			"port": "5432",
+		},
+		"features": []string{"auth", "api", "cache"},
+		"debug":    true,
+	}
+	vlog.Info("Auto-formatted map", "config", configMap)
+
+	// Demonstrate JSON string auto-formatting
+	jsonResponse := `{"status":"success","data":{"id":1,"name":"test"},"metadata":{"version":"1.0"}}`
+	vlog.Info("Auto-formatted JSON string", "response", jsonResponse)
+
+	// Demonstrate YAML formatting
+	vlog.Info("YAML formatted struct", "yaml", serialize.YAML(testStruct))
+	vlog.Info("YAML formatted map", "yaml", serialize.PrettyYAML(configMap))
 }
 
 type TestStruct struct {
-	Field1 string      `json:"field1,omitempty"`
-	Field2 int         `json:"field2,omitempty"`
-	Field3 TestStruct2 `json:"field3,omitempty"`
+	Field1 string      `json:"field1,omitempty" yaml:"field1,omitempty"`
+	Field2 int         `json:"field2,omitempty" yaml:"field2,omitempty"`
+	Field3 TestStruct2 `json:"field3,omitempty" yaml:"field3,omitempty"`
 }
 
 type TestStruct2 struct {
-	SubField1 string `json:"subField1,omitempty"`
-	SubField2 int    `json:"subField2,omitempty"`
+	SubField1 string `json:"subField1,omitempty" yaml:"subField1,omitempty"`
+	SubField2 int    `json:"subField2,omitempty" yaml:"subField2,omitempty"`
 }

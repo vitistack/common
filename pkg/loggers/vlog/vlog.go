@@ -1,3 +1,22 @@
+// Package vlog provides a structured logging interface backed by Go's standard log/slog package.
+//
+// Features:
+// - Multiple log levels: Debug, Info, Warn, Error
+// - Structured logging with key-value pairs
+// - Automatic JSON formatting: Maps, slices, structs, and JSON strings are automatically
+//   pretty-printed with 2-space indentation when logged as values
+// - Color output support for console logging
+// - Optional caller information
+// - Integration with logr for controller-runtime compatibility
+//
+// Example usage:
+//
+//	vlog.Info("user created", "user", userStruct)  // userStruct will be auto-formatted as JSON
+//	vlog.With("request_id", "123").Info("processing", "data", dataMap)  // dataMap auto-formatted
+//
+// For explicit control over formatting, use vlog.Pretty():
+//
+//	vlog.Info("object", vlog.Pretty(obj))
 package vlog
 
 import (
@@ -19,6 +38,7 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/vitistack/common/pkg/loggers"
+	"github.com/vitistack/common/pkg/serialize"
 )
 
 // Package-level logger with lazy default initialization.
@@ -281,7 +301,69 @@ func convertKVs(kv []any) []any {
 	if len(kv)%2 == 1 {
 		kv = append(kv, "<missing>")
 	}
+	// Auto-format JSON structures with indentation
+	for i := 1; i < len(kv); i += 2 {
+		kv[i] = autoFormatJSON(kv[i])
+	}
 	return kv
+}
+
+// autoFormatJSON attempts to detect and pretty-print JSON-like structures (maps, slices, structs)
+// with 2-space indentation using serialize.Pretty(). Returns the original value if not applicable.
+func autoFormatJSON(v any) any {
+	if v == nil {
+		return nil
+	}
+
+	// If it's already a prettyValue, leave it alone
+	if _, ok := v.(prettyValue); ok {
+		return v
+	}
+
+	// If it's a string that looks like JSON, try to reformat it
+	if s, ok := v.(string); ok {
+		trimmed := strings.TrimSpace(s)
+		if (strings.HasPrefix(trimmed, "{") && strings.HasSuffix(trimmed, "}")) ||
+			(strings.HasPrefix(trimmed, "[") && strings.HasSuffix(trimmed, "]")) {
+			if pretty, ok := reformatJSONBytes([]byte(trimmed)); ok {
+				return pretty
+			}
+		}
+		return v
+	}
+
+	// For maps, slices, and structs, use serialize.Pretty()
+	switch v.(type) {
+	case map[string]any, []any, map[string]string, map[string]int,
+		[]string, []int, []map[string]any:
+		return serialize.Pretty(v)
+	default:
+		// Check if it's a struct (not a basic type)
+		if isStructType(v) {
+			return serialize.Pretty(v)
+		}
+	}
+
+	return v
+}
+
+// isStructType checks if the value is a struct or pointer to struct
+func isStructType(v any) bool {
+	if v == nil {
+		return false
+	}
+	switch v.(type) {
+	case string, int, int8, int16, int32, int64,
+		uint, uint8, uint16, uint32, uint64,
+		float32, float64, bool, complex64, complex128:
+		return false
+	}
+	// If json.Marshal works and produces an object (starts with {), it's likely a struct
+	if b, err := json.Marshal(v); err == nil {
+		trimmed := bytes.TrimSpace(b)
+		return len(trimmed) > 0 && trimmed[0] == '{'
+	}
+	return false
 }
 
 // Pretty wraps any value and, when logged, attempts to pretty-print JSON or YAML (structs, maps, slices, or raw JSON/YAML strings).

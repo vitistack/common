@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+
+	"gopkg.in/yaml.v3"
 )
 
 // JSON returns a compact JSON string representation of v.
@@ -36,6 +38,23 @@ func JSONIndentN(v any, n int) string {
 
 // Pretty is a convenience alias for JSONIndentN(v, 2).
 func Pretty(v any) string { return JSONIndentN(v, 2) }
+
+// YAML returns a YAML string representation of v.
+// YAML is naturally indented/pretty-printed by default.
+// On error, it returns a best-effort fallback using fmt with the error appended.
+func YAML(v any) string {
+	b, err := yaml.Marshal(v)
+	if err != nil {
+		return fallback(v, err)
+	}
+	return strings.TrimSpace(string(b))
+}
+
+// PrettyYAML is an alias for YAML (YAML is pretty by default).
+func PrettyYAML(v any) string { return YAML(v) }
+
+// BytesYAML returns the YAML bytes and any error encountered.
+func BytesYAML(v any) ([]byte, error) { return yaml.Marshal(v) }
 
 // BytesJSON returns the compact JSON bytes and any error encountered.
 func BytesJSON(v any) ([]byte, error) { return json.Marshal(v) }
