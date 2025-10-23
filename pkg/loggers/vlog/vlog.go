@@ -1,13 +1,13 @@
 // Package vlog provides a structured logging interface backed by Go's standard log/slog package.
 //
 // Features:
-// - Multiple log levels: Debug, Info, Warn, Error
-// - Structured logging with key-value pairs
-// - Automatic JSON formatting: Maps, slices, structs, and JSON strings are automatically
-//   pretty-printed with 2-space indentation when logged as values
-// - Color output support for console logging
-// - Optional caller information
-// - Integration with logr for controller-runtime compatibility
+//   - Multiple log levels: Debug, Info, Warn, Error
+//   - Structured logging with key-value pairs
+//   - Automatic JSON formatting: Maps, slices, structs, and JSON strings are automatically
+//     pretty-printed with 2-space indentation when logged as values
+//   - Color output support for console logging
+//   - Optional caller information
+//   - Integration with logr for controller-runtime compatibility
 //
 // Example usage:
 //
