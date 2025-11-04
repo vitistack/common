@@ -155,8 +155,8 @@ func TestLoggerInterface(t *testing.T) {
 		if len(logger.lastKVs) != 4 {
 			t.Errorf("With() key-value pairs = %d, want 4", len(logger.lastKVs))
 		}
-		// Verify it returns a Logger
-		var _ Logger = newLogger
+		// Verify it returns a Logger (already guaranteed by interface)
+		_ = newLogger
 	})
 
 	t.Run("With returns chainable logger", func(t *testing.T) {
@@ -166,8 +166,8 @@ func TestLoggerInterface(t *testing.T) {
 		// Should be able to call methods on the returned logger
 		chainedLogger.Info("chained message")
 
-		// The returned logger should also be a valid Logger interface
-		var _ Logger = chainedLogger
+		// The returned logger is already guaranteed to be a Logger by the interface
+		_ = chainedLogger
 	})
 }
 
@@ -193,8 +193,8 @@ func TestFactoryInterface(t *testing.T) {
 			t.Errorf("New() calls = %d, want 1", factory.newCalls)
 		}
 
-		// Verify returned logger implements Logger interface
-		var _ Logger = logger
+		// Verify returned logger is used (already guaranteed by interface)
+		_ = logger
 	})
 
 	t.Run("New can be called multiple times", func(t *testing.T) {
@@ -207,9 +207,8 @@ func TestFactoryInterface(t *testing.T) {
 			t.Errorf("New() calls = %d, want 2", factory.newCalls)
 		}
 
-		// Both should be valid loggers
-		var _ Logger = logger1
-		var _ Logger = logger2
+		// Both should be valid loggers (already guaranteed by interface)
+		_, _ = logger1, logger2
 	})
 }
 

@@ -43,11 +43,11 @@ func TestGetString(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Clean up before and after
-			os.Unsetenv(tt.key)
-			defer os.Unsetenv(tt.key)
+			_ = os.Unsetenv(tt.key)
+			defer func() { _ = os.Unsetenv(tt.key) }()
 
 			if tt.setEnv {
-				os.Setenv(tt.key, tt.setValue)
+				_ = os.Setenv(tt.key, tt.setValue)
 			}
 
 			result := GetString(tt.key, tt.def)
@@ -126,11 +126,11 @@ func TestGetBool(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			os.Unsetenv(tt.key)
-			defer os.Unsetenv(tt.key)
+			_ = os.Unsetenv(tt.key)
+			defer func() { _ = os.Unsetenv(tt.key) }()
 
 			if tt.setEnv {
-				os.Setenv(tt.key, tt.setValue)
+				_ = os.Setenv(tt.key, tt.setValue)
 			}
 
 			result := GetBool(tt.key, tt.def)
@@ -201,11 +201,11 @@ func TestGetInt(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			os.Unsetenv(tt.key)
-			defer os.Unsetenv(tt.key)
+			_ = os.Unsetenv(tt.key)
+			defer func() { _ = os.Unsetenv(tt.key) }()
 
 			if tt.setEnv {
-				os.Setenv(tt.key, tt.setValue)
+				_ = os.Setenv(tt.key, tt.setValue)
 			}
 
 			result := GetInt(tt.key, tt.def)
@@ -292,11 +292,11 @@ func TestGetDuration(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			os.Unsetenv(tt.key)
-			defer os.Unsetenv(tt.key)
+			_ = os.Unsetenv(tt.key)
+			defer func() { _ = os.Unsetenv(tt.key) }()
 
 			if tt.setEnv {
-				os.Setenv(tt.key, tt.setValue)
+				_ = os.Setenv(tt.key, tt.setValue)
 			}
 
 			result := GetDuration(tt.key, tt.def)
@@ -318,17 +318,17 @@ func TestAllFunctionsWithRealEnvVars(t *testing.T) {
 
 	// Clean up
 	defer func() {
-		os.Unsetenv(strKey)
-		os.Unsetenv(boolKey)
-		os.Unsetenv(intKey)
-		os.Unsetenv(durKey)
+		_ = os.Unsetenv(strKey)
+		_ = os.Unsetenv(boolKey)
+		_ = os.Unsetenv(intKey)
+		_ = os.Unsetenv(durKey)
 	}()
 
 	// Set values
-	os.Setenv(strKey, "test-value")
-	os.Setenv(boolKey, "true")
-	os.Setenv(intKey, "999")
-	os.Setenv(durKey, "30s")
+	_ = os.Setenv(strKey, "test-value")
+	_ = os.Setenv(boolKey, "true")
+	_ = os.Setenv(intKey, "999")
+	_ = os.Setenv(durKey, "30s")
 
 	// Verify all work correctly
 	if s := GetString(strKey, ""); s != "test-value" {

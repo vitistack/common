@@ -17,10 +17,11 @@ type mockObject struct {
 }
 
 func (m *mockObject) DeepCopyObject() runtime.Object {
-	return &mockObject{
-		TypeMeta:   m.TypeMeta,
-		ObjectMeta: *m.ObjectMeta.DeepCopy(),
+	out := &mockObject{
+		TypeMeta: m.TypeMeta,
 	}
+	m.DeepCopyInto(&out.ObjectMeta)
+	return out
 }
 
 // mockObjectList is needed for scheme registration
@@ -33,8 +34,8 @@ type mockObjectList struct {
 func (m *mockObjectList) DeepCopyObject() runtime.Object {
 	out := &mockObjectList{
 		TypeMeta: m.TypeMeta,
-		ListMeta: *m.ListMeta.DeepCopy(),
 	}
+	m.DeepCopyInto(&out.ListMeta)
 	if m.Items != nil {
 		out.Items = make([]mockObject, len(m.Items))
 		for i := range m.Items {
