@@ -1,5 +1,10 @@
 # Vitistack common
 
+[![Build and Test](https://github.com/vitistack/common/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/vitistack/common/actions/workflows/build-and-test.yml)
+[![Security Scan](https://github.com/vitistack/common/actions/workflows/security-scan.yml/badge.svg)](https://github.com/vitistack/common/actions/workflows/security-scan.yml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/vitistack/common)](https://goreportcard.com/report/github.com/vitistack/common)
+[![Go Reference](https://pkg.go.dev/badge/github.com/vitistack/common.svg)](https://pkg.go.dev/github.com/vitistack/common)
+
 Small, focused helpers shared across Vitistack projects:
 
 - Logging: `vlog` — thin Zap setup with nice console colors and JSON mode, plus a logr adapter for controller-runtime.
