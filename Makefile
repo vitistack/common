@@ -132,6 +132,11 @@ update-deps: ## Update dependencies
 	@go mod tidy
 	@echo "Dependencies updated!"
 
+##@ Helm
+.PHONY: helm-lint
+helm-lint: ## Lint Helm charts
+	helm lint charts/vitistack-crds
+
 ##@ kubernetes
 .PHONY: install-crds
 install-crds: manifests ## Install CRDs into a Kubernetes cluster.

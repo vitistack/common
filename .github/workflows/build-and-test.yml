@@ -2,9 +2,9 @@ name: Build and Test
 
 on:
   push:
-    branches: ["*"]
+    branches: ['*']
   pull_request:
-    branches: ["main", "master"]
+    branches: ['main', 'master']
 
 concurrency:
   group: build-and-test-${{ github.workflow }}-${{ github.ref }}
@@ -65,6 +65,10 @@ jobs:
         run: |
           make test
           go tool cover -func=coverage.out
+
+      - name: Helm lint
+        run: |
+          make helm-lint
 
       - name: Upload coverage
         uses: actions/upload-artifact@v5
