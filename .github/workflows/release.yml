@@ -7,7 +7,7 @@ on:
 
 env:
     REGISTRY: ghcr.io
-    CHART_NAME: vitistack-crds
+    CHART_NAME: crds
 
 permissions:
     contents: write
