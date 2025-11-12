@@ -1,0 +1,1061 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.19.0
+  name: kubernetesproviders.vitistack.io
+spec:
+  group: vitistack.io
+  names:
+    kind: KubernetesProvider
+    listKind: KubernetesProviderList
+    plural: kubernetesproviders
+    shortNames:
+    - kp
+    singular: kubernetesprovider
+  scope: Cluster
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.providerType
+      name: Provider
+      type: string
+    - jsonPath: .spec.version
+      name: Version
+      type: string
+    - jsonPath: .status.phase
+      name: Status
+      type: string
+    - jsonPath: .status.nodeCount
+      name: Nodes
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: KubernetesProvider is the Schema for the KubernetesProviders
+          API
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: KubernetesProviderSpec defines the desired state of KubernetesProvider
+            properties:
+              addons:
+                description: Addons configuration
+                properties:
+                  additional:
+                    description: Additional addons
+                    items:
+                      properties:
+                        config:
+                          additionalProperties:
+                            type: string
+                          type: object
+                        enabled:
+                          type: boolean
+                        name:
+                          type: string
+                        version:
+                          type: string
+                      required:
+                      - enabled
+                      - name
+                      type: object
+                    type: array
+                  ingressController:
+                    description: Ingress controller configuration
+                    properties:
+                      config:
+                        additionalProperties:
+                          type: string
+                        description: Configuration parameters
+                        type: object
+                      enabled:
+                        description: Enable ingress controller
+                        type: boolean
+                      type:
+                        description: Ingress controller type (nginx, traefik, istio,
+                          haproxy)
+                        type: string
+                    required:
+                    - enabled
+                    type: object
+                  monitoring:
+                    description: Monitoring configuration
+                    properties:
+                      alertManager:
+                        description: Enable AlertManager
+                        type: boolean
+                      config:
+                        additionalProperties:
+                          type: string
+                        description: Configuration parameters
+                        type: object
+                      grafana:
+                        description: Enable Grafana
+                        type: boolean
+                      prometheus:
+                        description: Enable Prometheus
+                        type: boolean
+                    type: object
+                  serviceMesh:
+                    description: Service mesh configuration
+                    properties:
+                      config:
+                        additionalProperties:
+                          type: string
+                        description: Configuration parameters
+                        type: object
+                      enabled:
+                        description: Enable service mesh
+                        type: boolean
+                      type:
+                        description: Service mesh type (istio, linkerd, consul)
+                        type: string
+                    required:
+                    - enabled
+                    type: object
+                  storage:
+                    description: Storage configuration
+                    properties:
+                      classes:
+                        description: Storage classes
+                        items:
+                          properties:
+                            default:
+                              type: boolean
+                            name:
+                              type: string
+                            parameters:
+                              additionalProperties:
+                                type: string
+                              type: object
+                            provisioner:
+                              type: string
+                          required:
+                          - name
+                          - provisioner
+                          type: object
+                        type: array
+                      defaultClass:
+                        description: Default storage class
+                        type: string
+                    type: object
+                type: object
+              authentication:
+                description: Authentication configuration
+                properties:
+                  ldap:
+                    description: LDAP configuration
+                    properties:
+                      bindDN:
+                        description: Bind DN
+                        type: string
+                      bindPasswordRef:
+                        description: Bind password reference
+                        properties:
+                          namespace:
+                            description: Namespace of the secret (defaults to machine
+                              namespace)
+                            type: string
+                          secretName:
+                            description: Name of the secret containing credentials
+                            type: string
+                        type: object
+                      groupSearchBase:
+                        description: Group search base
+                        type: string
+                      serverURL:
+                        description: LDAP server URL
+                        type: string
+                      userSearchBase:
+                        description: User search base
+                        type: string
+                    required:
+                    - bindDN
+                    - groupSearchBase
+                    - serverURL
+                    - userSearchBase
+                    type: object
+                  oidc:
+                    description: OIDC configuration
+                    properties:
+                      clientID:
+                        description: OIDC client ID
+                        type: string
+                      clientSecretRef:
+                        description: OIDC client secret reference
+                        properties:
+                          namespace:
+                            description: Namespace of the secret (defaults to machine
+                              namespace)
+                            type: string
+                          secretName:
+                            description: Name of the secret containing credentials
+                            type: string
+                        type: object
+                      groupsClaim:
+                        description: Groups claim
+                        type: string
+                      issuerURL:
+                        description: OIDC issuer URL
+                        type: string
+                      usernameClaim:
+                        description: Username claim
+                        type: string
+                    required:
+                    - clientID
+                    - issuerURL
+                    type: object
+                  providers:
+                    description: Authentication providers
+                    items:
+                      properties:
+                        config:
+                          additionalProperties:
+                            type: string
+                          description: Configuration parameters
+                          type: object
+                        name:
+                          description: Provider name
+                          type: string
+                        type:
+                          description: Provider type (oidc, ldap, saml, github, google)
+                          type: string
+                      required:
+                      - name
+                      - type
+                      type: object
+                    type: array
+                  serviceAccount:
+                    description: Service account configuration
+                    properties:
+                      defaultName:
+                        description: Default service account name
+                        type: string
+                      signingKeyRef:
+                        description: Service account signing key
+                        properties:
+                          namespace:
+                            description: Namespace of the secret (defaults to machine
+                              namespace)
+                            type: string
+                          secretName:
+                            description: Name of the secret containing credentials
+                            type: string
+                        type: object
+                    type: object
+                type: object
+              backup:
+                description: Backup and disaster recovery configuration
+                properties:
+                  config:
+                    additionalProperties:
+                      type: string
+                    description: Configuration parameters
+                    type: object
+                  enabled:
+                    description: Enable cluster backup
+                    type: boolean
+                  provider:
+                    description: Backup provider (velero, kasten, portworx)
+                    type: string
+                  retentionDays:
+                    description: Backup retention period in days
+                    maximum: 365
+                    minimum: 1
+                    type: integer
+                  schedule:
+                    description: Backup schedule (cron format)
+                    type: string
+                  storageLocation:
+                    description: Storage location for backups
+                    type: string
+                required:
+                - enabled
+                type: object
+              cluster:
+                description: Cluster configuration
+                properties:
+                  apiServer:
+                    description: API server configuration
+                    properties:
+                      admissionPlugins:
+                        description: Enable admission plugins
+                        items:
+                          type: string
+                        type: array
+                      auditLogRetentionDays:
+                        description: Audit log retention days
+                        maximum: 365
+                        minimum: 1
+                        type: integer
+                      auditLogging:
+                        description: Enable audit logging
+                        type: boolean
+                      disableAdmissionPlugins:
+                        description: Disable admission plugins
+                        items:
+                          type: string
+                        type: array
+                      encryptionAtRest:
+                        description: Enable encryption at rest
+                        type: boolean
+                    type: object
+                  apiServerExtraArgs:
+                    additionalProperties:
+                      type: string
+                    description: Additional API server arguments
+                    type: object
+                  controlPlane:
+                    description: Control plane configuration
+                    properties:
+                      diskSizeGB:
+                        description: Control plane disk size in GB
+                        maximum: 1000
+                        minimum: 20
+                        type: integer
+                      instanceType:
+                        description: Control plane instance type
+                        type: string
+                      replicas:
+                        description: Number of control plane nodes
+                        maximum: 10
+                        minimum: 1
+                        type: integer
+                    type: object
+                  controllerManagerExtraArgs:
+                    additionalProperties:
+                      type: string
+                    description: Additional controller manager arguments
+                    type: object
+                  dns:
+                    description: DNS configuration
+                    properties:
+                      domain:
+                        description: DNS domain
+                        type: string
+                      provider:
+                        description: DNS provider (coredns, kube-dns)
+                        type: string
+                      upstreamServers:
+                        description: Upstream DNS servers
+                        items:
+                          type: string
+                        type: array
+                    type: object
+                  endpoint:
+                    description: Cluster endpoint URL (for managed clusters)
+                    type: string
+                  etcd:
+                    description: ETCD configuration
+                    properties:
+                      backupEnabled:
+                        description: Enable backup
+                        type: boolean
+                      backupRetentionDays:
+                        description: Backup retention period in days
+                        maximum: 365
+                        minimum: 1
+                        type: integer
+                      backupSchedule:
+                        description: Backup schedule (cron format)
+                        type: string
+                      encryption:
+                        description: Enable encryption
+                        type: boolean
+                      version:
+                        description: ETCD version
+                        type: string
+                    type: object
+                  featureGates:
+                    additionalProperties:
+                      type: boolean
+                    description: Feature gates
+                    type: object
+                  schedulerExtraArgs:
+                    additionalProperties:
+                      type: string
+                    description: Additional scheduler arguments
+                    type: object
+                type: object
+              config:
+                additionalProperties:
+                  type: string
+                description: Provider-specific configuration
+                type: object
+              defaultTags:
+                additionalProperties:
+                  type: string
+                description: Default tags to apply to all resources
+                type: object
+              displayName:
+                description: Human-readable name for this Kubernetes provider
+                minLength: 1
+                type: string
+              machineProviderRef:
+                description: Machine provider reference for node provisioning
+                properties:
+                  name:
+                    description: Name of the machine provider
+                    type: string
+                  namespace:
+                    description: Namespace of the machine provider
+                    type: string
+                required:
+                - name
+                type: object
+              network:
+                description: Network configuration
+                properties:
+                  cniPlugin:
+                    description: CNI plugin (calico, flannel, weave, cilium, antrea)
+                    type: string
+                  dnsServiceIP:
+                    description: DNS service IP
+                    type: string
+                  loadBalancer:
+                    description: Load balancer configuration
+                    properties:
+                      annotations:
+                        additionalProperties:
+                          type: string
+                        description: Additional annotations
+                        type: object
+                      class:
+                        description: Load balancer class
+                        type: string
+                      type:
+                        description: Load balancer type (classic, network, application)
+                        type: string
+                    type: object
+                  networkPolicy:
+                    description: Network policy support
+                    type: boolean
+                  podCIDR:
+                    description: Pod CIDR
+                    type: string
+                  serviceCIDR:
+                    description: Service CIDR
+                    type: string
+                type: object
+              nodePools:
+                description: Node pool configurations
+                items:
+                  properties:
+                    autoScaling:
+                      description: Auto-scaling configuration
+                      properties:
+                        enabled:
+                          description: Enable auto-scaling
+                          type: boolean
+                        scaleDownDelayAfterAdd:
+                          description: Scale down delay after node add
+                          type: string
+                        scaleDownDelayAfterDelete:
+                          description: Scale down delay after delete
+                          type: string
+                        scaleDownDelayAfterFailure:
+                          description: Scale down delay after failure
+                          type: string
+                        scaleDownUnneededTime:
+                          description: Scale down unneeded time
+                          type: string
+                      required:
+                      - enabled
+                      type: object
+                    desiredNodes:
+                      description: Desired number of nodes
+                      minimum: 0
+                      type: integer
+                    instanceType:
+                      description: Instance type
+                      type: string
+                    labels:
+                      additionalProperties:
+                        type: string
+                      description: Node labels
+                      type: object
+                    maxNodes:
+                      description: Maximum number of nodes
+                      minimum: 1
+                      type: integer
+                    minNodes:
+                      description: Minimum number of nodes
+                      minimum: 0
+                      type: integer
+                    name:
+                      description: Node pool name
+                      minLength: 1
+                      type: string
+                    nodeConfig:
+                      description: Node configuration
+                      properties:
+                        disk:
+                          description: Disk configuration
+                          properties:
+                            encrypted:
+                              description: Enable encryption
+                              type: boolean
+                            sizeGB:
+                              description: Root disk size in GB
+                              maximum: 2000
+                              minimum: 20
+                              type: integer
+                            type:
+                              description: Disk type
+                              type: string
+                          type: object
+                        kubelet:
+                          description: Kubelet configuration
+                          properties:
+                            extraArgs:
+                              additionalProperties:
+                                type: string
+                              description: Additional kubelet arguments
+                              type: object
+                            maxPods:
+                              description: Max pods per node
+                              maximum: 250
+                              minimum: 10
+                              type: integer
+                          type: object
+                        network:
+                          description: Network configuration
+                          properties:
+                            assignPublicIP:
+                              description: Assign public IP
+                              type: boolean
+                            securityGroupIDs:
+                              description: Security group IDs
+                              items:
+                                type: string
+                              type: array
+                            subnetIDs:
+                              description: Subnet IDs
+                              items:
+                                type: string
+                              type: array
+                          type: object
+                        os:
+                          description: Operating system configuration
+                          properties:
+                            image:
+                              description: Image ID or family
+                              type: string
+                            type:
+                              description: OS type (linux, windows)
+                              type: string
+                            userData:
+                              description: User data script
+                              type: string
+                          type: object
+                        security:
+                          description: Security configuration
+                          properties:
+                            iamInstanceProfile:
+                              description: IAM instance profile
+                              type: string
+                            securityGroups:
+                              description: Security groups
+                              items:
+                                type: string
+                              type: array
+                            sshKeyPairs:
+                              description: SSH key pairs
+                              items:
+                                type: string
+                              type: array
+                          type: object
+                      type: object
+                    taints:
+                      description: Node taints
+                      items:
+                        properties:
+                          effect:
+                            type: string
+                          key:
+                            type: string
+                          value:
+                            type: string
+                        required:
+                        - effect
+                        - key
+                        type: object
+                      type: array
+                    zones:
+                      description: Zones for this node pool
+                      items:
+                        type: string
+                      type: array
+                  required:
+                  - desiredNodes
+                  - instanceType
+                  - maxNodes
+                  - minNodes
+                  - name
+                  type: object
+                type: array
+              observability:
+                description: Monitoring and logging configuration
+                properties:
+                  logging:
+                    description: Logging configuration
+                    properties:
+                      backend:
+                        description: Logging backend (elasticsearch, loki, splunk)
+                        type: string
+                      config:
+                        additionalProperties:
+                          type: string
+                        description: Configuration parameters
+                        type: object
+                      enabled:
+                        description: Enable centralized logging
+                        type: boolean
+                      retentionDays:
+                        description: Log retention period in days
+                        maximum: 365
+                        minimum: 1
+                        type: integer
+                    required:
+                    - enabled
+                    type: object
+                  metrics:
+                    description: Metrics configuration
+                    properties:
+                      backend:
+                        description: Metrics backend (prometheus, datadog, newrelic)
+                        type: string
+                      config:
+                        additionalProperties:
+                          type: string
+                        description: Configuration parameters
+                        type: object
+                      enabled:
+                        description: Enable metrics collection
+                        type: boolean
+                      retentionDays:
+                        description: Metrics retention period in days
+                        maximum: 365
+                        minimum: 1
+                        type: integer
+                    required:
+                    - enabled
+                    type: object
+                  tracing:
+                    description: Tracing configuration
+                    properties:
+                      backend:
+                        description: Tracing backend (jaeger, zipkin, datadog)
+                        type: string
+                      config:
+                        additionalProperties:
+                          type: string
+                        description: Configuration parameters
+                        type: object
+                      enabled:
+                        description: Enable distributed tracing
+                        type: boolean
+                      samplingRate:
+                        description: Sampling rate (0.0 to 1.0) as string for cross-language
+                          compatibility
+                        pattern: ^(0(\.[0-9]+)?|1(\.0+)?)$
+                        type: string
+                    required:
+                    - enabled
+                    type: object
+                type: object
+              providerType:
+                description: Provider type (eks, gke, aks, openshift, rancher, k3s,
+                  kubeadm, managed)
+                enum:
+                - eks
+                - gke
+                - aks
+                - openshift
+                - rancher
+                - k3s
+                - kubeadm
+                - managed
+                - vanilla
+                - rke
+                - rke2
+                - talos
+                type: string
+              region:
+                description: Region where this Kubernetes cluster operates
+                minLength: 1
+                type: string
+              security:
+                description: Security configuration
+                properties:
+                  imageScanning:
+                    description: Enable image scanning
+                    type: boolean
+                  networkPolicies:
+                    description: Enable Network Policies
+                    type: boolean
+                  podSecurityLevel:
+                    description: Pod Security Standard level (privileged, baseline,
+                      restricted)
+                    type: string
+                  podSecurityStandards:
+                    description: Enable Pod Security Standards
+                    type: boolean
+                  rbac:
+                    description: Enable RBAC
+                    type: boolean
+                  runtimeSecurity:
+                    description: Runtime security configuration
+                    properties:
+                      config:
+                        additionalProperties:
+                          type: string
+                        description: Configuration parameters
+                        type: object
+                      enabled:
+                        description: Enable runtime protection
+                        type: boolean
+                      provider:
+                        description: Runtime security provider (falco, twistlock,
+                          aqua)
+                        type: string
+                    required:
+                    - enabled
+                    type: object
+                type: object
+              version:
+                description: Kubernetes version
+                pattern: ^v?[0-9]+\.[0-9]+\.[0-9]+$
+                type: string
+              zones:
+                description: Available zones for node placement
+                items:
+                  type: string
+                type: array
+            required:
+            - cluster
+            - displayName
+            - providerType
+            - region
+            - version
+            type: object
+          status:
+            description: KubernetesProviderStatus defines the observed state of KubernetesProvider
+            properties:
+              addons:
+                description: Addon status
+                items:
+                  properties:
+                    configurationStatus:
+                      description: Configuration status
+                      type: string
+                    health:
+                      description: Health status
+                      type: string
+                    lastUpdated:
+                      description: Last update time
+                      format: date-time
+                      type: string
+                    name:
+                      description: Addon name
+                      type: string
+                    status:
+                      description: Status (active, inactive, failed, updating)
+                      type: string
+                    version:
+                      description: Addon version
+                      type: string
+                  required:
+                  - name
+                  - status
+                  type: object
+                type: array
+              capacity:
+                description: Capacity and resource usage
+                properties:
+                  cpu:
+                    description: Total CPU capacity (cores)
+                    type: string
+                  cpuUsage:
+                    description: CPU usage
+                    type: string
+                  memory:
+                    description: Total memory capacity
+                    type: string
+                  memoryUsage:
+                    description: Memory usage
+                    type: string
+                  pods:
+                    description: Total pods capacity
+                    type: string
+                  podsUsage:
+                    description: Pods usage
+                    type: string
+                  storage:
+                    description: Total storage capacity
+                    type: string
+                  storageUsage:
+                    description: Storage usage
+                    type: string
+                type: object
+              cluster:
+                description: Kubernetes cluster information
+                properties:
+                  certificateAuthorityData:
+                    description: Certificate authority data
+                    type: string
+                  createdAt:
+                    description: Creation timestamp
+                    format: date-time
+                    type: string
+                  endpoint:
+                    description: Cluster endpoint
+                    type: string
+                  id:
+                    description: Cluster ID
+                    type: string
+                  oidcIssuerURL:
+                    description: OIDC issuer URL
+                    type: string
+                  platformVersion:
+                    description: Platform version
+                    type: string
+                  state:
+                    description: Cluster state (creating, active, updating, deleting,
+                      failed)
+                    type: string
+                type: object
+              conditions:
+                description: Conditions represent the latest available observations
+                items:
+                  properties:
+                    lastTransitionTime:
+                      description: Last time the condition transitioned
+                      format: date-time
+                      type: string
+                    message:
+                      description: Human-readable message
+                      type: string
+                    reason:
+                      description: Reason for the condition's last transition
+                      type: string
+                    status:
+                      description: Status of the condition (True, False, Unknown)
+                      type: string
+                    type:
+                      description: Type of condition
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+              endpoints:
+                description: Endpoint information
+                properties:
+                  apiServer:
+                    description: API server endpoint
+                    type: string
+                  ingress:
+                    description: Ingress endpoints
+                    items:
+                      type: string
+                    type: array
+                  loadBalancer:
+                    description: Load balancer endpoints
+                    items:
+                      type: string
+                    type: array
+                  monitoring:
+                    additionalProperties:
+                      type: string
+                    description: Monitoring endpoints
+                    type: object
+                type: object
+              health:
+                description: Health status
+                properties:
+                  apiServer:
+                    description: API server health
+                    type: string
+                  controllerManager:
+                    description: Controller manager health
+                    type: string
+                  coreDNS:
+                    description: CoreDNS health
+                    type: string
+                  etcd:
+                    description: ETCD health
+                    type: string
+                  lastCheck:
+                    description: Last health check
+                    format: date-time
+                    type: string
+                  nodes:
+                    description: Node health summary
+                    type: string
+                  overall:
+                    description: Overall health status (Healthy, Degraded, Unhealthy)
+                    type: string
+                  scheduler:
+                    description: Scheduler health
+                    type: string
+                type: object
+              lastUpdated:
+                description: Last update time
+                format: date-time
+                type: string
+              message:
+                description: Human-readable status message
+                type: string
+              nodeCount:
+                description: Total node count
+                type: integer
+              nodePools:
+                description: Node pools status
+                items:
+                  properties:
+                    autoScaling:
+                      description: Auto-scaling status
+                      properties:
+                        enabled:
+                          description: Is auto-scaling enabled
+                          type: boolean
+                        lastScalingAction:
+                          description: Last scaling action
+                          type: string
+                        lastScalingTime:
+                          description: Last scaling time
+                          format: date-time
+                          type: string
+                        maxNodes:
+                          description: Current maximum nodes
+                          type: integer
+                        minNodes:
+                          description: Current minimum nodes
+                          type: integer
+                      required:
+                      - enabled
+                      - maxNodes
+                      - minNodes
+                      type: object
+                    currentNodes:
+                      description: Current node count
+                      type: integer
+                    desiredNodes:
+                      description: Desired node count
+                      type: integer
+                    health:
+                      description: Health status
+                      type: string
+                    instanceType:
+                      description: Instance type
+                      type: string
+                    lastUpdated:
+                      description: Last update time
+                      format: date-time
+                      type: string
+                    name:
+                      description: Node pool name
+                      type: string
+                    readyNodes:
+                      description: Ready node count
+                      type: integer
+                    state:
+                      description: Current state (creating, active, updating, deleting,
+                        failed)
+                      type: string
+                  required:
+                  - currentNodes
+                  - desiredNodes
+                  - instanceType
+                  - name
+                  - readyNodes
+                  - state
+                  type: object
+                type: array
+              phase:
+                description: Current phase of the provider (Pending, Ready, Failed,
+                  Updating)
+                type: string
+              readyNodeCount:
+                description: Ready node count
+                type: integer
+              security:
+                description: Security status
+                properties:
+                  imageScanning:
+                    description: Image scanning status
+                    type: string
+                  lastSecurityScan:
+                    description: Last security scan
+                    format: date-time
+                    type: string
+                  networkPolicies:
+                    description: Network policies status
+                    type: string
+                  podSecurityStandards:
+                    description: Pod Security Standards status
+                    type: string
+                  rbac:
+                    description: RBAC status
+                    type: string
+                  runtimeSecurity:
+                    description: Runtime security status
+                    type: string
+                  securityScanResults:
+                    additionalProperties:
+                      type: string
+                    description: Security scan results
+                    type: object
+                type: object
+              version:
+                description: Cluster version information
+                properties:
+                  availableUpgrades:
+                    description: Available upgrade versions
+                    items:
+                      type: string
+                    type: array
+                  controlPlane:
+                    description: Control plane version
+                    type: string
+                  current:
+                    description: Current Kubernetes version
+                    type: string
+                  node:
+                    description: Node version
+                    type: string
+                  platform:
+                    description: Platform version
+                    type: string
+                type: object
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

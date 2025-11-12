@@ -1,0 +1,704 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.19.0
+  name: vitistacks.vitistack.io
+spec:
+  group: vitistack.io
+  names:
+    kind: Vitistack
+    listKind: VitistackList
+    plural: vitistacks
+    shortNames:
+    - vs
+    singular: vitistack
+  scope: Cluster
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.displayName
+      name: Display Name
+      type: string
+    - jsonPath: .status.phase
+      name: Phase
+      type: string
+    - jsonPath: .status.conditions[?(@.type=="Ready")].status
+      name: Ready
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    - jsonPath: .spec.region
+      name: Region
+      type: string
+    - jsonPath: .spec.zone
+      name: Zone
+      type: string
+    - jsonPath: .status.machineProvider.count
+      name: Machine Providers
+      priority: 10
+      type: integer
+    - jsonPath: .status.kubernetesProvider.count
+      name: K8s Providers
+      priority: 10
+      type: integer
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: VitistackSpec defines the desired state of Vitistack
+            properties:
+              backup:
+                description: Backup configures backup and disaster recovery policies
+                properties:
+                  destinations:
+                    description: Destinations where backups are stored
+                    items:
+                      description: VitistackBackupDestination defines backup storage
+                        destination
+                      properties:
+                        configuration:
+                          additionalProperties:
+                            type: string
+                          description: Configuration for the backup destination
+                          type: object
+                        encryption:
+                          description: Encryption settings for backup destination
+                          type: boolean
+                        name:
+                          description: Name of the backup destination
+                          type: string
+                        type:
+                          description: Type of backup destination (s3, azure, gcs,
+                            local)
+                          enum:
+                          - s3
+                          - azure
+                          - gcs
+                          - local
+                          - nfs
+                          type: string
+                      required:
+                      - name
+                      - type
+                      type: object
+                    type: array
+                  disasterRecovery:
+                    description: DisasterRecovery configuration
+                    properties:
+                      enabled:
+                        default: false
+                        description: Enabled indicates if disaster recovery is configured
+                        type: boolean
+                      rpoMinutes:
+                        description: RPO (Recovery Point Objective) in minutes
+                        minimum: 1
+                        type: integer
+                      rtoMinutes:
+                        description: RTO (Recovery Time Objective) in minutes
+                        minimum: 1
+                        type: integer
+                      targetVitistack:
+                        description: TargetVitistack for disaster recovery
+                        type: string
+                    type: object
+                  enabled:
+                    default: true
+                    description: Enabled indicates if backup is enabled
+                    type: boolean
+                  retentionPolicy:
+                    description: RetentionPolicy for backups
+                    properties:
+                      daily:
+                        default: 7
+                        description: Daily backups to keep
+                        minimum: 1
+                        type: integer
+                      monthly:
+                        default: 12
+                        description: Monthly backups to keep
+                        minimum: 1
+                        type: integer
+                      weekly:
+                        default: 4
+                        description: Weekly backups to keep
+                        minimum: 1
+                        type: integer
+                    type: object
+                  schedule:
+                    default: 0 2 * * *
+                    description: Schedule for automated backups (cron format)
+                    type: string
+                type: object
+              description:
+                description: Description provides additional context about the vitistack
+                type: string
+              displayName:
+                description: DisplayName is the human-readable name for the vitistack
+                type: string
+              kubernetesProviders:
+                description: KubernetesProviders lists the Kubernetes providers available
+                  in this vitistack
+                items:
+                  description: VitistackProviderReference references a provider available
+                    in this vitistack
+                  properties:
+                    configuration:
+                      additionalProperties:
+                        type: string
+                      description: Configuration provides provider-specific settings
+                        for this vitistack
+                      type: object
+                    enabled:
+                      default: true
+                      description: Enabled indicates if this provider is currently
+                        active
+                      type: boolean
+                    name:
+                      description: Name of the provider resource
+                      minLength: 1
+                      type: string
+                    namespace:
+                      description: Namespace where the provider resource is located
+                      type: string
+                    priority:
+                      description: Priority defines the preference order for this
+                        provider (1 = highest priority)
+                      minimum: 1
+                      type: integer
+                  required:
+                  - name
+                  type: object
+                type: array
+              location:
+                description: Location provides detailed location information
+                properties:
+                  address:
+                    description: Address of the vitistack
+                    type: string
+                  city:
+                    description: City where the vitistack is located
+                    type: string
+                  coordinates:
+                    description: Coordinates for the vitistack location
+                    properties:
+                      latitude:
+                        description: Latitude coordinate (-90 to 90)
+                        pattern: ^-?([0-8]?[0-9](\.[0-9]+)?|90(\.0+)?)$
+                        type: string
+                      longitude:
+                        description: Longitude coordinate (-180 to 180)
+                        pattern: ^-?(1[0-7][0-9](\.[0-9]+)?|180(\.0+)?|[0-9]?[0-9](\.[0-9]+)?)$
+                        type: string
+                    type: object
+                  country:
+                    description: Country where the vitistack is located
+                    type: string
+                type: object
+              machineProviders:
+                description: MachineProviders lists the machine providers available
+                  in this vitistack
+                items:
+                  description: VitistackProviderReference references a provider available
+                    in this vitistack
+                  properties:
+                    configuration:
+                      additionalProperties:
+                        type: string
+                      description: Configuration provides provider-specific settings
+                        for this vitistack
+                      type: object
+                    enabled:
+                      default: true
+                      description: Enabled indicates if this provider is currently
+                        active
+                      type: boolean
+                    name:
+                      description: Name of the provider resource
+                      minLength: 1
+                      type: string
+                    namespace:
+                      description: Namespace where the provider resource is located
+                      type: string
+                    priority:
+                      description: Priority defines the preference order for this
+                        provider (1 = highest priority)
+                      minimum: 1
+                      type: integer
+                  required:
+                  - name
+                  type: object
+                type: array
+              monitoring:
+                description: Monitoring configures monitoring and observability for
+                  the vitistack
+                properties:
+                  alertReceivers:
+                    description: AlertReceivers list contact points for alerts
+                    items:
+                      type: string
+                    type: array
+                  alertingEnabled:
+                    default: true
+                    description: AlertingEnabled indicates if alerting is configured
+                    type: boolean
+                  customDashboards:
+                    description: CustomDashboards list custom monitoring dashboards
+                    items:
+                      type: string
+                    type: array
+                  enabled:
+                    default: true
+                    description: Enabled indicates if monitoring is enabled
+                    type: boolean
+                  metricsRetentionDays:
+                    default: 30
+                    description: MetricsRetentionDays for storing metrics
+                    maximum: 365
+                    minimum: 1
+                    type: integer
+                type: object
+              networking:
+                description: Networking defines the network configuration for the
+                  vitistack
+                properties:
+                  dns:
+                    description: DNS configuration for the vitistack
+                    properties:
+                      domain:
+                        description: Domain is the default domain for the vitistack
+                        type: string
+                      searchDomains:
+                        description: SearchDomains for DNS resolution
+                        items:
+                          type: string
+                        type: array
+                      servers:
+                        description: Servers list DNS server addresses
+                        items:
+                          type: string
+                        type: array
+                    type: object
+                  firewall:
+                    description: Firewall rules and security groups
+                    properties:
+                      defaultPolicy:
+                        default: deny
+                        description: DefaultPolicy for traffic (allow, deny)
+                        enum:
+                        - allow
+                        - deny
+                        type: string
+                      rules:
+                        description: Rules define specific firewall rules
+                        items:
+                          description: VitistackFirewallRule defines a firewall rule
+                          properties:
+                            action:
+                              description: Action to take (allow, deny)
+                              enum:
+                              - allow
+                              - deny
+                              type: string
+                            destination:
+                              description: Destination CIDR or IP range
+                              type: string
+                            name:
+                              description: Name of the rule
+                              type: string
+                            port:
+                              description: Port or port range
+                              type: string
+                            protocol:
+                              default: tcp
+                              description: Protocol (tcp, udp, icmp, all)
+                              enum:
+                              - tcp
+                              - udp
+                              - icmp
+                              - all
+                              type: string
+                            source:
+                              description: Source CIDR or IP range
+                              type: string
+                          required:
+                          - action
+                          - name
+                          type: object
+                        type: array
+                    type: object
+                  loadBalancers:
+                    description: LoadBalancers define available load balancer configurations
+                    items:
+                      description: VitistackLoadBalancer defines load balancer configuration
+                      properties:
+                        name:
+                          description: Name of the load balancer
+                          type: string
+                        scheme:
+                          default: internet-facing
+                          description: Scheme defines if the load balancer is internet-facing
+                            or internal
+                          enum:
+                          - internet-facing
+                          - internal
+                          type: string
+                        type:
+                          description: Type of load balancer (application, network,
+                            classic)
+                          enum:
+                          - application
+                          - network
+                          - classic
+                          type: string
+                      required:
+                      - name
+                      - type
+                      type: object
+                    type: array
+                  vpcs:
+                    description: VPCs define the virtual private clouds available
+                    items:
+                      description: VitistackVPC defines a virtual private cloud
+                      properties:
+                        cidr:
+                          description: CIDR block for the VPC
+                          pattern: ^([0-9]{1,3}\.){3}[0-9]{1,3}/[0-9]{1,2}$
+                          type: string
+                        default:
+                          description: Default indicates if this is the default VPC
+                          type: boolean
+                        name:
+                          description: Name of the VPC
+                          type: string
+                        subnets:
+                          description: Subnets within the VPC
+                          items:
+                            description: VitistackSubnet defines a subnet within a
+                              VPC
+                            properties:
+                              cidr:
+                                description: CIDR block for the subnet
+                                pattern: ^([0-9]{1,3}\.){3}[0-9]{1,3}/[0-9]{1,2}$
+                                type: string
+                              name:
+                                description: Name of the subnet
+                                type: string
+                              public:
+                                description: Public indicates if this subnet has internet
+                                  access
+                                type: boolean
+                              zone:
+                                description: Zone where the subnet is located
+                                type: string
+                            required:
+                            - cidr
+                            - name
+                            type: object
+                          type: array
+                      required:
+                      - cidr
+                      - name
+                      type: object
+                    type: array
+                type: object
+              region:
+                description: Region specifies the geographical region where the vitistack
+                  is located
+                minLength: 0
+                type: string
+              resourceQuotas:
+                description: ResourceQuotas define resource limits for the vitistack
+                properties:
+                  maxCPUCores:
+                    description: MaxCPUCores limits total CPU cores
+                    minimum: 1
+                    type: integer
+                  maxClusters:
+                    description: MaxClusters limits the number of Kubernetes clusters
+                    minimum: 1
+                    type: integer
+                  maxMachines:
+                    description: MaxMachines limits the number of machines
+                    minimum: 1
+                    type: integer
+                  maxMemoryGB:
+                    description: MaxMemoryGB limits total memory in GB
+                    minimum: 1
+                    type: integer
+                  maxNetworkInterfaces:
+                    description: MaxNetworkInterfaces limits network interfaces
+                    minimum: 1
+                    type: integer
+                  maxStorageGB:
+                    description: MaxStorageGB limits total storage in GB
+                    minimum: 1
+                    type: integer
+                type: object
+              security:
+                description: Security defines security policies and compliance requirements
+                properties:
+                  accessControl:
+                    description: AccessControl policies
+                    properties:
+                      allowedGroups:
+                        description: AllowedGroups list groups who can access resources
+                          in this vitistack
+                        items:
+                          type: string
+                        type: array
+                      allowedUsers:
+                        description: AllowedUsers list users who can access resources
+                          in this vitistack
+                        items:
+                          type: string
+                        type: array
+                      mfa:
+                        default: false
+                        description: MFA indicates if multi-factor authentication
+                          is required
+                        type: boolean
+                      rbac:
+                        default: true
+                        description: RBAC indicates if role-based access control is
+                          required
+                        type: boolean
+                    type: object
+                  auditLogging:
+                    description: AuditLogging configuration
+                    properties:
+                      destination:
+                        description: Destination for audit logs (local, s3, azure,
+                          gcs)
+                        enum:
+                        - local
+                        - s3
+                        - azure
+                        - gcs
+                        - elasticsearch
+                        type: string
+                      enabled:
+                        default: true
+                        description: Enabled indicates if audit logging is enabled
+                        type: boolean
+                      retentionDays:
+                        default: 90
+                        description: RetentionDays for audit logs
+                        maximum: 2555
+                        minimum: 1
+                        type: integer
+                    type: object
+                  complianceFrameworks:
+                    description: ComplianceFrameworks that must be adhered to
+                    items:
+                      type: string
+                    type: array
+                  encryption:
+                    description: Encryption requirements
+                    properties:
+                      atRest:
+                        default: true
+                        description: AtRest indicates if data at rest must be encrypted
+                        type: boolean
+                      inTransit:
+                        default: true
+                        description: InTransit indicates if data in transit must be
+                          encrypted
+                        type: boolean
+                      keyManagement:
+                        description: KeyManagement service to use
+                        type: string
+                    type: object
+                type: object
+              tags:
+                additionalProperties:
+                  type: string
+                description: Tags for organizing and categorizing vitistacks
+                type: object
+              zone:
+                description: Zone specifies the availability zone within the region
+                  (optional)
+                type: string
+            required:
+            - displayName
+            - region
+            - zone
+            type: object
+          status:
+            description: VitistackStatus defines the observed state of Vitistack
+            properties:
+              activeClusters:
+                description: ActiveClusters is the number of active Kubernetes clusters
+                type: integer
+              activeMachines:
+                description: ActiveMachines is the number of active machines in the
+                  vitistack
+                type: integer
+              conditions:
+                description: Conditions represent the latest available observations
+                  of vitistack state
+                items:
+                  description: Condition contains details for one aspect of the current
+                    state of this API Resource.
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        message is a human readable message indicating details about the transition.
+                        This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: |-
+                        observedGeneration represents the .metadata.generation that the condition was set based upon.
+                        For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                        with respect to the current state of the instance.
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: |-
+                        reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                        Producers of specific condition types may define expected values and meanings for this field,
+                        and whether the values are considered a guaranteed API.
+                        The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+              kubernetesProviderCount:
+                description: KubernetesProviderCount is the number of active Kubernetes
+                  providers
+                type: integer
+              lastReconcileTime:
+                description: LastReconcileTime is when the vitistack was last reconciled
+                format: date-time
+                type: string
+              machineProviderCount:
+                description: MachineProviderCount is the number of active machine
+                  providers
+                type: integer
+              observedGeneration:
+                description: ObservedGeneration reflects the generation of the most
+                  recently observed Vitistack
+                type: integer
+              phase:
+                description: Phase represents the current phase of the vitistack
+                type: string
+              providerStatuses:
+                description: ProviderStatuses shows the status of each provider
+                items:
+                  description: VitistackProviderStatus shows the status of a provider
+                    in the vitistack
+                  properties:
+                    healthy:
+                      description: Healthy indicates if the provider is healthy
+                      type: boolean
+                    lastHealthCheck:
+                      description: LastHealthCheck is when the provider was last health
+                        checked
+                      format: date-time
+                      type: string
+                    message:
+                      description: Message provides additional status information
+                      type: string
+                    name:
+                      description: Name of the provider
+                      type: string
+                    phase:
+                      description: Phase of the provider (Ready, NotReady, Failed)
+                      type: string
+                    resourcesManaged:
+                      description: ResourcesManaged shows resources managed by this
+                        provider
+                      type: integer
+                    type:
+                      description: Type of provider (machine, kubernetes)
+                      enum:
+                      - machine
+                      - kubernetes
+                      type: string
+                  required:
+                  - name
+                  - type
+                  type: object
+                type: array
+              resourceUsage:
+                description: ResourceUsage shows current resource utilization
+                properties:
+                  cpuCoresTotal:
+                    description: CPUCoresTotal shows total available CPU cores
+                    type: integer
+                  cpuCoresUsed:
+                    description: CPUCoresUsed shows used CPU cores
+                    type: integer
+                  memoryGBTotal:
+                    description: MemoryGBTotal shows total available memory in GB
+                    type: integer
+                  memoryGBUsed:
+                    description: MemoryGBUsed shows used memory in GB
+                    type: integer
+                  networkInterfacesTotal:
+                    description: NetworkInterfacesTotal shows total available network
+                      interfaces
+                    type: integer
+                  networkInterfacesUsed:
+                    description: NetworkInterfacesUsed shows used network interfaces
+                    type: integer
+                  storageGBTotal:
+                    description: StorageGBTotal shows total available storage in GB
+                    type: integer
+                  storageGBUsed:
+                    description: StorageGBUsed shows used storage in GB
+                    type: integer
+                type: object
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

@@ -1,0 +1,642 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.19.0
+  name: machineproviders.vitistack.io
+spec:
+  group: vitistack.io
+  names:
+    kind: MachineProvider
+    listKind: MachineProviderList
+    plural: machineproviders
+    shortNames:
+    - mp
+    singular: machineprovider
+  scope: Cluster
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.providerType
+      name: Provider
+      type: string
+    - jsonPath: .spec.region
+      name: Region
+      type: string
+    - jsonPath: .status.phase
+      name: Status
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: MachineProvider is the Schema for the MachineProviders API
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: MachineProviderSpec defines the desired state of MachineProvider
+            properties:
+              authentication:
+                description: Authentication configuration
+                properties:
+                  credentialsRef:
+                    description: Reference to credentials secret
+                    properties:
+                      namespace:
+                        description: Namespace of the secret (defaults to machine
+                          namespace)
+                        type: string
+                      secretName:
+                        description: Name of the secret containing credentials
+                        type: string
+                    type: object
+                  parameters:
+                    additionalProperties:
+                      type: string
+                    description: Additional authentication parameters
+                    type: object
+                  serviceAccount:
+                    description: Service account configuration (for GCP, Azure, etc.)
+                    properties:
+                      accountID:
+                        description: Service account email or ID
+                        type: string
+                      keyRef:
+                        description: Key file content or reference to secret
+                        properties:
+                          namespace:
+                            description: Namespace of the secret (defaults to machine
+                              namespace)
+                            type: string
+                          secretName:
+                            description: Name of the secret containing credentials
+                            type: string
+                        type: object
+                      scopes:
+                        description: Scopes for the service account
+                        items:
+                          type: string
+                        type: array
+                    required:
+                    - accountID
+                    type: object
+                  type:
+                    description: Type of authentication (credentials, serviceAccount,
+                      instanceProfile, managedIdentity)
+                    enum:
+                    - credentials
+                    - serviceAccount
+                    - instanceProfile
+                    - managedIdentity
+                    - certificate
+                    - token
+                    type: string
+                required:
+                - type
+                type: object
+              capabilities:
+                description: Provider capabilities and limits
+                properties:
+                  autoScaling:
+                    description: Whether this provider supports auto-scaling
+                    type: boolean
+                  instanceTypes:
+                    description: Supported instance types
+                    items:
+                      properties:
+                        costPerHour:
+                          description: Cost per hour (optional)
+                          type: string
+                        displayName:
+                          description: Display name
+                          type: string
+                        gpu:
+                          description: Whether this type supports GPU
+                          type: boolean
+                        memoryGB:
+                          description: Memory in GB (as string for cross-language
+                            compatibility)
+                          pattern: ^[0-9]+(\.[0-9]+)?$
+                          type: string
+                        name:
+                          description: Instance type name
+                          type: string
+                        networkPerformance:
+                          description: Network performance level
+                          type: string
+                        storageGB:
+                          description: Storage in GB (if included)
+                          type: integer
+                        vcpus:
+                          description: Number of vCPUs
+                          type: integer
+                      required:
+                      - memoryGB
+                      - name
+                      - vcpus
+                      type: object
+                    type: array
+                  loadBalancers:
+                    description: Whether this provider supports load balancers
+                    type: boolean
+                  maxMachines:
+                    description: Maximum number of machines per provider
+                    minimum: 1
+                    type: integer
+                  networkFeatures:
+                    description: Supported network features
+                    items:
+                      type: string
+                    type: array
+                  operatingSystems:
+                    description: Supported operating systems
+                    items:
+                      properties:
+                        architectures:
+                          description: Supported architectures
+                          items:
+                            type: string
+                          type: array
+                        defaultImageID:
+                          description: Default image ID
+                          type: string
+                        distribution:
+                          description: OS distribution
+                          type: string
+                        family:
+                          description: OS family
+                          type: string
+                        versions:
+                          description: Available versions
+                          items:
+                            type: string
+                          type: array
+                      required:
+                      - architectures
+                      - distribution
+                      - family
+                      - versions
+                      type: object
+                    type: array
+                  persistentVolumes:
+                    description: Whether this provider supports persistent volumes
+                    type: boolean
+                  storageTypes:
+                    description: Supported storage types
+                    items:
+                      properties:
+                        class:
+                          description: Storage class (SSD, HDD, NVMe)
+                          type: string
+                        displayName:
+                          description: Display name
+                          type: string
+                        encryptionSupported:
+                          description: Whether encryption is supported
+                          type: boolean
+                        iopsRange:
+                          description: IOPS range
+                          properties:
+                            max:
+                              type: integer
+                            min:
+                              type: integer
+                          required:
+                          - max
+                          - min
+                          type: object
+                        name:
+                          description: Storage type name
+                          type: string
+                        throughputRange:
+                          description: Throughput range in MB/s
+                          properties:
+                            max:
+                              type: integer
+                            min:
+                              type: integer
+                          required:
+                          - max
+                          - min
+                          type: object
+                      required:
+                      - class
+                      - name
+                      type: object
+                    type: array
+                type: object
+              compute:
+                description: Compute configuration and limits
+                properties:
+                  defaultInstanceType:
+                    description: Default instance type
+                    type: string
+                  gpuSupport:
+                    description: Whether GPU instances are available
+                    type: boolean
+                  gpuTypes:
+                    description: Available GPU types
+                    items:
+                      type: string
+                    type: array
+                  maxCPUs:
+                    description: Maximum CPU cores per machine
+                    minimum: 1
+                    type: integer
+                  maxMemoryGB:
+                    description: Maximum memory in GB per machine
+                    minimum: 1
+                    type: integer
+                  nestedVirtualization:
+                    description: Whether nested virtualization is supported
+                    type: boolean
+                type: object
+              config:
+                additionalProperties:
+                  type: string
+                description: Provider-specific configuration
+                type: object
+              defaultTags:
+                additionalProperties:
+                  type: string
+                description: Default tags to apply to all resources
+                type: object
+              displayName:
+                description: Human-readable name for this provider instance
+                minLength: 1
+                type: string
+              endpoint:
+                description: Provider-specific endpoint configuration
+                properties:
+                  caBundle:
+                    description: Custom CA certificate bundle
+                    type: string
+                  insecureSkipVerify:
+                    description: Whether to skip TLS verification
+                    type: boolean
+                  retryAttempts:
+                    description: Number of retry attempts
+                    maximum: 10
+                    minimum: 0
+                    type: integer
+                  timeoutSeconds:
+                    description: Connection timeout in seconds
+                    maximum: 300
+                    minimum: 1
+                    type: integer
+                  url:
+                    description: Primary endpoint URL
+                    type: string
+                type: object
+              network:
+                description: Network configuration for this provider
+                properties:
+                  availableVPCs:
+                    description: Available VPCs/Virtual Networks
+                    items:
+                      properties:
+                        cidr:
+                          description: CIDR block
+                          type: string
+                        id:
+                          description: VPC ID
+                          type: string
+                        name:
+                          description: VPC name
+                          type: string
+                        subnets:
+                          description: Available subnets
+                          items:
+                            properties:
+                              cidr:
+                                description: CIDR block
+                                type: string
+                              id:
+                                description: Subnet ID
+                                type: string
+                              name:
+                                description: Subnet name
+                                type: string
+                              public:
+                                description: Whether this is a public subnet
+                                type: boolean
+                              zone:
+                                description: Availability zone
+                                type: string
+                            required:
+                            - cidr
+                            - id
+                            - name
+                            - public
+                            - zone
+                            type: object
+                          type: array
+                      required:
+                      - cidr
+                      - id
+                      - name
+                      type: object
+                    type: array
+                  defaultSecurityGroups:
+                    description: Default security groups
+                    items:
+                      type: string
+                    type: array
+                  defaultVPC:
+                    description: Default VPC/Virtual Network
+                    type: string
+                  ipv6Support:
+                    description: Whether IPv6 is supported
+                    type: boolean
+                  loadBalancerSupport:
+                    description: Whether load balancers are supported
+                    type: boolean
+                  publicIPSupport:
+                    description: Whether public IPs are supported
+                    type: boolean
+                type: object
+              providerType:
+                description: Provider type (aws, azure, gcp, vsphere, openstack, libvirt,
+                  proxmox)
+                enum:
+                - kubevirt
+                - proxmox
+                - aws
+                - azure
+                - gcp
+                - vsphere
+                - openstack
+                - libvirt
+                - proxmox
+                - cloudstack
+                - nutanix
+                - ovirt
+                type: string
+              region:
+                description: Region where this provider operates
+                minLength: 1
+                type: string
+              storage:
+                description: Storage configuration for this provider
+                properties:
+                  defaultEncryption:
+                    description: Whether encryption is enabled by default
+                    type: boolean
+                  defaultType:
+                    description: Default storage type
+                    type: string
+                  maxStorageGB:
+                    description: Maximum storage size in GB
+                    minimum: 1
+                    type: integer
+                  storageClasses:
+                    description: Available storage classes
+                    items:
+                      properties:
+                        default:
+                          description: Whether this is the default storage class
+                          type: boolean
+                        displayName:
+                          description: Display name
+                          type: string
+                        name:
+                          description: Storage class name
+                          type: string
+                        parameters:
+                          additionalProperties:
+                            type: string
+                          description: Parameters
+                          type: object
+                        provisioner:
+                          description: Provisioner
+                          type: string
+                      required:
+                      - name
+                      - provisioner
+                      type: object
+                    type: array
+                type: object
+              zones:
+                description: Available zones in this region
+                items:
+                  type: string
+                type: array
+            required:
+            - authentication
+            - displayName
+            - providerType
+            - region
+            type: object
+          status:
+            description: MachineProviderStatus defines the observed state of MachineProvider
+            properties:
+              activeMachines:
+                description: Active machines count
+                type: integer
+              availableResources:
+                description: Available resources
+                properties:
+                  images:
+                    description: Available images
+                    items:
+                      properties:
+                        architecture:
+                          description: Architecture
+                          type: string
+                        creationDate:
+                          description: Creation date
+                          format: date-time
+                          type: string
+                        id:
+                          description: Image ID
+                          type: string
+                        name:
+                          description: Image name
+                          type: string
+                        osDistribution:
+                          description: OS distribution
+                          type: string
+                        osFamily:
+                          description: OS family
+                          type: string
+                        osVersion:
+                          description: OS version
+                          type: string
+                        public:
+                          description: Whether this is a public image
+                          type: boolean
+                      required:
+                      - architecture
+                      - id
+                      - name
+                      - osDistribution
+                      - osFamily
+                      - osVersion
+                      - public
+                      type: object
+                    type: array
+                  instanceTypes:
+                    description: Available instance types
+                    items:
+                      type: string
+                    type: array
+                  limits:
+                    description: Resource limits
+                    properties:
+                      maxMachinesPerZone:
+                        description: Maximum machines per zone
+                        type: integer
+                      maxNetworkInterfaces:
+                        description: Maximum network interfaces per machine
+                        type: integer
+                      maxStoragePerMachineGB:
+                        description: Maximum storage per machine in GB
+                        type: integer
+                      rateLimits:
+                        additionalProperties:
+                          type: string
+                        description: Rate limits
+                        type: object
+                    type: object
+                  storageTypes:
+                    description: Available storage types
+                    items:
+                      type: string
+                    type: array
+                  zones:
+                    description: Available zones
+                    items:
+                      type: string
+                    type: array
+                type: object
+              conditions:
+                description: Conditions represent the latest available observations
+                items:
+                  properties:
+                    lastTransitionTime:
+                      description: Last time the condition transitioned
+                      format: date-time
+                      type: string
+                    message:
+                      description: Human-readable message
+                      type: string
+                    reason:
+                      description: Reason for the condition's last transition
+                      type: string
+                    status:
+                      description: Status of the condition (True, False, Unknown)
+                      type: string
+                    type:
+                      description: Type of condition
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+              health:
+                description: Health check information
+                properties:
+                  apiConnectivity:
+                    description: API connectivity status
+                    type: string
+                  authentication:
+                    description: Authentication status
+                    type: string
+                  lastCheck:
+                    description: Last health check time
+                    format: date-time
+                    type: string
+                  responseTimeMs:
+                    description: Response time in milliseconds
+                    type: integer
+                  serviceAvailability:
+                    additionalProperties:
+                      type: string
+                    description: Service availability by region/zone
+                    type: object
+                  status:
+                    description: Overall health status (Healthy, Degraded, Unhealthy)
+                    type: string
+                type: object
+              lastVerified:
+                description: Last time the provider was verified/tested
+                format: date-time
+                type: string
+              message:
+                description: Human-readable status message
+                type: string
+              phase:
+                description: Current phase of the provider (Pending, Ready, Failed,
+                  Offline)
+                type: string
+              providerStatus:
+                additionalProperties:
+                  type: string
+                description: Provider-specific status information
+                type: object
+              quota:
+                description: Current quota usage
+                properties:
+                  cpuQuota:
+                    description: CPU quota (total cores)
+                    type: integer
+                  cpuUsed:
+                    description: CPU usage (used cores)
+                    type: integer
+                  instanceQuota:
+                    description: Instance quota
+                    type: integer
+                  instanceUsed:
+                    description: Instance usage
+                    type: integer
+                  memoryQuotaGB:
+                    description: Memory quota in GB
+                    type: integer
+                  memoryUsedGB:
+                    description: Memory usage in GB
+                    type: integer
+                  networkQuota:
+                    additionalProperties:
+                      type: integer
+                    description: Network quota (e.g., VPCs, Security Groups)
+                    type: object
+                  networkUsed:
+                    additionalProperties:
+                      type: integer
+                    description: Network usage
+                    type: object
+                  storageQuotaGB:
+                    description: Storage quota in GB
+                    type: integer
+                  storageUsedGB:
+                    description: Storage usage in GB
+                    type: integer
+                type: object
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

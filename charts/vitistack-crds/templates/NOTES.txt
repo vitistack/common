@@ -1,0 +1,35 @@
+Thank you for installing {{ .Chart.Name }}.
+
+Your release is named {{ .Release.Name }}.
+
+The following Vitistack CRDs have been installed:
+
+- vitistacks.vitistack.io
+- kubernetesclusters.vitistack.io
+- kubernetesproviders.vitistack.io
+- kubevirtconfigs.vitistack.io
+- loadbalancers.vitistack.io
+- machineproviders.vitistack.io
+- machines.vitistack.io
+- networkconfigurations.vitistack.io
+- networknamespaces.vitistack.io
+- proxmoxconfigs.vitistack.io
+
+To verify the installation:
+
+  kubectl get crds | grep vitistack.io
+
+To create custom resources, refer to the examples in the repository:
+
+  https://github.com/vitistack/common/tree/main/examples
+
+{{- if .Values.crds.keep }}
+
+NOTE: CRDs are configured to be kept on uninstall to prevent data loss.
+To remove them manually after uninstalling the chart, run:
+
+  kubectl delete crd -l app.kubernetes.io/instance={{ .Release.Name }}
+
+{{- end }}
+
+For more information, visit: https://github.com/vitistack/common

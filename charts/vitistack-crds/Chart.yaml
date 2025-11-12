@@ -1,0 +1,17 @@
+apiVersion: v2
+name: vitistack-crds
+description: A Helm chart for Vitistack Custom Resource Definitions (CRDs)
+type: application
+version: 0.1.0
+appVersion: "v1alpha1"
+icon: https://vitistack.io/images/viti1.svg
+keywords:
+  - vitistack
+  - crds
+  - kubernetes
+  - infrastructure
+maintainers:
+  - name: Vitistack Team
+home: https://github.com/vitistack/common
+sources:
+  - https://github.com/vitistack/common

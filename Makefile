@@ -26,6 +26,7 @@ LOCALBIN ?= $(shell pwd)/bin
 $(LOCALBIN):
 	mkdir -p $(LOCALBIN)
 
+CONTROLLER_GEN = $(LOCALBIN)/controller-gen
 GOLANGCI_LINT = $(LOCALBIN)/golangci-lint
 GOSEC ?= $(LOCALBIN)/gosec
 
@@ -34,11 +35,49 @@ GO_VERSION := $(shell awk '/^go /{print $$2}' go.mod)
 GO_TOOLCHAIN := go$(GO_VERSION)
 GOSEC_VERSION ?= latest
 GOLANGCI_LINT_VERSION ?= latest
+CONTROLLER_TOOLS_VERSION ?= latest
 
 ##@ Help
 .PHONY: help
 help: ## Display this help.
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
+
+##@ Generate code and manifests
+
+.PHONY: manifests
+manifests: generate ## Generate CRD manifests
+	
+.PHONY: generate
+generate: gen-deepcopy gen-manifests   ## Generate code and manifests.
+
+.PHONY: gen-manifests
+gen-manifests: controller-gen ## Generate manifests
+	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=crds
+	@hack/sanitize-crds.sh crds
+	@echo "Cleaning up charts/vitistack-crds/templates..."
+	@rm -f charts/vitistack-crds/templates/*.yaml
+	@echo "Copying CRDs to charts/vitistack-crds/templates..."
+	@cp crds/*.yaml charts/vitistack-crds/templates/
+	@echo "CRDs copied successfully!"
+
+.PHONY: sanitize-crds
+sanitize-crds: ## Sanitize generated CRDs to remove unsupported int32/int64 formats.
+	hack/sanitize-crds.sh crds
+
+.PHONY: verify-crds
+verify-crds: ## Verify CRDs are sanitized (no int32/int64 format lines present).
+	@set -e; \
+	if grep -R --include='*.yaml' -E '^[[:space:]]*format:[[:space:]]*"?int(32|64)"?[[:space:]]*$$' crds >/dev/null; then \
+	  echo "CRDs contain int32/int64 format lines. Run 'make sanitize-crds' or 'make manifests'."; \
+	  exit 1; \
+	else \
+	  echo "CRDs are sanitized."; \
+	fi
+
+.PHONY: gen-deepcopy
+gen-deepcopy: controller-gen ## Generate code
+	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
+
 
 ##@ Build
 .PHONY: build
@@ -103,6 +142,11 @@ uninstall-crds: ## Uninstall CRDs from a Kubernetes cluster.
 	kubectl delete -f crds
 
 ##@ Tools
+
+.PHONY: controller-gen
+controller-gen: $(CONTROLLER_GEN) ## Download controller-gen locally if necessary.
+$(CONTROLLER_GEN): $(LOCALBIN)
+	$(call go-install-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen,$(CONTROLLER_TOOLS_VERSION))
 
 .PHONY: golangci-lint
 golangci-lint: $(LOCALBIN) ## Download golangci-lint locally if necessary.

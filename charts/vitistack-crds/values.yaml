@@ -1,0 +1,16 @@
+# Default values for vitistack-crds
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# Whether to create the CRDs
+crds:
+  # Keep CRDs on helm uninstall
+  keep: true
+  
+# Annotations to add to all CRD resources
+annotations: {}
+  # example.com/annotation: "value"
+
+# Labels to add to all CRD resources
+labels: {}
+  # example.com/label: "value"

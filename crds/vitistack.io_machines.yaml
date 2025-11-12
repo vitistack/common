@@ -1,0 +1,460 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.19.0
+  name: machines.vitistack.io
+spec:
+  group: vitistack.io
+  names:
+    kind: Machine
+    listKind: MachineList
+    plural: machines
+    shortNames:
+    - m
+    singular: machine
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .status.phase
+      name: Phase
+      type: string
+    - jsonPath: .status.state
+      name: State
+      type: string
+    - jsonPath: .status.provider
+      name: Provider
+      type: string
+    - jsonPath: .spec.instanceType
+      name: Instance Type
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: Machine is the Schema for the Machines API
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            properties:
+              backup:
+                description: Backup configuration
+                properties:
+                  enabled:
+                    description: Whether to enable automated backups
+                    type: boolean
+                  retentionDays:
+                    description: Retention period in days
+                    type: integer
+                  schedule:
+                    description: Backup schedule (cron format)
+                    type: string
+                type: object
+              cpu:
+                description: CPU configuration
+                properties:
+                  cores:
+                    description: Number of CPU cores
+                    maximum: 256
+                    minimum: 1
+                    type: integer
+                  sockets:
+                    description: Number of CPU sockets
+                    maximum: 16
+                    minimum: 1
+                    type: integer
+                  threadsPerCore:
+                    description: Number of threads per core
+                    maximum: 8
+                    minimum: 1
+                    type: integer
+                type: object
+              disks:
+                description: Disk configuration
+                items:
+                  properties:
+                    boot:
+                      description: Whether this is the boot disk
+                      type: boolean
+                    device:
+                      description: Device name (e.g., /dev/sda, /dev/nvme0n1)
+                      type: string
+                    encrypted:
+                      description: Encryption settings
+                      type: boolean
+                    iops:
+                      description: IOPS for the disk (if supported by provider)
+                      maximum: 64000
+                      minimum: 100
+                      type: integer
+                    name:
+                      description: Name of the disk
+                      type: string
+                    sizeGB:
+                      description: Size of the disk in GB
+                      maximum: 65536
+                      minimum: 1
+                      type: integer
+                    throughput:
+                      description: Throughput in MB/s (if supported by provider)
+                      maximum: 4000
+                      minimum: 125
+                      type: integer
+                    type:
+                      description: Type of the disk (e.g., gp2, gp3, pd-ssd, Premium_LRS)
+                      type: string
+                  type: object
+                type: array
+              instanceType:
+                description: The instance type/size of the machine (e.g., t3.medium,
+                  Standard_B2s, n1-standard-2)
+                minLength: 1
+                type: string
+              machineType:
+                description: The provider-specific machine type override
+                type: string
+              memory:
+                description: Memory configuration in bytes
+                minimum: 0
+                type: integer
+              monitoring:
+                description: Whether to enable monitoring
+                type: boolean
+              name:
+                description: The name of the machine
+                minLength: 1
+                type: string
+              network:
+                description: Network configuration
+                properties:
+                  assignPublicIP:
+                    description: Whether to assign a public IP
+                    type: boolean
+                  interfaces:
+                    description: Network interfaces
+                    items:
+                      properties:
+                        name:
+                          description: Name of the network interface
+                          type: string
+                        primary:
+                          description: Whether this is the primary interface
+                          type: boolean
+                        securityGroups:
+                          description: Security groups for this interface
+                          items:
+                            type: string
+                          type: array
+                        subnet:
+                          description: Subnet for this interface
+                          type: string
+                      type: object
+                    type: array
+                  privateIP:
+                    description: Static private IP address
+                    type: string
+                  publicIP:
+                    description: Static public IP address or Elastic IP
+                    type: string
+                  subnet:
+                    description: Subnet ID
+                    type: string
+                  vpc:
+                    description: VPC/Virtual Network ID
+                    type: string
+                type: object
+              os:
+                description: Operating system configuration
+                properties:
+                  architecture:
+                    description: Architecture (amd64, arm64)
+                    enum:
+                    - amd64
+                    - arm64
+                    - x86_64
+                    type: string
+                  distribution:
+                    description: Distribution (ubuntu, centos, rhel, windows-server,
+                      debian, alpine)
+                    type: string
+                  family:
+                    description: Operating system family (linux, windows)
+                    type: string
+                  imageFamily:
+                    description: Image family or marketplace image
+                    type: string
+                  imageID:
+                    description: Image ID/AMI/Template ID
+                    type: string
+                  version:
+                    description: Version of the OS
+                    type: string
+                type: object
+              providerConfig:
+                description: Cloud provider configuration
+                properties:
+                  config:
+                    additionalProperties:
+                      type: string
+                    description: Provider-specific configuration
+                    type: object
+                  credentialsRef:
+                    description: Credentials reference
+                    properties:
+                      namespace:
+                        description: Namespace of the secret (defaults to machine
+                          namespace)
+                        type: string
+                      secretName:
+                        description: Name of the secret containing credentials
+                        type: string
+                    type: object
+                  name:
+                    description: Provider name (aws, azure, gcp, vsphere, openstack)
+                    type: string
+                  region:
+                    description: Region where the machine should be created
+                    type: string
+                  zone:
+                    description: Availability zone
+                    type: string
+                type: object
+              securityGroups:
+                description: Security groups or firewall rules
+                items:
+                  type: string
+                type: array
+              sshKeys:
+                description: SSH key configuration
+                items:
+                  type: string
+                type: array
+              tags:
+                additionalProperties:
+                  type: string
+                description: Tags/labels to apply to the machine
+                type: object
+              userData:
+                description: User data script to run on first boot
+                type: string
+            type: object
+          status:
+            properties:
+              architecture:
+                description: The machine's CPU architecture
+                type: string
+              bootTime:
+                description: Boot time of the machine
+                format: date-time
+                type: string
+              conditions:
+                description: Conditions represent the latest available observations
+                  of the machine's state
+                items:
+                  properties:
+                    lastTransitionTime:
+                      description: Last time the condition transitioned from one status
+                        to another
+                      format: date-time
+                      type: string
+                    message:
+                      description: A human readable message indicating details about
+                        the transition
+                      type: string
+                    reason:
+                      description: The reason for the condition's last transition
+                      type: string
+                    status:
+                      description: Status of the condition (True, False, Unknown)
+                      type: string
+                    type:
+                      description: Type of condition
+                      type: string
+                  type: object
+                type: array
+              cpus:
+                description: Actual CPU count
+                type: integer
+              creationTime:
+                description: Creation time of the machine
+                format: date-time
+                type: string
+              disks:
+                description: Actual disk information
+                items:
+                  properties:
+                    accessModes:
+                      description: Access modes, readwriteonce, readwritemany, readonlymany
+                      items:
+                        type: string
+                      type: array
+                    availableBytes:
+                      description: Available space in bytes
+                      type: integer
+                    device:
+                      description: Device path (e.g., /dev/sda)
+                      type: string
+                    filesystemType:
+                      description: The disk's filesystem type (e.g., ext4, xfs)
+                      type: string
+                    label:
+                      description: The disk's label
+                      type: string
+                    mountPoint:
+                      description: The disk's mount point
+                      type: string
+                    name:
+                      description: The disk's name
+                      type: string
+                    pvcName:
+                      description: PVC name
+                      type: string
+                    serialNumber:
+                      description: The disk's serial number
+                      type: string
+                    size:
+                      description: The disk's size in bytes
+                      type: integer
+                    type:
+                      description: The disk's type (e.g., SSD, HDD, gp2, gp3)
+                      type: string
+                    usagePercent:
+                      description: Usage percentage as string (e.g., "75.5%")
+                      type: string
+                    usedBytes:
+                      description: Used space in bytes
+                      type: integer
+                    uuid:
+                      description: The disk's UUID
+                      type: string
+                    volumeMode:
+                      description: Volume mode, filesystem or block
+                      type: string
+                  type: object
+                type: array
+              failureMessage:
+                description: Failure message if the machine failed to be created
+                type: string
+              failureReason:
+                description: Failure reason if the machine failed to be created
+                type: string
+              hostname:
+                description: The machine's hostname
+                type: string
+              ipAddresses:
+                description: The IP addresses of the machine
+                items:
+                  type: string
+                type: array
+              ipv6Addresses:
+                description: IPv6 addresses of the machine
+                items:
+                  type: string
+                type: array
+              kernelVersion:
+                description: The machine's kernel version
+                type: string
+              lastUpdated:
+                description: The last time the machine status was updated
+                format: date-time
+                type: string
+              machineID:
+                description: Internal machine identifier
+                type: string
+              memory:
+                description: Actual memory in bytes
+                type: integer
+              message:
+                description: Detailed status message
+                type: string
+              networkInterfaces:
+                description: Network interface information
+                items:
+                  properties:
+                    ipAddresses:
+                      description: IP addresses assigned to this interface
+                      items:
+                        type: string
+                      type: array
+                    ipv6Addresses:
+                      description: IPv6 addresses assigned to this interface
+                      items:
+                        type: string
+                      type: array
+                    macAddress:
+                      description: MAC address
+                      type: string
+                    mtu:
+                      description: MTU size
+                      type: integer
+                    name:
+                      description: Name of the network interface
+                      type: string
+                    state:
+                      description: Interface state (up, down)
+                      type: string
+                    type:
+                      description: Interface type (ethernet, wifi, etc.)
+                      type: string
+                  type: object
+                type: array
+              operatingSystem:
+                description: The machine's operating system
+                type: string
+              operatingSystemVersion:
+                description: The machine's operating system version
+                type: string
+              phase:
+                description: Current phase of the machine (Pending, Creating, Running,
+                  Stopping, Stopped, Terminating, Terminated, Failed)
+                type: string
+              privateIPAddresses:
+                description: Private IP addresses
+                items:
+                  type: string
+                type: array
+              provider:
+                description: The provider that created this machine
+                type: string
+              providerID:
+                description: The unique identifier assigned by the provider
+                type: string
+              publicIPAddresses:
+                description: Public IP addresses
+                items:
+                  type: string
+                type: array
+              region:
+                description: The region where the machine is located
+                type: string
+              state:
+                description: The current state of the machine
+                type: string
+              zone:
+                description: The zone where the machine is located
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
