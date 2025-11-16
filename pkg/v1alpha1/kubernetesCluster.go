@@ -12,6 +12,11 @@ import (
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:path=kubernetesclusters,scope=Namespaced,shortName=kc
+// +kubebuilder:printcolumn:name="Phase",type=string,JSONPath=`.status.phase`,description="The phase of the Kubernetes cluster"
+// +kubebuilder:printcolumn:name="Provider",type=string,JSONPath=`.spec.data.provider`,description="The cloud provider of the Kubernetes cluster"
+// +kubebuilder:printcolumn:name="Region",type=string,JSONPath=`.spec.data.region`,description="The region of the Kubernetes cluster"
+// +kubebuilder:printcolumn:name="ControlPlaneReplicas",type=integer,JSONPath=`.spec.topology.controlplane.replicas`,description="The number of control plane replicas"
+// +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`,description="The age of the Kubernetes cluster"
 type KubernetesCluster struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -33,33 +38,53 @@ func init() {
 }
 
 type KubernetesClusterSpec struct {
-	Cluster  KubernetesClusterSpecData     `json:"data,omitzero"`
+	// +kubebuilder:validation:Required
+	Cluster KubernetesClusterSpecData `json:"data,omitzero"`
+
+	// +kubebuilder:validation:Required
 	Topology KubernetesClusterSpecTopology `json:"topology,omitzero"`
 }
 
 type KubernetesClusterSpecData struct {
-	ClusterUID  string `json:"clusterUid"` // ClusterUID is a unique identifier for the cluster, e.g., "12345678-1234-1234-1234-123456789012"
-	ClusterId   string `json:"clusterId"`
-	Provider    string `json:"provider"`
-	Datacenter  string `json:"datacenter"`
-	Region      string `json:"region"`
-	Zone        string `json:"zone"`
-	Project     string `json:"project"`
-	Workspace   string `json:"workspace"`
-	Workorder   string `json:"workorder"`
+	ClusterUID string `json:"clusterUid"` // ClusterUID is a unique identifier for the cluster, e.g., "12345678-1234-1234-1234-123456789012"
+
+	// +kubebuilder:validation:Required
+	ClusterId string `json:"clusterId"`
+
+	// +kubebuilder:validation:Required
+	Provider   string `json:"provider"`
+	Datacenter string `json:"datacenter"`
+
+	// +kubebuilder:validation:Required
+	Region string `json:"region"`
+
+	// +kubebuilder:validation:Required
+	Zone      string `json:"zone"`
+	Project   string `json:"project"`
+	Workspace string `json:"workspace"`
+	Workorder string `json:"workorder"`
+
+	// +kubebuilder:validation:Required
 	Environment string `json:"environment"`
 }
 
 type KubernetesClusterSpecTopology struct {
-	Version      string                            `json:"version"`      // Kubernetes version, e.g., "1.23.0"
+	Version string `json:"version"` // Kubernetes version, e.g., "1.23.0"
+
+	// +kubebuilder:validation:Required
 	ControlPlane KubernetesClusterSpecControlPlane `json:"controlplane"` // ControlPlane contains the control plane configuration.
-	Workers      KubernetesClusterWorkers          `json:"workers"`      // Workers contains the worker nodes configuration.
+
+	Workers KubernetesClusterWorkers `json:"workers"` // Workers contains the worker nodes configuration.
 }
 
 type KubernetesClusterSpecControlPlane struct {
-	Replicas     int                                  `json:"replicas"`
-	Version      string                               `json:"version"` // Kubernetes version, e.g., "1.23.0"
-	Provider     string                               `json:"provider"`
+	// +kubebuilder:validation:Required
+	Replicas int    `json:"replicas"`
+	Version  string `json:"version"` // Kubernetes version, e.g., "1.23.0"
+
+	// +kubebuilder:validation:Required
+	Provider string `json:"provider"`
+
 	MachineClass string                               `json:"machineClass"`
 	Metadata     KubernetesClusterSpecMetadataDetails `json:"metadata"`
 	Storage      []KubernetesClusterStorage           `json:"storage"`

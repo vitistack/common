@@ -13,7 +13,7 @@ import (
 // +kubebuilder:resource:path=machines,scope=Namespaced,shortName=m
 // +kubebuilder:printcolumn:name="Phase",type=string,JSONPath=`.status.phase`
 // +kubebuilder:printcolumn:name="State",type=string,JSONPath=`.status.state`
-// +kubebuilder:printcolumn:name="Provider",type=string,JSONPath=`.status.provider`
+// +kubebuilder:printcolumn:name="Provider",type=string,JSONPath=`.spec.provider`
 // +kubebuilder:printcolumn:name="Instance Type",type=string,JSONPath=`.spec.instanceType`
 // +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`
 type Machine struct {
@@ -51,6 +51,10 @@ type MachineSpec struct {
 
 	// Operating system configuration
 	OS MachineOS `json:"os,omitempty"`
+
+	// Machine Provider
+	// +kubebuilder:validation:Required
+	Provider string `json:"provider,omitempty"`
 
 	// Cloud provider configuration
 	ProviderConfig CloudProviderConfig `json:"providerConfig,omitempty"`

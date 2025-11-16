@@ -23,7 +23,7 @@ spec:
     - jsonPath: .status.state
       name: State
       type: string
-    - jsonPath: .status.provider
+    - jsonPath: .spec.provider
       name: Provider
       type: string
     - jsonPath: .spec.instanceType
@@ -209,6 +209,9 @@ spec:
                     description: Version of the OS
                     type: string
                 type: object
+              provider:
+                description: Machine Provider
+                type: string
               providerConfig:
                 description: Cloud provider configuration
                 properties:
@@ -256,6 +259,8 @@ spec:
               userData:
                 description: User data script to run on first boot
                 type: string
+            required:
+            - provider
             type: object
           status:
             properties:
