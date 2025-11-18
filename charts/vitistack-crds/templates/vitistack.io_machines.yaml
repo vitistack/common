@@ -23,6 +23,9 @@ spec:
     - jsonPath: .status.state
       name: State
       type: string
+    - jsonPath: .status.ipAddresses
+      name: IpAddresses
+      type: string
     - jsonPath: .spec.provider
       name: Provider
       type: string

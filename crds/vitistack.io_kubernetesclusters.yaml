@@ -191,6 +191,21 @@ spec:
                               type: string
                             replicas:
                               type: integer
+                            storage:
+                              items:
+                                properties:
+                                  class:
+                                    type: string
+                                  path:
+                                    type: string
+                                  size:
+                                    type: string
+                                required:
+                                - class
+                                - path
+                                - size
+                                type: object
+                              type: array
                             taint:
                               items:
                                 properties:
@@ -215,6 +230,7 @@ spec:
                           - name
                           - provider
                           - replicas
+                          - storage
                           - taint
                           - version
                           type: object

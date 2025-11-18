@@ -114,6 +114,7 @@ type KubernetesClusterNodePool struct {
 	Autoscaling  KubernetesClusterAutoscalingSpec     `json:"autoscaling"`
 	Metadata     KubernetesClusterSpecMetadataDetails `json:"metadata"`
 	Taint        []KubernetesClusterTaint             `json:"taint"`
+	Storage      []KubernetesClusterStorage           `json:"storage"`
 }
 
 type KubernetesClusterTaint struct {
