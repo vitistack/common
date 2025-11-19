@@ -39,6 +39,12 @@ type ControlPlaneVirtualSharedIPSpec struct {
 	DatacenterIdentifier string `json:"datacenterIdentifier,omitempty"`
 
 	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:MinLength=3
+	// +kubebuilder:validation:MaxLength=32
+	// +kubebuilder:validation:Pattern=`^[A-Za-z0-9_-]+$`
+	NetworkNamespaceIdentifier string `json:"networkNamespaceIdentifier,omitempty"`
+
+	// +kubebuilder:validation:Required
 	ClusterIdentifier string `json:"clusterIdentifier,omitempty"`
 
 	// +kubebuilder:validation:Required
@@ -54,8 +60,11 @@ type ControlPlaneVirtualSharedIPSpec struct {
 	Method string `json:"method,omitempty"`
 
 	// +kubebuilder:validation:Required
-	// +kubebuilder:validation:MinItems:=1
-	// example control plane ips
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=128
+	// +kubebuilder:validation:Pattern=`^[A-Za-z0-9._-]+$`
+	Environment string `json:"environment,omitempty"`
+
 	PoolMembers []string `json:"poolMembers,omitempty"`
 }
 
@@ -66,12 +75,14 @@ type ControlPlaneVirtualSharedIPStatus struct {
 	Message    string             `json:"message,omitempty"`
 	Created    metav1.Time        `json:"created,omitempty"`
 
-	DatacenterIdentifier string   `json:"datacenterIdentifier,omitempty"`
-	SupervisorIdentifier string   `json:"supervisorIdentifier,omitempty"`
-	ClusterIdentifier    string   `json:"clusterIdentifier,omitempty"`
-	LoadBalancerIps      []string `json:"loadBalancerIps,omitempty"`
-	Method               string   `json:"method,omitempty"`
-	PoolMembers          []string `json:"poolMembers,omitempty"`
+	DatacenterIdentifier       string   `json:"datacenterIdentifier,omitempty"`
+	SupervisorIdentifier       string   `json:"supervisorIdentifier,omitempty"`
+	ClusterIdentifier          string   `json:"clusterIdentifier,omitempty"`
+	LoadBalancerIps            []string `json:"loadBalancerIps,omitempty"`
+	Method                     string   `json:"method,omitempty"`
+	PoolMembers                []string `json:"poolMembers,omitempty"`
+	NetworkNamespaceIdentifier string   `json:"networkNamespaceIdentifier,omitempty"`
+	Environment                string   `json:"environment,omitempty"`
 }
 
 func init() {

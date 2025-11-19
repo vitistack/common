@@ -57,24 +57,9 @@ spec:
             type: object
           spec:
             properties:
-              clusterIdentifier:
-                maxLength: 32
-                minLength: 3
-                pattern: ^[A-Za-z0-9_-]+$
-                type: string
               datacenterIdentifier:
                 maxLength: 32
                 minLength: 2
-                pattern: ^[A-Za-z0-9_-]+$
-                type: string
-              environment:
-                maxLength: 128
-                minLength: 1
-                pattern: ^[A-Za-z0-9._-]+$
-                type: string
-              provider:
-                maxLength: 32
-                minLength: 1
                 pattern: ^[A-Za-z0-9_-]+$
                 type: string
               supervisorIdentifier:
@@ -83,10 +68,7 @@ spec:
                 pattern: ^[A-Za-z0-9_-]+$
                 type: string
             required:
-            - clusterIdentifier
             - datacenterIdentifier
-            - environment
-            - provider
             - supervisorIdentifier
             type: object
           status:
@@ -95,8 +77,6 @@ spec:
                 items:
                   type: string
                 type: array
-              clusterIdentifier:
-                type: string
               conditions:
                 items:
                   description: Condition contains details for one aspect of the current

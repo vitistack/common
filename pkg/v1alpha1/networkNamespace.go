@@ -44,24 +44,6 @@ type NetworkNamespaceSpec struct {
 	// +kubebuilder:validation:MaxLength=32
 	// +kubebuilder:validation:Pattern=`^[A-Za-z0-9_-]+$`
 	SupervisorIdentifier string `json:"supervisorIdentifier,omitempty"` // <unique name per datacenter> ex: my-namespace
-
-	// +kubebuilder:validation:Required
-	// +kubebuilder:validation:MinLength=3
-	// +kubebuilder:validation:MaxLength=32
-	// +kubebuilder:validation:Pattern=`^[A-Za-z0-9_-]+$`
-	ClusterIdentifier string `json:"clusterIdentifier,omitempty"` // <unique name per availability zone> ex: my-name
-
-	// +kubebuilder:validation:Required
-	// +kubebuilder:validation:MinLength=1
-	// +kubebuilder:validation:MaxLength=32
-	// +kubebuilder:validation:Pattern=`^[A-Za-z0-9_-]+$`
-	Provider string `json:"provider,omitempty"`
-
-	// +kubebuilder:validation:Required
-	// +kubebuilder:validation:MinLength=1
-	// +kubebuilder:validation:MaxLength=128
-	// +kubebuilder:validation:Pattern=`^[A-Za-z0-9._-]+$`
-	Environment string `json:"environment,omitempty"`
 }
 
 type NetworkNamespaceStatus struct {
@@ -74,7 +56,6 @@ type NetworkNamespaceStatus struct {
 	DataCenterIdentifier string `json:"datacenterIdentifier,omitempty"`
 	SupervisorIdentifier string `json:"supervisorIdentifier,omitempty"`
 	NamespaceID          string `json:"namespaceId,omitempty"`
-	ClusterIdentifier    string `json:"clusterIdentifier,omitempty"`
 	IPv4Prefix           string `json:"ipv4Prefix,omitempty"`
 	IPv6Prefix           string `json:"ipv6Prefix,omitempty"`
 	IPv4EgressIP         string `json:"ipv4EgressIp,omitempty"`
