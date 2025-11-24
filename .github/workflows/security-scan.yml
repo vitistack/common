@@ -2,7 +2,7 @@ name: Security Scan
 
 on:
   schedule:
-    - cron: "0 0 * * 1" # Run weekly on Mondays
+    - cron: '0 0 * * 1' # Run weekly on Mondays
   workflow_dispatch: {}
 
 permissions:
@@ -15,7 +15,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Setup Go
         uses: actions/setup-go@v6
