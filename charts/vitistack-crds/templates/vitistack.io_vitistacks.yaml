@@ -155,6 +155,9 @@ spec:
               displayName:
                 description: DisplayName is the human-readable name for the vitistack
                 type: string
+              infrastructure:
+                description: Infrastructure (e.g., prod, test, mgmt)
+                type: string
               kubernetesProviders:
                 description: KubernetesProviders lists the Kubernetes providers available
                   in this vitistack
@@ -540,6 +543,7 @@ spec:
                 type: string
             required:
             - displayName
+            - infrastructure
             - region
             - zone
             type: object

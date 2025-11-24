@@ -59,14 +59,18 @@ type VitistackSpec struct {
 	// +kubebuilder:validation:Required
 	Zone string `json:"zone,omitempty"`
 
-	// Description provides additional context about the vitistack
-	// +kubebuilder:validation:Optional
-	Description string `json:"description,omitempty"`
-
 	// Region specifies the geographical region where the vitistack is located
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:MinLength=0
 	Region string `json:"region"`
+
+	// Infrastructure (e.g., prod, test, mgmt)
+	// +kubebuilder:validation:Required
+	Infrastructure string `json:"infrastructure,omitempty"`
+
+	// Description provides additional context about the vitistack
+	// +kubebuilder:validation:Optional
+	Description string `json:"description,omitempty"`
 
 	// Location provides detailed location information
 	// +kubebuilder:validation:Optional

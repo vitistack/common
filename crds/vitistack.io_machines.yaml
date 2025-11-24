@@ -208,6 +208,9 @@ spec:
                   imageID:
                     description: Image ID/AMI/Template ID
                     type: string
+                  isoUri:
+                    description: ISO URI for custom installations
+                    type: string
                   version:
                     description: Version of the OS
                     type: string

@@ -55,7 +55,7 @@ type MachineSpec struct {
 
 	// Machine Provider
 	// +kubebuilder:validation:Required
-	Provider string `json:"provider,omitempty"`
+	Provider MachineProviderType `json:"provider,omitempty"`
 
 	// Cloud provider configuration
 	ProviderConfig CloudProviderConfig `json:"providerConfig,omitempty"`
@@ -157,6 +157,8 @@ type MachineOS struct {
 	Architecture string `json:"architecture,omitempty"`
 	// Image ID/AMI/Template ID
 	ImageID string `json:"imageID,omitempty"`
+	// ISO URI for custom installations
+	ISOUri string `json:"isoUri,omitempty"`
 	// Image family or marketplace image
 	ImageFamily string `json:"imageFamily,omitempty"`
 }
@@ -210,7 +212,7 @@ type MachineStatus struct {
 	LastUpdated metav1.Time `json:"lastUpdated,omitempty"`
 
 	// The provider that created this machine
-	Provider string `json:"provider,omitempty"`
+	Provider MachineProviderType `json:"provider,omitempty"`
 
 	// The region where the machine is located
 	Region string `json:"region,omitempty"`

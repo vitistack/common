@@ -52,8 +52,8 @@ type KubernetesClusterSpecData struct {
 	ClusterId string `json:"clusterId"`
 
 	// +kubebuilder:validation:Required
-	Provider   string `json:"provider"`
-	Datacenter string `json:"datacenter"`
+	Provider   KubernetesProviderType `json:"provider"`
+	Datacenter string                 `json:"datacenter"`
 
 	// +kubebuilder:validation:Required
 	Region string `json:"region"`
@@ -83,7 +83,7 @@ type KubernetesClusterSpecControlPlane struct {
 	Version  string `json:"version"` // Kubernetes version, e.g., "1.23.0"
 
 	// +kubebuilder:validation:Required
-	Provider string `json:"provider"`
+	Provider KubernetesProviderType `json:"provider"`
 
 	MachineClass string                               `json:"machineClass"`
 	Metadata     KubernetesClusterSpecMetadataDetails `json:"metadata"`
@@ -107,7 +107,7 @@ type KubernetesClusterWorkers struct {
 
 type KubernetesClusterNodePool struct {
 	MachineClass string                               `json:"machineClass"`
-	Provider     string                               `json:"provider"`
+	Provider     KubernetesProviderType               `json:"provider"`
 	Version      string                               `json:"version"` // Kubernetes version, e.g., "1.23.0"
 	Name         string                               `json:"name"`
 	Replicas     int                                  `json:"replicas"`
