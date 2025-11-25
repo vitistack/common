@@ -144,3 +144,27 @@ func LoadBalancerFromUnstructured(u *metav1unstructured.Unstructured) (*v1alpha1
 	}
 	return out, nil
 }
+
+func KubevirtConfigToUnstructured(in *v1alpha1.KubevirtConfig) (*metav1unstructured.Unstructured, error) {
+	return ToUnstructured(in)
+}
+
+func KubevirtConfigFromUnstructured(u *metav1unstructured.Unstructured) (*v1alpha1.KubevirtConfig, error) {
+	out := new(v1alpha1.KubevirtConfig)
+	if err := FromUnstructured(u, out); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func ProxmoxConfigToUnstructured(in *v1alpha1.ProxmoxConfig) (*metav1unstructured.Unstructured, error) {
+	return ToUnstructured(in)
+}
+
+func ProxmoxConfigFromUnstructured(u *metav1unstructured.Unstructured) (*v1alpha1.ProxmoxConfig, error) {
+	out := new(v1alpha1.ProxmoxConfig)
+	if err := FromUnstructured(u, out); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
