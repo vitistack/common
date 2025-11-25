@@ -42,6 +42,16 @@ jobs:
         run: |
           go mod download
 
+      - name: Check generated files are up to date
+        run: |
+          make generate
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "::error::Generated files are not up to date. Please run 'make generate' and commit the changes."
+            git status
+            git diff
+            exit 1
+          fi
+
       - name: Build
         run: |
           VERSION="${{ github.ref_type == 'tag' && github.ref_name || '0.0.0' }}"
