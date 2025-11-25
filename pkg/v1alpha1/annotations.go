@@ -5,24 +5,56 @@ import (
 )
 
 const (
-	ClusterNameAnnotation        = "vitistack.io/clustername"              // The name of the cluster
-	ClusterWorkspaceAnnotation   = "vitistack.io/clusterworkspace"         // The workspace of the cluster
-	CountryAnnotation            = "vitistack.io/country"                  // The country of the cluster
-	RegionAnnotation             = "vitistack.io/region"                   // The region of the cluster
-	InfrastructureAnnotation     = "vitistack.io/infrastructure"           // The infrastructure of the cluster
-	AzAnnotation                 = "vitistack.io/az"                       // The availability zone of the cluster
-	VMProviderAnnotation         = "vitistack.io/vmprovider"               // The VM provider of the cluster
-	VMIdAnnotation               = "vitistack.io/vmid"                     // The VM ID of the cluster
-	KubernetesProviderAnnotation = "vitistack.io/kubernetesprovider"       // The Kubernetes provider of the cluster
-	ClusterIdAnnotation          = "vitistack.io/clusterid"                // The ID of the cluster, this is the uuid in ror
-	K8sEndpointAnnotation        = "vitistack.io/kubernetes-endpoint-addr" // The endpoint of the kubernetes api server
-	ClusterFQDNAnnotation        = "vitistack.io/cluster-fqdn"             // The FQDN of the cluster
-	NodeFQDNAnnotation           = "vitistack.io/node-fqdn"                // The FQDN of the node
-	ManagedByAnnotation          = "vitistack.io/managed-by"               // The operator managing the resource
+	// The ID of the cluster, this is the uuid in ror
+	ClusterIdAnnotation = "vitistack.io/clusterid"
 
+	// The name of the cluster
+	ClusterNameAnnotation = "vitistack.io/clustername"
+
+	// The workspace of the cluster
+	ClusterWorkspaceAnnotation = "vitistack.io/clusterworkspace"
+
+	// The FQDN of the cluster
+	ClusterFQDNAnnotation = "vitistack.io/cluster-fqdn"
+
+	// The country of the cluster
+	CountryAnnotation = "vitistack.io/country"
+
+	// The region of the cluster
+	RegionAnnotation = "vitistack.io/region"
+
+	// The availability zone of the cluster
+	AzAnnotation = "vitistack.io/az"
+
+	// The infrastructure of the cluster
+	InfrastructureAnnotation = "vitistack.io/infrastructure"
+
+	// The VM provider of the cluster
+	VMProviderAnnotation = "vitistack.io/vmprovider"
+
+	// The VM ID of the cluster
+	VMIdAnnotation = "vitistack.io/vmid"
+
+	// The Kubernetes provider of the cluster
+	KubernetesProviderAnnotation = "vitistack.io/kubernetesprovider"
+
+	// The endpoint of the kubernetes api server
+	K8sEndpointAnnotation = "vitistack.io/kubernetes-endpoint-addr"
+
+	// The FQDN of the node
+	NodeFQDNAnnotation = "vitistack.io/node-fqdn"
+
+	// The role of the node
+	NodeRoleAnnotation = "vitistack.io/node-role"
+
+	// The name of the node pool
+	NodePoolAnnotation = "vitistack.io/nodepool"
+
+	// The operator managing the resource
+	ManagedByAnnotation = "vitistack.io/managed-by"
 )
 
-func GetAllAnnotations() []string {
+func GetAllVitistackAnnotations() []string {
 	return []string{
 		ClusterNameAnnotation,
 		ClusterWorkspaceAnnotation,
@@ -41,5 +73,5 @@ func GetAllAnnotations() []string {
 }
 
 func IsVitisStackAnnotation(key string) bool {
-	return slices.Contains(GetAllAnnotations(), key)
+	return slices.Contains(GetAllVitistackAnnotations(), key)
 }

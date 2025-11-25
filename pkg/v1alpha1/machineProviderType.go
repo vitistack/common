@@ -3,12 +3,12 @@ package v1alpha1
 type MachineProviderType string
 
 const (
-	MachineProviderTypeTalos MachineProviderType = "kubevirt"
+	MachineProviderTypeKubevirt MachineProviderType = "kubevirt"
 )
 
 func (mpt MachineProviderType) IsValid() bool {
 	switch mpt {
-	case MachineProviderTypeTalos:
+	case MachineProviderTypeKubevirt:
 		return true
 	default:
 		return false
@@ -17,12 +17,12 @@ func (mpt MachineProviderType) IsValid() bool {
 
 func ValidMachineProviderTypes() []MachineProviderType {
 	return []MachineProviderType{
-		MachineProviderTypeTalos,
+		MachineProviderTypeKubevirt,
 	}
 }
 
 func DefaultMachineProviderType() MachineProviderType {
-	return MachineProviderTypeTalos
+	return MachineProviderTypeKubevirt
 }
 
 func MachineProviderTypeValues() []string {
