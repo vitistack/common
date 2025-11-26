@@ -3,7 +3,7 @@ package v1alpha1
 type KubernetesProviderType string
 
 const (
-	KubernetesProviderTypeTalos KubernetesProviderType = "Talos"
+	KubernetesProviderTypeTalos KubernetesProviderType = "talos"
 )
 
 func (pt KubernetesProviderType) IsValid() bool {
