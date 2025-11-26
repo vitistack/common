@@ -33,12 +33,11 @@ const (
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:path=vitistacks,scope=Cluster,shortName=vs
 // +kubebuilder:printcolumn:name="Display Name",type=string,JSONPath=`.spec.displayName`
-// +kubebuilder:printcolumn:name="Phase",type=string,JSONPath=`.status.phase`
-// +kubebuilder:printcolumn:name="Ready",type=string,JSONPath=`.status.conditions[?(@.type=="Ready")].status`
 // +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`
 // +kubebuilder:printcolumn:name="Region",type=string,JSONPath=`.spec.region`
 // +kubebuilder:printcolumn:name="Zone",type=string,JSONPath=`.spec.zone`
-
+// +kubebuilder:printcolumn:name="Country",type=string,JSONPath=`.spec.location.country`
+// +kubebuilder:printcolumn:name="Infrastructure",type=string,JSONPath=`.spec.infrastructure`
 // +kubebuilder:printcolumn:name="Machine Providers",type=integer,JSONPath=`.status.machineProvider.count`,priority=10
 // +kubebuilder:printcolumn:name="K8s Providers",type=integer,JSONPath=`.status.kubernetesProvider.count`,priority=10
 type Vitistack struct {

@@ -20,12 +20,6 @@ spec:
     - jsonPath: .spec.displayName
       name: Display Name
       type: string
-    - jsonPath: .status.phase
-      name: Phase
-      type: string
-    - jsonPath: .status.conditions[?(@.type=="Ready")].status
-      name: Ready
-      type: string
     - jsonPath: .metadata.creationTimestamp
       name: Age
       type: date
@@ -34,6 +28,12 @@ spec:
       type: string
     - jsonPath: .spec.zone
       name: Zone
+      type: string
+    - jsonPath: .spec.location.country
+      name: Country
+      type: string
+    - jsonPath: .spec.infrastructure
+      name: Infrastructure
       type: string
     - jsonPath: .status.machineProvider.count
       name: Machine Providers
@@ -46,6 +46,7 @@ spec:
     name: v1alpha1
     schema:
       openAPIV3Schema:
+        description: Vitistack is the Schema for the Vitistacks API
         properties:
           apiVersion:
             description: |-
