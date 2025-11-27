@@ -38,6 +38,9 @@ type KubevirtConfigSpec struct {
 	Name string `json:"name,omitempty"`
 
 	// +kubebuilder:validation:Required
+	SecretNamespace string `json:"secretNamespace,omitempty"`
+
+	// +kubebuilder:validation:Required
 	KubeconfigSecretRef string `json:"kubeconfigSecretRef,omitempty"`
 }
 

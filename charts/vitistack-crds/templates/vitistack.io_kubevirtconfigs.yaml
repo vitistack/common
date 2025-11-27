@@ -61,9 +61,12 @@ spec:
                 type: string
               name:
                 type: string
+              secretNamespace:
+                type: string
             required:
             - kubeconfigSecretRef
             - name
+            - secretNamespace
             type: object
           status:
             properties:
