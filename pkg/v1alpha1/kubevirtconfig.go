@@ -10,7 +10,7 @@ import (
 // KubevirtConfig is the Schema for the KubevirtConfig API
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
-// +kubebuilder:resource:path=kubevirtconfigs,scope=Namespaced,shortName=kvc
+// +kubebuilder:resource:path=kubevirtconfigs,scope=Cluster,shortName=kvc
 // +kubebuilder:printcolumn:name="Name",type=string,JSONPath=`.spec.name`
 // +kubebuilder:printcolumn:name="Provider",type=string,JSONPath=`.spec.provider`
 // +kubebuilder:printcolumn:name="Phase",type=string,JSONPath=`.status.phase`

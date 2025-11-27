@@ -14,7 +14,7 @@ spec:
     shortNames:
     - pxc
     singular: proxmoxconfig
-  scope: Namespaced
+  scope: Cluster
   versions:
   - additionalPrinterColumns:
     - jsonPath: .spec.name

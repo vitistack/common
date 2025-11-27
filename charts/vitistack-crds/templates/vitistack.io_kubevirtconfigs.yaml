@@ -14,7 +14,7 @@ spec:
     shortNames:
     - kvc
     singular: kubevirtconfig
-  scope: Namespaced
+  scope: Cluster
   versions:
   - additionalPrinterColumns:
     - jsonPath: .spec.name
