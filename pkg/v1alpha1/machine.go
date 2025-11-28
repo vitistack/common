@@ -13,7 +13,7 @@ import (
 // +kubebuilder:resource:path=machines,scope=Namespaced,shortName=m
 // +kubebuilder:printcolumn:name="Phase",type=string,JSONPath=`.status.phase`
 // +kubebuilder:printcolumn:name="State",type=string,JSONPath=`.status.state`
-// +kubebuilder:printcolumn:name="IpAddresses",type=string,JSONPath=`.status.ipAddresses`
+// +kubebuilder:printcolumn:name="Public IPs",type=string,JSONPath=`.status.publicIPAddresses`
 // +kubebuilder:printcolumn:name="Provider",type=string,JSONPath=`.spec.provider`
 // +kubebuilder:printcolumn:name="Instance Type",type=string,JSONPath=`.spec.instanceType`
 // +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`
