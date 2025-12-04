@@ -106,10 +106,6 @@ type VitistackSpec struct {
 	// Tags for organizing and categorizing vitistacks
 	// +kubebuilder:validation:Optional
 	Tags map[string]string `json:"tags,omitempty"`
-
-	// MachineClasses available in this vitistack
-	// +kubebuilder:validation:Optional
-	MachineClasses []MachineClass `json:"machineClasses,omitempty"`
 }
 
 // VitistackLocation provides detailed location information
@@ -541,6 +537,16 @@ type VitistackStatus struct {
 	// +kubebuilder:validation:Optional
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
 
+	// MachineProviders lists MachineProvider objects discovered in the cluster
+	// that are associated with this Vitistack (matching region/zone)
+	// +kubebuilder:validation:Optional
+	MachineProviders []VitistackDiscoveredProvider `json:"machineProviders,omitempty"`
+
+	// KubernetesProviders lists KubernetesProvider objects discovered in the cluster
+	// that are associated with this Vitistack (matching region/zone)
+	// +kubebuilder:validation:Optional
+	KubernetesProviders []VitistackDiscoveredProvider `json:"kubernetesProviders,omitempty"`
+
 	// MachineProviderCount is the number of active machine providers
 	// +kubebuilder:validation:Optional
 	MachineProviderCount int32 `json:"machineProviderCount,omitempty"`
@@ -572,6 +578,10 @@ type VitistackStatus struct {
 	// ObservedGeneration reflects the generation of the most recently observed Vitistack
 	// +kubebuilder:validation:Optional
 	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
+
+	// MachineClasses lists available machine classes in the vitistack
+	// +kubebuilder:validation:Optional
+	MachineClasses []string `json:"machineClasses,omitempty"`
 }
 
 // VitistackResourceUsage shows current resource utilization
@@ -639,6 +649,37 @@ type VitistackProviderStatus struct {
 	// ResourcesManaged shows resources managed by this provider
 	// +kubebuilder:validation:Optional
 	ResourcesManaged int32 `json:"resourcesManaged,omitempty"`
+}
+
+// VitistackDiscoveredProvider represents a provider discovered in the cluster
+type VitistackDiscoveredProvider struct {
+	// Name of the discovered provider resource
+	// +kubebuilder:validation:Required
+	Name string `json:"name"`
+
+	// Namespace where the provider resource is located
+	// +kubebuilder:validation:Optional
+	Namespace string `json:"namespace,omitempty"`
+
+	// ProviderType indicates the underlying provider type (e.g., proxmox, kubevirt, aws)
+	// +kubebuilder:validation:Optional
+	ProviderType string `json:"providerType,omitempty"`
+
+	// Region of the provider
+	// +kubebuilder:validation:Optional
+	Region string `json:"region,omitempty"`
+
+	// Zone of the provider
+	// +kubebuilder:validation:Optional
+	Zone string `json:"zone,omitempty"`
+
+	// Ready indicates if the provider is ready to use
+	// +kubebuilder:validation:Optional
+	Ready bool `json:"ready,omitempty"`
+
+	// DiscoveredAt is when the provider was discovered
+	// +kubebuilder:validation:Optional
+	DiscoveredAt *metav1.Time `json:"discoveredAt,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

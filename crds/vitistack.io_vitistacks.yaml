@@ -218,113 +218,6 @@ spec:
                     description: Country where the vitistack is located
                     type: string
                 type: object
-              machineClasses:
-                description: MachineClasses available in this vitistack
-                items:
-                  description: MachineClass is the Schema for the MachineClass API
-                  properties:
-                    apiVersion:
-                      description: |-
-                        APIVersion defines the versioned schema of this representation of an object.
-                        Servers should convert recognized schemas to the latest internal value, and
-                        may reject unrecognized values.
-                        More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
-                      type: string
-                    kind:
-                      description: |-
-                        Kind is a string value representing the REST resource this object represents.
-                        Servers may infer this from the endpoint the client submits requests to.
-                        Cannot be updated.
-                        In CamelCase.
-                        More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
-                      type: string
-                    metadata:
-                      type: object
-                    spec:
-                      properties:
-                        category:
-                          default: Standard
-                          type: string
-                        cpu:
-                          properties:
-                            cores:
-                              type: integer
-                            sockets:
-                              type: integer
-                            threads:
-                              type: integer
-                          required:
-                          - cores
-                          type: object
-                        default:
-                          default: false
-                          type: boolean
-                        description:
-                          type: string
-                        displayName:
-                          type: string
-                        enabled:
-                          default: true
-                          type: boolean
-                        gpu:
-                          properties:
-                            cores:
-                              type: integer
-                            manufacturer:
-                              type: string
-                          required:
-                          - cores
-                          type: object
-                        machineProviders:
-                          items:
-                            type: string
-                          type: array
-                        memory:
-                          properties:
-                            maxQuantity:
-                              anyOf:
-                              - type: integer
-                              - type: string
-                              pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                              x-kubernetes-int-or-string: true
-                            minQuantity:
-                              anyOf:
-                              - type: integer
-                              - type: string
-                              pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                              x-kubernetes-int-or-string: true
-                            quantity:
-                              anyOf:
-                              - type: integer
-                              - type: string
-                              pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                              x-kubernetes-int-or-string: true
-                          required:
-                          - quantity
-                          type: object
-                      required:
-                      - category
-                      - cpu
-                      - default
-                      - enabled
-                      - machineProviders
-                      - memory
-                      type: object
-                    status:
-                      properties:
-                        created:
-                          type: string
-                        message:
-                          type: string
-                        name:
-                          type: string
-                        phase:
-                          type: string
-                        status:
-                          type: string
-                      type: object
-                  type: object
-                type: array
               machineProviders:
                 description: MachineProviders lists the machine providers available
                   in this vitistack
@@ -726,14 +619,90 @@ spec:
                 description: KubernetesProviderCount is the number of active Kubernetes
                   providers
                 type: integer
+              kubernetesProviders:
+                description: |-
+                  KubernetesProviders lists KubernetesProvider objects discovered in the cluster
+                  that are associated with this Vitistack (matching region/zone)
+                items:
+                  description: VitistackDiscoveredProvider represents a provider discovered
+                    in the cluster
+                  properties:
+                    discoveredAt:
+                      description: DiscoveredAt is when the provider was discovered
+                      format: date-time
+                      type: string
+                    name:
+                      description: Name of the discovered provider resource
+                      type: string
+                    namespace:
+                      description: Namespace where the provider resource is located
+                      type: string
+                    providerType:
+                      description: ProviderType indicates the underlying provider
+                        type (e.g., proxmox, kubevirt, aws)
+                      type: string
+                    ready:
+                      description: Ready indicates if the provider is ready to use
+                      type: boolean
+                    region:
+                      description: Region of the provider
+                      type: string
+                    zone:
+                      description: Zone of the provider
+                      type: string
+                  required:
+                  - name
+                  type: object
+                type: array
               lastReconcileTime:
                 description: LastReconcileTime is when the vitistack was last reconciled
                 format: date-time
                 type: string
+              machineClasses:
+                description: MachineClasses lists available machine classes in the
+                  vitistack
+                items:
+                  type: string
+                type: array
               machineProviderCount:
                 description: MachineProviderCount is the number of active machine
                   providers
                 type: integer
+              machineProviders:
+                description: |-
+                  MachineProviders lists MachineProvider objects discovered in the cluster
+                  that are associated with this Vitistack (matching region/zone)
+                items:
+                  description: VitistackDiscoveredProvider represents a provider discovered
+                    in the cluster
+                  properties:
+                    discoveredAt:
+                      description: DiscoveredAt is when the provider was discovered
+                      format: date-time
+                      type: string
+                    name:
+                      description: Name of the discovered provider resource
+                      type: string
+                    namespace:
+                      description: Namespace where the provider resource is located
+                      type: string
+                    providerType:
+                      description: ProviderType indicates the underlying provider
+                        type (e.g., proxmox, kubevirt, aws)
+                      type: string
+                    ready:
+                      description: Ready indicates if the provider is ready to use
+                      type: boolean
+                    region:
+                      description: Region of the provider
+                      type: string
+                    zone:
+                      description: Zone of the provider
+                      type: string
+                  required:
+                  - name
+                  type: object
+                type: array
               observedGeneration:
                 description: ObservedGeneration reflects the generation of the most
                   recently observed Vitistack
