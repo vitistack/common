@@ -118,7 +118,15 @@ spec:
                       provider:
                         type: string
                       replicas:
+                        description: |-
+                          Replicas is the number of control plane nodes.
+                          Must be an odd number (1, 3, 5, etc.) to maintain etcd quorum.
+                        minimum: 1
                         type: integer
+                        x-kubernetes-validations:
+                        - message: controlplane replicas must be an odd number (1,
+                            3, 5, etc.) to maintain etcd quorum
+                          rule: self % 2 == 1
                       storage:
                         items:
                           properties:

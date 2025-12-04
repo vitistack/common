@@ -78,7 +78,11 @@ type KubernetesClusterSpecTopology struct {
 }
 
 type KubernetesClusterSpecControlPlane struct {
+	// Replicas is the number of control plane nodes.
+	// Must be an odd number (1, 3, 5, etc.) to maintain etcd quorum.
 	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:XValidation:rule="self % 2 == 1",message="controlplane replicas must be an odd number (1, 3, 5, etc.) to maintain etcd quorum"
 	Replicas int    `json:"replicas"`
 	Version  string `json:"version"` // Kubernetes version, e.g., "1.23.0"
 
