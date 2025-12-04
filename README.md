@@ -15,9 +15,16 @@ Kubernetes-native APIs for declarative infrastructure management:
 
 - **Machine** - Virtual machine provisioning and lifecycle
 - **MachineProvider** - Multi-cloud provider configuration (Proxmox, KubeVirt)
+- **MachineClass** - Machine size and resource presets
 - **NetworkConfiguration** - Network topology and VLANs
+- **NetworkNamespace** - Network isolation and segmentation
 - **KubernetesCluster** - Kubernetes cluster management
-- **VitiStack** - Complete infrastructure stacks
+- **KubernetesProvider** - Kubernetes cluster provider configuration
+- **ControlPlaneVirtualSharedIP** - Shared IP management for control planes
+- **EtcdBackup** - Etcd backup configuration and scheduling
+- **VitiStack** - Infrastructure stack definition with auto-discovery of providers and clusters
+- **ProxmoxConfig** - Proxmox-specific configuration
+- **KubevirtConfig** - KubeVirt-specific configuration
 
 📖 **[View full CRD documentation →](docs/crds.md)**
 

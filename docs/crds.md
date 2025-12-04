@@ -405,7 +405,7 @@ spec:
 
 `vitistacks.vitistack.io/v1alpha1`
 
-Complete infrastructure stack definition combining all components.
+Complete infrastructure stack definition combining all components. This is a cluster-scoped resource that represents a datacenter or availability zone.
 
 **Short Name**: `vs`
 
@@ -413,23 +413,115 @@ Complete infrastructure stack definition combining all components.
 
 ```yaml
 apiVersion: vitistack.io/v1alpha1
-kind: VitiStack
+kind: Vitistack
 metadata:
   name: production-stack
-  namespace: default
 spec:
-  region: us-east-1
-  environment: production
-  components:
-    - type: kubernetes-cluster
-      name: prod-k8s
-      config:
-        version: "1.28.0"
-        nodeCount: 5
-    - type: network
-      name: prod-network
-      config:
+  displayName: Production Stack
+  region: south
+  zone: az1
+  infrastructure: prod
+  description: Production infrastructure stack
+  location:
+    country: "no"
+    city: Oslo
+  machineProviders:
+    - name: proxmox-provider
+      namespace: vitistack-system
+      priority: 1
+      enabled: true
+  kubernetesProviders:
+    - name: k8s-provider
+      namespace: vitistack-system
+  networking:
+    vpcs:
+      - name: production-vpc
         cidr: "10.0.0.0/16"
+        default: true
+        subnets:
+          - name: web-tier
+            cidr: "10.0.1.0/24"
+            zone: az1
+    dns:
+      domain: prod.example.com
+      servers:
+        - 8.8.8.8
+  backup:
+    enabled: true
+    schedule: "0 2 * * *"
+    retentionPolicy:
+      daily: 7
+      weekly: 4
+      monthly: 12
+  resourceQuotas:
+    maxMachines: 100
+    maxClusters: 10
+    maxCPUCores: 500
+    maxMemoryGB: 2048
+```
+
+**Key Spec Fields**:
+
+- `spec.displayName`: Human-readable name for the vitistack (required)
+- `spec.region`: Geographical region (required)
+- `spec.zone`: Availability zone within the region
+- `spec.infrastructure`: Environment type (e.g., prod, test, mgmt)
+- `spec.description`: Additional context about the vitistack
+- `spec.location`: Detailed location information (country, city, coordinates)
+- `spec.machineProviders`: List of machine provider references
+- `spec.kubernetesProviders`: List of Kubernetes provider references
+- `spec.networking`: Network configuration (VPCs, subnets, DNS, firewall)
+- `spec.security`: Security policies (encryption, access control, audit logging)
+- `spec.monitoring`: Monitoring configuration
+- `spec.backup`: Backup and disaster recovery policies
+- `spec.resourceQuotas`: Resource limits for the vitistack
+
+**Key Status Fields**:
+
+- `status.phase`: Current phase (`Initializing`, `Provisioning`, `Ready`, `Degraded`, `Deleting`, `Failed`)
+- `status.displayName`: Observed display name
+- `status.region`: Observed region
+- `status.zone`: Observed zone
+- `status.infrastructure`: Observed infrastructure type
+- `status.description`: Observed description
+- `status.location`: Observed location information
+- `status.machineProviders`: Discovered MachineProvider objects in the cluster
+- `status.kubernetesProviders`: Discovered KubernetesProvider objects in the cluster
+- `status.clusters`: Discovered KubernetesCluster objects in the vitistack
+- `status.machineProviderCount`: Number of active machine providers
+- `status.kubernetesProviderCount`: Number of active Kubernetes providers
+- `status.activeMachines`: Number of active machines
+- `status.activeClusters`: Number of active Kubernetes clusters
+- `status.resourceUsage`: Current resource utilization (CPU, memory, storage)
+- `status.conditions`: Standard Kubernetes conditions
+
+**Discovered Provider Structure**:
+
+```yaml
+status:
+  machineProviders:
+    - name: proxmox-provider
+      namespace: vitistack-system
+      providerType: proxmox
+      region: south
+      zone: az1
+      ready: true
+      discoveredAt: "2025-12-04T12:00:00Z"
+```
+
+**Discovered Cluster Structure**:
+
+```yaml
+status:
+  clusters:
+    - name: prod-cluster
+      namespace: default
+      phase: Running
+      version: "1.28.0"
+      controlPlaneReplicas: 3
+      workerReplicas: 5
+      ready: true
+      discoveredAt: "2025-12-04T12:00:00Z"
 ```
 
 ### ProxmoxConfig
