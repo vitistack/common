@@ -15,7 +15,7 @@ import (
 // +kubebuilder:printcolumn:name="State",type=string,JSONPath=`.status.state`
 // +kubebuilder:printcolumn:name="Public IPs",type=string,JSONPath=`.status.publicIPAddresses`
 // +kubebuilder:printcolumn:name="Provider",type=string,JSONPath=`.spec.provider`
-// +kubebuilder:printcolumn:name="Instance Type",type=string,JSONPath=`.spec.machineClass`
+// +kubebuilder:printcolumn:name="Machine Class",type=string,JSONPath=`.spec.machineClass`
 // +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`
 type Machine struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -30,7 +30,7 @@ type MachineSpec struct {
 	// +kubebuilder:validation:MinLength=1
 	Name string `json:"name,omitempty"`
 
-	// The instance type/size of the machine (e.g., t3.medium, Standard_B2s, n1-standard-2)
+	// The machine class of the machine (e.g., t3.medium, Standard_B2s, n1-standard-2)
 	// +kubebuilder:validation:MinLength=1
 	MachineClass string `json:"machineClass,omitempty"`
 

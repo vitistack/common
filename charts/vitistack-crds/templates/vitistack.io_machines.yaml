@@ -30,7 +30,7 @@ spec:
       name: Provider
       type: string
     - jsonPath: .spec.machineClass
-      name: Instance Type
+      name: Machine Class
       type: string
     - jsonPath: .metadata.creationTimestamp
       name: Age
@@ -128,8 +128,8 @@ spec:
                   type: object
                 type: array
               machineClass:
-                description: The instance type/size of the machine (e.g., t3.medium,
-                  Standard_B2s, n1-standard-2)
+                description: The machine class of the machine (e.g., t3.medium, Standard_B2s,
+                  n1-standard-2)
                 minLength: 1
                 type: string
               machineType:

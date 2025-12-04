@@ -156,7 +156,7 @@ type ControlPlaneConfig struct {
 	// +kubebuilder:validation:Maximum=10
 	Replicas int `json:"replicas,omitempty"`
 
-	// Control plane instance type
+	// Control plane machine class
 	MachineClass string `json:"machineClass,omitempty"`
 
 	// Control plane disk size in GB

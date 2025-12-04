@@ -334,7 +334,7 @@ spec:
                         minimum: 20
                         type: integer
                       machineClass:
-                        description: Control plane instance type
+                        description: Control plane machine class
                         type: string
                       replicas:
                         description: Number of control plane nodes
