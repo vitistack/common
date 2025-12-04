@@ -39,7 +39,10 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-govulncheck-
 
-      - name: Run security scan
+      - name: Run gosec security scan
         run: |
-          GOBIN=$HOME/go/bin go install golang.org/x/vuln/cmd/govulncheck@latest
-          $HOME/go/bin/govulncheck ./...
+          make gosec
+
+      - name: Run govulncheck vulnerability scan
+        run: |
+          make govulncheck

@@ -1,0 +1,18 @@
+---
+apiVersion: vitistack.io/v1alpha1
+kind: MachineClass
+metadata:
+  name: xlarge
+spec:
+  displayName: XLarge
+  description: Extra large instance with 4 cores and 48Gi memory, optimized for memory
+  enabled: true
+  default: false
+  category: Memory
+  cpu:
+    cores: 4
+    sockets: 1
+    threads: 1
+  memory:
+    quantity: 48Gi
+  machineProviders: []

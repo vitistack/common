@@ -20,6 +20,7 @@ import (
 // +kubebuilder:printcolumn:name="Cpu Threads",type=string,JSONPath=`.spec.cpu.threads`
 // +kubebuilder:printcolumn:name="Gpu Cores",type=string,JSONPath=`.spec.gpu.cores`
 // +kubebuilder:printcolumn:name="Memory",type=string,JSONPath=`.spec.memory.quantity`
+// +kubebuilder:printcolumn:name="Enabled",type=string,JSONPath=`.spec.enabled`
 // +kubebuilder:printcolumn:name="Created",type=string,JSONPath=`.status.created`,description="Creation Timestamp"
 type MachineClass struct {
 	metav1.TypeMeta   `json:",inline"`

@@ -1,0 +1,18 @@
+---
+apiVersion: vitistack.io/v1alpha1
+kind: MachineClass
+metadata:
+  name: largememory
+spec:
+  displayName: Large Memory
+  description: Large memory instance with 4 cores and 64Gi memory, optimized for memory-intensive workloads
+  enabled: true
+  default: false
+  category: Memory
+  cpu:
+    cores: 4
+    sockets: 1
+    threads: 1
+  memory:
+    quantity: 64Gi
+  machineProviders: []

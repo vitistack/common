@@ -41,6 +41,9 @@ spec:
     - jsonPath: .spec.memory.quantity
       name: Memory
       type: string
+    - jsonPath: .spec.enabled
+      name: Enabled
+      type: string
     - description: Creation Timestamp
       jsonPath: .status.created
       name: Created
