@@ -8,11 +8,13 @@ Vitistack provides a comprehensive set of CRDs for declarative infrastructure ma
 
 - **Machine**: Virtual machine provisioning and management
 - **MachineProvider**: Configuration for machine provisioning backends (Proxmox, KubeVirt, etc.)
+- **MachineClass**: Machine size and resource presets
 - **NetworkConfiguration**: Network topology and configuration
 - **NetworkNamespace**: Network isolation and segmentation
 - **KubernetesCluster**: Kubernetes cluster lifecycle management
 - **KubernetesProvider**: Kubernetes cluster provider configuration
 - **ControlPlaneVirtualSharedIP**: Shared IP management for control planes
+- **EtcdBackup**: Etcd backup configuration and scheduling
 - **VitiStack**: Complete infrastructure stack definition
 - **ProxmoxConfig**: Proxmox-specific configuration
 - **KubevirtConfig**: KubeVirt-specific configuration
@@ -345,6 +347,59 @@ spec:
     - 10.0.1.12
     - 10.0.1.13
 ```
+
+### EtcdBackup
+
+`etcdbackups.vitistack.io/v1alpha1`
+
+Manages etcd backup configuration and scheduling for Kubernetes clusters.
+
+**Short Name**: `eb`
+
+**Example**:
+
+```yaml
+apiVersion: vitistack.io/v1alpha1
+kind: EtcdBackup
+metadata:
+  name: prod-cluster-backup
+  namespace: default
+spec:
+  clusterName: production-cluster
+  schedule: "0 */6 * * *" # Every 6 hours
+  retention: 7
+  storageLocation:
+    type: s3
+    bucket: my-etcd-backups
+    path: prod-cluster/
+    secretRef: backup-credentials
+```
+
+**Key Fields**:
+
+- `spec.clusterName`: Name of the Kubernetes cluster to backup (required)
+- `spec.schedule`: Cron schedule for automated backups (optional)
+- `spec.retention`: Number of backups to retain (default: 7)
+- `spec.storageLocation`: Storage destination configuration
+  - `type`: Storage type (`s3`, `gcs`, `azure`, `local`)
+  - `bucket`: Bucket name for cloud storage
+  - `path`: Path/prefix within the storage location
+  - `secretRef`: Reference to secret containing storage credentials
+- `status.phase`: Current phase (`Pending`, `Running`, `Completed`, `Failed`)
+- `status.lastBackupTime`: Timestamp of last successful backup
+- `status.nextBackupTime`: Scheduled time for next backup
+- `status.backupSize`: Size of the last backup
+- `status.backupCount`: Current number of stored backups
+- `status.conditions`: Standard Kubernetes conditions
+
+**Storage Types**:
+
+| Type    | Description                     | Required Fields       |
+| ------- | ------------------------------- | --------------------- |
+| `s3`    | AWS S3 or S3-compatible storage | `bucket`, `secretRef` |
+| `gcs`   | Google Cloud Storage            | `bucket`, `secretRef` |
+| `azure` | Azure Blob Storage              | `bucket`, `secretRef` |
+| `local` | Local filesystem storage        | `path`                |
 
 ### VitiStack
 

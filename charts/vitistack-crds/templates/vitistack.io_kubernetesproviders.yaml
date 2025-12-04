@@ -333,7 +333,7 @@ spec:
                         maximum: 1000
                         minimum: 20
                         type: integer
-                      instanceType:
+                      machineClass:
                         description: Control plane instance type
                         type: string
                       replicas:
@@ -486,14 +486,14 @@ spec:
                       description: Desired number of nodes
                       minimum: 0
                       type: integer
-                    instanceType:
-                      description: Instance type
-                      type: string
                     labels:
                       additionalProperties:
                         type: string
                       description: Node labels
                       type: object
+                    machineClass:
+                      description: Machine class
+                      type: string
                     maxNodes:
                       description: Maximum number of nodes
                       minimum: 1
@@ -608,7 +608,7 @@ spec:
                       type: array
                   required:
                   - desiredNodes
-                  - instanceType
+                  - machineClass
                   - maxNodes
                   - minNodes
                   - name
@@ -971,12 +971,12 @@ spec:
                     health:
                       description: Health status
                       type: string
-                    instanceType:
-                      description: Instance type
-                      type: string
                     lastUpdated:
                       description: Last update time
                       format: date-time
+                      type: string
+                    machineClass:
+                      description: Machine class
                       type: string
                     name:
                       description: Node pool name
@@ -991,7 +991,7 @@ spec:
                   required:
                   - currentNodes
                   - desiredNodes
-                  - instanceType
+                  - machineClass
                   - name
                   - readyNodes
                   - state

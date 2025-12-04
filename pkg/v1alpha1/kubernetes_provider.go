@@ -157,7 +157,7 @@ type ControlPlaneConfig struct {
 	Replicas int `json:"replicas,omitempty"`
 
 	// Control plane instance type
-	InstanceType string `json:"instanceType,omitempty"`
+	MachineClass string `json:"machineClass,omitempty"`
 
 	// Control plane disk size in GB
 	// +kubebuilder:validation:Minimum=20
@@ -182,9 +182,9 @@ type NodePoolConfig struct {
 	// +kubebuilder:validation:MinLength=1
 	Name string `json:"name"`
 
-	// Instance type
+	// Machine class
 	// +kubebuilder:validation:Required
-	InstanceType string `json:"instanceType"`
+	MachineClass string `json:"machineClass"`
 
 	// Minimum number of nodes
 	// +kubebuilder:validation:Minimum=0
@@ -686,8 +686,8 @@ type NodePoolStatus struct {
 	// Desired node count
 	DesiredNodes int `json:"desiredNodes"`
 
-	// Instance type
-	InstanceType string `json:"instanceType"`
+	// Machine class
+	MachineClass string `json:"machineClass"`
 
 	// Auto-scaling status
 	AutoScaling *NodePoolAutoScalingStatus `json:"autoScaling,omitempty"`

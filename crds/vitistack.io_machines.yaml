@@ -29,7 +29,7 @@ spec:
     - jsonPath: .spec.provider
       name: Provider
       type: string
-    - jsonPath: .spec.instanceType
+    - jsonPath: .spec.machineClass
       name: Instance Type
       type: string
     - jsonPath: .metadata.creationTimestamp
@@ -127,7 +127,7 @@ spec:
                       type: string
                   type: object
                 type: array
-              instanceType:
+              machineClass:
                 description: The instance type/size of the machine (e.g., t3.medium,
                   Standard_B2s, n1-standard-2)
                 minLength: 1

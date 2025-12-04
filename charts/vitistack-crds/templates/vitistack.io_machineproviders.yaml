@@ -118,45 +118,117 @@ spec:
                   autoScaling:
                     description: Whether this provider supports auto-scaling
                     type: boolean
-                  instanceTypes:
-                    description: Supported instance types
-                    items:
-                      properties:
-                        costPerHour:
-                          description: Cost per hour (optional)
-                          type: string
-                        displayName:
-                          description: Display name
-                          type: string
-                        gpu:
-                          description: Whether this type supports GPU
-                          type: boolean
-                        memoryGB:
-                          description: Memory in GB (as string for cross-language
-                            compatibility)
-                          pattern: ^[0-9]+(\.[0-9]+)?$
-                          type: string
-                        name:
-                          description: Instance type name
-                          type: string
-                        networkPerformance:
-                          description: Network performance level
-                          type: string
-                        storageGB:
-                          description: Storage in GB (if included)
-                          type: integer
-                        vcpus:
-                          description: Number of vCPUs
-                          type: integer
-                      required:
-                      - memoryGB
-                      - name
-                      - vcpus
-                      type: object
-                    type: array
                   loadBalancers:
                     description: Whether this provider supports load balancers
                     type: boolean
+                  machineClasses:
+                    description: Supported machineclasses
+                    items:
+                      description: MachineClass is the Schema for the MachineClass
+                        API
+                      properties:
+                        apiVersion:
+                          description: |-
+                            APIVersion defines the versioned schema of this representation of an object.
+                            Servers should convert recognized schemas to the latest internal value, and
+                            may reject unrecognized values.
+                            More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+                          type: string
+                        kind:
+                          description: |-
+                            Kind is a string value representing the REST resource this object represents.
+                            Servers may infer this from the endpoint the client submits requests to.
+                            Cannot be updated.
+                            In CamelCase.
+                            More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+                          type: string
+                        metadata:
+                          type: object
+                        spec:
+                          properties:
+                            category:
+                              default: Standard
+                              type: string
+                            cpu:
+                              properties:
+                                cores:
+                                  type: integer
+                                sockets:
+                                  type: integer
+                                threads:
+                                  type: integer
+                              required:
+                              - cores
+                              type: object
+                            default:
+                              default: false
+                              type: boolean
+                            description:
+                              type: string
+                            displayName:
+                              type: string
+                            enabled:
+                              default: true
+                              type: boolean
+                            gpu:
+                              properties:
+                                cores:
+                                  type: integer
+                                manufacturer:
+                                  type: string
+                              required:
+                              - cores
+                              type: object
+                            machineProviders:
+                              items:
+                                type: string
+                              type: array
+                            memory:
+                              properties:
+                                maxQuantity:
+                                  anyOf:
+                                  - type: integer
+                                  - type: string
+                                  pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                  x-kubernetes-int-or-string: true
+                                minQuantity:
+                                  anyOf:
+                                  - type: integer
+                                  - type: string
+                                  pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                  x-kubernetes-int-or-string: true
+                                quantity:
+                                  anyOf:
+                                  - type: integer
+                                  - type: string
+                                  pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                  x-kubernetes-int-or-string: true
+                              required:
+                              - quantity
+                              type: object
+                          required:
+                          - category
+                          - cpu
+                          - default
+                          - enabled
+                          - machineProviders
+                          - memory
+                          type: object
+                        status:
+                          properties:
+                            created:
+                              type: string
+                            message:
+                              type: string
+                            name:
+                              type: string
+                            phase:
+                              type: string
+                            status:
+                              type: string
+                          type: object
+                      type: object
+                    type: array
                   maxMachines:
                     description: Maximum number of machines per provider
                     minimum: 1
@@ -246,8 +318,8 @@ spec:
               compute:
                 description: Compute configuration and limits
                 properties:
-                  defaultInstanceType:
-                    description: Default instance type
+                  defaultMachineClass:
+                    description: Default machine class
                     type: string
                   gpuSupport:
                     description: Whether GPU instances are available
@@ -493,11 +565,6 @@ spec:
                       - public
                       type: object
                     type: array
-                  instanceTypes:
-                    description: Available instance types
-                    items:
-                      type: string
-                    type: array
                   limits:
                     description: Resource limits
                     properties:
@@ -516,6 +583,11 @@ spec:
                         description: Rate limits
                         type: object
                     type: object
+                  machineClasses:
+                    description: Available machine classes
+                    items:
+                      type: string
+                    type: array
                   storageTypes:
                     description: Available storage types
                     items:

@@ -106,6 +106,10 @@ type VitistackSpec struct {
 	// Tags for organizing and categorizing vitistacks
 	// +kubebuilder:validation:Optional
 	Tags map[string]string `json:"tags,omitempty"`
+
+	// MachineClasses available in this vitistack
+	// +kubebuilder:validation:Optional
+	MachineClasses []MachineClass `json:"machineClasses,omitempty"`
 }
 
 // VitistackLocation provides detailed location information

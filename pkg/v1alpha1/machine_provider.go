@@ -117,8 +117,8 @@ type ServiceAccountConfig struct {
 }
 
 type ProviderCapabilities struct {
-	// Supported instance types
-	InstanceTypes []InstanceTypeInfo `json:"instanceTypes,omitempty"`
+	// Supported machineclasses
+	MachineClasses []MachineClass `json:"machineClasses,omitempty"`
 
 	// Supported operating systems
 	OperatingSystems []OSInfo `json:"operatingSystems,omitempty"`
@@ -141,33 +141,6 @@ type ProviderCapabilities struct {
 
 	// Whether this provider supports persistent volumes
 	PersistentVolumes bool `json:"persistentVolumes,omitempty"`
-}
-
-type InstanceTypeInfo struct {
-	// Instance type name
-	Name string `json:"name"`
-
-	// Display name
-	DisplayName string `json:"displayName,omitempty"`
-
-	// Number of vCPUs
-	VCPUs int `json:"vcpus"`
-
-	// Memory in GB (as string for cross-language compatibility)
-	// +kubebuilder:validation:Pattern=`^[0-9]+(\.[0-9]+)?$`
-	MemoryGB string `json:"memoryGB"`
-
-	// Storage in GB (if included)
-	StorageGB int `json:"storageGB,omitempty"`
-
-	// Network performance level
-	NetworkPerformance string `json:"networkPerformance,omitempty"`
-
-	// Whether this type supports GPU
-	GPU bool `json:"gpu,omitempty"`
-
-	// Cost per hour (optional)
-	CostPerHour string `json:"costPerHour,omitempty"`
 }
 
 type OSInfo struct {
@@ -301,8 +274,8 @@ type StorageClassInfo struct {
 }
 
 type ProviderComputeConfig struct {
-	// Default instance type
-	DefaultInstanceType string `json:"defaultInstanceType,omitempty"`
+	// Default machine class
+	DefaultMachineClass string `json:"defaultMachineClass,omitempty"`
 
 	// Maximum CPU cores per machine
 	// +kubebuilder:validation:Minimum=1
@@ -405,8 +378,8 @@ type ProviderHealthStatus struct {
 }
 
 type ProviderResourcesStatus struct {
-	// Available instance types
-	InstanceTypes []string `json:"instanceTypes,omitempty"`
+	// Available machine classes
+	MachineClasses []string `json:"machineClasses,omitempty"`
 
 	// Available zones
 	Zones []string `json:"zones,omitempty"`
