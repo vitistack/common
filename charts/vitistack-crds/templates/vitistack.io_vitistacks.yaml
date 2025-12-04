@@ -558,6 +558,45 @@ spec:
                 description: ActiveMachines is the number of active machines in the
                   vitistack
                 type: integer
+              clusters:
+                description: |-
+                  Clusters lists KubernetesCluster objects discovered in the cluster
+                  that are associated with this Vitistack
+                items:
+                  description: VitistackDiscoveredCluster represents a KubernetesCluster
+                    discovered in the vitistack
+                  properties:
+                    controlPlaneReplicas:
+                      description: ControlPlaneReplicas is the number of control plane
+                        nodes
+                      type: integer
+                    discoveredAt:
+                      description: DiscoveredAt is when the cluster was discovered
+                      format: date-time
+                      type: string
+                    name:
+                      description: Name of the discovered cluster resource
+                      type: string
+                    namespace:
+                      description: Namespace where the cluster resource is located
+                      type: string
+                    phase:
+                      description: Phase of the cluster (Provisioning, Running, Deleting,
+                        Failed, Updating)
+                      type: string
+                    ready:
+                      description: Ready indicates if the cluster is ready
+                      type: boolean
+                    version:
+                      description: Version is the Kubernetes version of the cluster
+                      type: string
+                    workerReplicas:
+                      description: WorkerReplicas is the total number of worker nodes
+                      type: integer
+                  required:
+                  - name
+                  type: object
+                type: array
               conditions:
                 description: Conditions represent the latest available observations
                   of vitistack state
@@ -615,6 +654,15 @@ spec:
                   - type
                   type: object
                 type: array
+              description:
+                description: Description provides additional context about the vitistack
+                type: string
+              displayName:
+                description: DisplayName is the human-readable name for the vitistack
+                type: string
+              infrastructure:
+                description: Infrastructure type (e.g., prod, test, mgmt)
+                type: string
               kubernetesProviderCount:
                 description: KubernetesProviderCount is the number of active Kubernetes
                   providers
@@ -658,6 +706,31 @@ spec:
                 description: LastReconcileTime is when the vitistack was last reconciled
                 format: date-time
                 type: string
+              location:
+                description: Location provides detailed location information
+                properties:
+                  address:
+                    description: Address of the vitistack
+                    type: string
+                  city:
+                    description: City where the vitistack is located
+                    type: string
+                  coordinates:
+                    description: Coordinates for the vitistack location
+                    properties:
+                      latitude:
+                        description: Latitude coordinate (-90 to 90)
+                        pattern: ^-?([0-8]?[0-9](\.[0-9]+)?|90(\.0+)?)$
+                        type: string
+                      longitude:
+                        description: Longitude coordinate (-180 to 180)
+                        pattern: ^-?(1[0-7][0-9](\.[0-9]+)?|180(\.0+)?|[0-9]?[0-9](\.[0-9]+)?)$
+                        type: string
+                    type: object
+                  country:
+                    description: Country where the vitistack is located
+                    type: string
+                type: object
               machineClasses:
                 description: MachineClasses lists available machine classes in the
                   vitistack
@@ -748,6 +821,10 @@ spec:
                   - type
                   type: object
                 type: array
+              region:
+                description: Region specifies the geographical region where the vitistack
+                  is located
+                type: string
               resourceUsage:
                 description: ResourceUsage shows current resource utilization
                 properties:
@@ -777,6 +854,9 @@ spec:
                     description: StorageGBUsed shows used storage in GB
                     type: integer
                 type: object
+              zone:
+                description: Zone specifies the availability zone within the region
+                type: string
             type: object
         type: object
     served: true

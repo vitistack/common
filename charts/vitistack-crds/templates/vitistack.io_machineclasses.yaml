@@ -17,17 +17,29 @@ spec:
   scope: Cluster
   versions:
   - additionalPrinterColumns:
-    - jsonPath: .spec.name
-      name: Name
+    - jsonPath: .spec.displayName
+      name: Display Name
       type: string
-    - jsonPath: .spec.provider
-      name: Provider
+    - jsonPath: .spec.category
+      name: Category
       type: string
-    - jsonPath: .status.phase
-      name: Phase
+    - jsonPath: .spec.default
+      name: Default
       type: string
-    - jsonPath: .status.status
-      name: Status
+    - jsonPath: .spec.cpu.cores
+      name: Cpu Cores
+      type: string
+    - jsonPath: .spec.cpu.sockets
+      name: Cpu Sockets
+      type: string
+    - jsonPath: .spec.cpu.threads
+      name: Cpu Threads
+      type: string
+    - jsonPath: .spec.gpu.cores
+      name: Gpu Cores
+      type: string
+    - jsonPath: .spec.memory.quantity
+      name: Memory
       type: string
     - description: Creation Timestamp
       jsonPath: .status.created

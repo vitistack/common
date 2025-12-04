@@ -533,6 +533,30 @@ type VitistackStatus struct {
 	// +kubebuilder:validation:Optional
 	Phase string `json:"phase,omitempty"`
 
+	// DisplayName is the human-readable name for the vitistack
+	// +kubebuilder:validation:Optional
+	DisplayName string `json:"displayName,omitempty"`
+
+	// Region specifies the geographical region where the vitistack is located
+	// +kubebuilder:validation:Optional
+	Region string `json:"region,omitempty"`
+
+	// Zone specifies the availability zone within the region
+	// +kubebuilder:validation:Optional
+	Zone string `json:"zone,omitempty"`
+
+	// Infrastructure type (e.g., prod, test, mgmt)
+	// +kubebuilder:validation:Optional
+	Infrastructure string `json:"infrastructure,omitempty"`
+
+	// Description provides additional context about the vitistack
+	// +kubebuilder:validation:Optional
+	Description string `json:"description,omitempty"`
+
+	// Location provides detailed location information
+	// +kubebuilder:validation:Optional
+	Location VitistackLocation `json:"location,omitempty"`
+
 	// Conditions represent the latest available observations of vitistack state
 	// +kubebuilder:validation:Optional
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
@@ -546,6 +570,11 @@ type VitistackStatus struct {
 	// that are associated with this Vitistack (matching region/zone)
 	// +kubebuilder:validation:Optional
 	KubernetesProviders []VitistackDiscoveredProvider `json:"kubernetesProviders,omitempty"`
+
+	// Clusters lists KubernetesCluster objects discovered in the cluster
+	// that are associated with this Vitistack
+	// +kubebuilder:validation:Optional
+	Clusters []VitistackDiscoveredCluster `json:"clusters,omitempty"`
 
 	// MachineProviderCount is the number of active machine providers
 	// +kubebuilder:validation:Optional
@@ -582,6 +611,41 @@ type VitistackStatus struct {
 	// MachineClasses lists available machine classes in the vitistack
 	// +kubebuilder:validation:Optional
 	MachineClasses []string `json:"machineClasses,omitempty"`
+}
+
+// VitistackDiscoveredCluster represents a KubernetesCluster discovered in the vitistack
+type VitistackDiscoveredCluster struct {
+	// Name of the discovered cluster resource
+	// +kubebuilder:validation:Required
+	Name string `json:"name"`
+
+	// Namespace where the cluster resource is located
+	// +kubebuilder:validation:Optional
+	Namespace string `json:"namespace,omitempty"`
+
+	// Phase of the cluster (Provisioning, Running, Deleting, Failed, Updating)
+	// +kubebuilder:validation:Optional
+	Phase string `json:"phase,omitempty"`
+
+	// Version is the Kubernetes version of the cluster
+	// +kubebuilder:validation:Optional
+	Version string `json:"version,omitempty"`
+
+	// ControlPlaneReplicas is the number of control plane nodes
+	// +kubebuilder:validation:Optional
+	ControlPlaneReplicas int32 `json:"controlPlaneReplicas,omitempty"`
+
+	// WorkerReplicas is the total number of worker nodes
+	// +kubebuilder:validation:Optional
+	WorkerReplicas int32 `json:"workerReplicas,omitempty"`
+
+	// Ready indicates if the cluster is ready
+	// +kubebuilder:validation:Optional
+	Ready bool `json:"ready,omitempty"`
+
+	// DiscoveredAt is when the cluster was discovered
+	// +kubebuilder:validation:Optional
+	DiscoveredAt *metav1.Time `json:"discoveredAt,omitempty"`
 }
 
 // VitistackResourceUsage shows current resource utilization

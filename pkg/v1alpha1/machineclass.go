@@ -12,10 +12,14 @@ import (
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:path=machineclasses,scope=Cluster,shortName=mc
-// +kubebuilder:printcolumn:name="Name",type=string,JSONPath=`.spec.name`
-// +kubebuilder:printcolumn:name="Provider",type=string,JSONPath=`.spec.provider`
-// +kubebuilder:printcolumn:name="Phase",type=string,JSONPath=`.status.phase`
-// +kubebuilder:printcolumn:name="Status",type=string,JSONPath=`.status.status`
+// +kubebuilder:printcolumn:name="Display Name",type=string,JSONPath=`.spec.displayName`
+// +kubebuilder:printcolumn:name="Category",type=string,JSONPath=`.spec.category`
+// +kubebuilder:printcolumn:name="Default",type=string,JSONPath=`.spec.default`
+// +kubebuilder:printcolumn:name="Cpu Cores",type=string,JSONPath=`.spec.cpu.cores`
+// +kubebuilder:printcolumn:name="Cpu Sockets",type=string,JSONPath=`.spec.cpu.sockets`
+// +kubebuilder:printcolumn:name="Cpu Threads",type=string,JSONPath=`.spec.cpu.threads`
+// +kubebuilder:printcolumn:name="Gpu Cores",type=string,JSONPath=`.spec.gpu.cores`
+// +kubebuilder:printcolumn:name="Memory",type=string,JSONPath=`.spec.memory.quantity`
 // +kubebuilder:printcolumn:name="Created",type=string,JSONPath=`.status.created`,description="Creation Timestamp"
 type MachineClass struct {
 	metav1.TypeMeta   `json:",inline"`
