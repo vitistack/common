@@ -4,11 +4,12 @@ type MachineProviderType string
 
 const (
 	MachineProviderTypeKubevirt MachineProviderType = "kubevirt"
+	MachineProviderTypeProxmox  MachineProviderType = "proxmox"
 )
 
 func (mpt MachineProviderType) IsValid() bool {
 	switch mpt {
-	case MachineProviderTypeKubevirt:
+	case MachineProviderTypeKubevirt, MachineProviderTypeProxmox:
 		return true
 	default:
 		return false
@@ -18,6 +19,7 @@ func (mpt MachineProviderType) IsValid() bool {
 func ValidMachineProviderTypes() []MachineProviderType {
 	return []MachineProviderType{
 		MachineProviderTypeKubevirt,
+		MachineProviderTypeProxmox,
 	}
 }
 
