@@ -53,6 +53,9 @@ jobs:
       - name: Verify CRDs are sanitized
         run: make verify-crds
 
+      - name: Generate combined crds.yaml
+        run: make gen-crds-yaml
+
       - name: Update Chart version
         run: |
           VERSION=${{ steps.version.outputs.version }}
@@ -93,6 +96,17 @@ jobs:
           echo "To install:"
           echo "  helm install ${CHART_NAME} oci://${{ env.REGISTRY }}/vitistack/${CHART_NAME} --version ${CHART_VERSION}"
 
+      - name: Create GitHub Release with crds.yaml
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: ${{ steps.version.outputs.tag }}
+          draft: false
+          prerelease: ${{ contains(steps.version.outputs.tag, '-') }}
+          files: |
+            crds.yaml
+          generate_release_notes: true
+
       - name: Summary
         run: |
           cat >> $GITHUB_STEP_SUMMARY << EOF
@@ -106,9 +120,18 @@ jobs:
           helm install vitistack-crds oci://${{ env.REGISTRY }}/vitistack/vitistack-crds --version ${{ steps.version.outputs.version }}
           \`\`\`
 
+          ### � CRDs YAML
+
+          Install CRDs directly with kubectl:
+
+          \`\`\`bash
+          kubectl apply -f https://github.com/vitistack/common/releases/latest/download/crds.yaml
+          \`\`\`
+
           ### 🔗 Links
 
           - [Container Registry](https://github.com/vitistack/common/pkgs/container/vitistack-crds)
+          - [Release Assets](https://github.com/vitistack/common/releases/tag/${{ steps.version.outputs.tag }})
 
           ### ✅ Verification
 
@@ -116,8 +139,9 @@ jobs:
           - Tests passed
           - Helm chart linted
           - OCI image pushed
+          - crds.yaml uploaded to release
 
           ### 📝 Next Steps
 
-          Developers should manually create the GitHub Release with release notes.
+          The GitHub Release has been created automatically with release notes.
           EOF

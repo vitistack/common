@@ -61,6 +61,13 @@ gen-manifests: controller-gen ## Generate manifests
 	@echo "Copying CRDs to charts/vitistack-crds/templates..."
 	@cp crds/*.yaml charts/vitistack-crds/templates/
 	@echo "CRDs copied successfully!"
+	@$(MAKE) gen-crds-yaml
+
+.PHONY: gen-crds-yaml
+gen-crds-yaml: ## Generate combined crds.yaml from individual CRD files
+	@echo "Generating crds.yaml..."
+	@cat crds/*.yaml > crds.yaml
+	@echo "crds.yaml generated successfully!"
 
 .PHONY: sanitize-crds
 sanitize-crds: ## Sanitize generated CRDs to remove unsupported int32/int64 formats.
