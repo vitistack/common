@@ -101,7 +101,9 @@ jobs:
           helm push /tmp/helm/crds-*.tgz oci://${{ env.HELM_REGISTRY }}
 
       - name: Install Cosign
-        uses: sigstore/cosign-installer@v4
+        uses: sigstore/cosign-installer@v4.0.0
+        with:
+          cosign-release: 'v3.0.3'
 
       - name: Sign Helm chart
         run: cosign sign --yes ${{ env.HELM_REGISTRY }}/crds:${{ needs.package-helm.outputs.version }}
