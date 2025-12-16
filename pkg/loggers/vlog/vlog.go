@@ -235,6 +235,10 @@ func logMsg(level slog.Level, msg string) {
 // writeRecord constructs a slog.Record with a caller pointing at the first frame outside this package.
 func writeRecord(logger *slog.Logger, level slog.Level, msg string) {
 	h := logger.Handler()
+	// Check if this level is enabled before proceeding
+	if !h.Enabled(context.Background(), level) {
+		return
+	}
 	pc := uintptr(0)
 	file := ""
 	line := 0
@@ -731,10 +735,14 @@ type slogSink struct {
 
 func (s *slogSink) Init(_ logr.RuntimeInfo) {}
 
-func (s *slogSink) Enabled(_ int) bool {
-	// logr will call Enabled with a verbosity level; we delegate to slog's handler for Info level.
-	// We conservatively report true; handler will still filter by level.
-	return true
+func (s *slogSink) Enabled(level int) bool {
+	// logr calls Enabled with a verbosity level: V(0) -> Info, V(1+) -> Debug.
+	// Map to slog levels and delegate to the handler's Enabled check.
+	lvl := slog.LevelInfo
+	if level > 0 {
+		lvl = slog.LevelDebug
+	}
+	return s.logger.Handler().Enabled(context.Background(), lvl)
 }
 
 func (s *slogSink) Info(level int, msg string, keysAndValues ...any) {
