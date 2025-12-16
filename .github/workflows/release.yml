@@ -67,7 +67,7 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: helm-chart
-          path: vitistack-crds-*.tgz
+          path: crds-*.tgz
           retention-days: 1
 
       - name: Upload crds.yaml artifact
@@ -98,13 +98,13 @@ jobs:
       - name: Push Helm chart
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
-          helm push /tmp/helm/vitistack-crds-*.tgz oci://${{ env.HELM_REGISTRY }}
+          helm push /tmp/helm/crds-*.tgz oci://${{ env.HELM_REGISTRY }}
 
       - name: Install Cosign
-        uses: sigstore/cosign-installer@v3
+        uses: sigstore/cosign-installer@v4
 
       - name: Sign Helm chart
-        run: cosign sign --yes ${{ env.HELM_REGISTRY }}/vitistack-crds:${{ needs.package-helm.outputs.version }}
+        run: cosign sign --yes ${{ env.HELM_REGISTRY }}/crds:${{ needs.package-helm.outputs.version }}
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
