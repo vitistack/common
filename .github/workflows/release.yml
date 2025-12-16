@@ -1,21 +1,26 @@
-name: Release Helm Chart
+name: Release
 
 on:
   push:
     tags:
-      - 'v[0-9]+.[0-9]+.[0-9]+*' # Matches v1.0.0, v1.0.0-alpha.1, etc.
-
-env:
-  REGISTRY: ghcr.io
-  CHART_NAME: crds
+      - 'v*'
 
 permissions:
   contents: write
   packages: write
+  id-token: write # Required for keyless signing with Sigstore
+
+env:
+  REGISTRY: ghcr.io
+  HELM_REGISTRY: ghcr.io/vitistack/helm
 
 jobs:
-  release:
+  # Package Helm chart
+  package-helm:
+    name: Package Helm Chart
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -23,125 +28,85 @@ jobs:
           fetch-depth: 0
 
       - name: Set up Go
-        uses: actions/setup-go@v6.1.0
+        uses: actions/setup-go@v6
         with:
           go-version-file: 'go.mod'
           cache: true
 
       - name: Set up Helm
         uses: azure/setup-helm@v4
-        with:
-          version: 'latest'
 
-      - name: Extract version from tag
+      - name: Extract version
         id: version
         run: |
-          VERSION=${GITHUB_REF#refs/tags/v}
-          echo "version=${VERSION}" >> $GITHUB_OUTPUT
-          echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
-          echo "Releasing version: ${VERSION}"
+          VERSION="${{ github.ref_name }}"
+          VERSION="${VERSION#v}"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
 
-      - name: Generate CRDs
-        run: make generate
-
-      - name: Build
-        run: make build
-
-      - name: Run tests
-        run: make test
-
-      - name: Verify CRDs are sanitized
-        run: make verify-crds
-
-      - name: Generate combined crds.yaml
-        run: make gen-crds-yaml
-
-      - name: Update Chart version
+      - name: Generate CRDs and Artifacts
         run: |
-          VERSION=${{ steps.version.outputs.version }}
-          sed -i "s/^version: .*/version: ${VERSION}/" charts/vitistack-crds/Chart.yaml
-          sed -i "s/^appVersion: .*/appVersion: \"${{ steps.version.outputs.tag }}\"/" charts/vitistack-crds/Chart.yaml
-          echo "Updated Chart.yaml:"
-          cat charts/vitistack-crds/Chart.yaml
+          make generate
+          make verify-crds
+          make gen-crds-yaml
 
-      - name: Lint Helm chart
-        run: helm lint charts/vitistack-crds
+      - name: Install yq
+        run: |
+          sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+          sudo chmod +x /usr/local/bin/yq
+
+      - name: Update chart versions
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          yq -i ".version = \"${VERSION}\"" charts/vitistack-crds/Chart.yaml
+          yq -i ".appVersion = \"${VERSION}\"" charts/vitistack-crds/Chart.yaml
 
       - name: Package Helm chart
-        run: |
-          helm package charts/vitistack-crds -d .helm-dist/
-          echo "Packaged charts:"
-          ls -lh .helm-dist/
+        run: helm package charts/vitistack-crds
 
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
+      - name: Upload chart artifact
+        uses: actions/upload-artifact@v6
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          name: helm-chart
+          path: vitistack-crds-*.tgz
+          retention-days: 1
 
-      - name: Push Helm chart to OCI registry
+      - name: Upload crds.yaml artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: crds-yaml
+          path: crds.yaml
+          retention-days: 1
+
+  # Publish and sign
+  publish-and-sign:
+    name: Publish & Sign
+    needs: [package-helm]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Helm chart
+        uses: actions/download-artifact@v7
+        with:
+          name: helm-chart
+          path: /tmp/helm
+
+      - name: Download crds.yaml
+        uses: actions/download-artifact@v7
+        with:
+          name: crds-yaml
+          path: .
+
+      - name: Push Helm chart
         run: |
-          CHART_VERSION=${{ steps.version.outputs.version }}
-          CHART_PACKAGE=".helm-dist/${CHART_NAME}-${CHART_VERSION}.tgz"
+          echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
+          helm push /tmp/helm/vitistack-crds-*.tgz oci://${{ env.HELM_REGISTRY }}
 
-          echo "Pushing Helm chart to OCI registry..."
-          helm push "${CHART_PACKAGE}" oci://${{ env.REGISTRY }}/vitistack
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3
 
-          echo "✓ Helm chart pushed successfully"
-          echo ""
-          echo "Chart is available at:"
-          echo "  oci://${{ env.REGISTRY }}/vitistack/${CHART_NAME}:${CHART_VERSION}"
-          echo ""
-          echo "To install:"
-          echo "  helm install ${CHART_NAME} oci://${{ env.REGISTRY }}/vitistack/${CHART_NAME} --version ${CHART_VERSION}"
+      - name: Sign Helm chart
+        run: cosign sign --yes ${{ env.HELM_REGISTRY }}/vitistack-crds:${{ needs.package-helm.outputs.version }}
 
-      - name: Create GitHub Release with crds.yaml
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.version.outputs.tag }}
-          name: ${{ steps.version.outputs.tag }}
-          draft: false
-          prerelease: ${{ contains(steps.version.outputs.tag, '-') }}
-          files: |
-            crds.yaml
-          generate_release_notes: true
-
-      - name: Summary
-        run: |
-          cat >> $GITHUB_STEP_SUMMARY << EOF
-          ## 🎉 Helm Chart Published for ${{ steps.version.outputs.tag }}
-
-          ### 📦 Helm Chart OCI Image
-
-          The Helm chart has been published to GitHub Container Registry:
-
-          \`\`\`bash
-          helm install vitistack-crds oci://${{ env.REGISTRY }}/vitistack/vitistack-crds --version ${{ steps.version.outputs.version }}
-          \`\`\`
-
-          ### � CRDs YAML
-
-          Install CRDs directly with kubectl:
-
-          \`\`\`bash
-          kubectl apply -f https://github.com/vitistack/common/releases/latest/download/crds.yaml
-          \`\`\`
-
-          ### 🔗 Links
-
-          - [Container Registry](https://github.com/vitistack/common/pkgs/container/vitistack-crds)
-          - [Release Assets](https://github.com/vitistack/common/releases/tag/${{ steps.version.outputs.tag }})
-
-          ### ✅ Verification
-
-          - CRDs generated and validated
-          - Tests passed
-          - Helm chart linted
-          - OCI image pushed
-          - crds.yaml uploaded to release
-
-          ### 📝 Next Steps
-
-          The GitHub Release has been created automatically with release notes.
-          EOF
+          files: crds.yaml

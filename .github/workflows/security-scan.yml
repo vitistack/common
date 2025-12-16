@@ -2,7 +2,7 @@ name: Security Scan
 
 on:
   schedule:
-    - cron: '0 0 * * 1' # Run weekly on Mondays
+    - cron: '0 0 * * 0' # Run weekly on Sundays
   workflow_dispatch: {}
 
 permissions:
@@ -27,17 +27,6 @@ jobs:
       - name: Install dependencies
         run: |
           go mod download
-
-      - name: Cache govulncheck
-        uses: actions/cache@v5.0.0
-        with:
-          path: |
-            ~/.cache/govulncheck
-            ~/.cache/go-build
-            ~/go/bin/govulncheck
-          key: ${{ runner.os }}-govulncheck-${{ hashFiles('go.mod', 'go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-govulncheck-
 
       - name: Run gosec security scan
         run: |
