@@ -2,6 +2,7 @@ package finalizers
 
 import (
 	"context"
+	"slices"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -9,12 +10,7 @@ import (
 // Has returns true if the object has the finalizer name.
 func Has(obj client.Object, name string) bool {
 	fins := obj.GetFinalizers()
-	for i := range fins {
-		if fins[i] == name {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(fins, name)
 }
 
 // Ensure adds the finalizer to the object if missing and patches it.

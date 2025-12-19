@@ -4,6 +4,7 @@ type KubernetesProviderType string
 
 const (
 	KubernetesProviderTypeTalos KubernetesProviderType = "talos"
+	KubernetesProviderTypeAKS   KubernetesProviderType = "aks"
 )
 
 func (pt KubernetesProviderType) IsValid() bool {
