@@ -9,7 +9,7 @@ const (
 
 func (pt KubernetesProviderType) IsValid() bool {
 	switch pt {
-	case KubernetesProviderTypeTalos:
+	case KubernetesProviderTypeTalos, KubernetesProviderTypeAKS:
 		return true
 	default:
 		return false
@@ -19,6 +19,7 @@ func (pt KubernetesProviderType) IsValid() bool {
 func ValidKubernetesProviderTypes() []KubernetesProviderType {
 	return []KubernetesProviderType{
 		KubernetesProviderTypeTalos,
+		KubernetesProviderTypeAKS,
 	}
 }
 

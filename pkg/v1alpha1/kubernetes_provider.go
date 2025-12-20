@@ -26,9 +26,9 @@ type KubernetesProvider struct {
 
 // KubernetesProviderSpec defines the desired state of KubernetesProvider
 type KubernetesProviderSpec struct {
-	// Provider type (eks, gke, aks, openshift, rancher, k3s, kubeadm, managed)
+	// Provider type (eks: talos, gke, aks, openshift, rancher, k3s, kubeadm, managed)
 	// +kubebuilder:validation:Required
-	// +kubebuilder:validation:Enum=eks;gke;aks;openshift;rancher;k3s;kubeadm;managed;vanilla;rke;rke2;talos
+	// +kubebuilder:validation:Enum=aks;talos
 	ProviderType string `json:"providerType"`
 
 	// Human-readable name for this Kubernetes provider

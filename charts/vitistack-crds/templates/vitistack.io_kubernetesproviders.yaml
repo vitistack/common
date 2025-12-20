@@ -685,20 +685,10 @@ spec:
                     type: object
                 type: object
               providerType:
-                description: Provider type (eks, gke, aks, openshift, rancher, k3s,
-                  kubeadm, managed)
+                description: 'Provider type (eks: talos, gke, aks, openshift, rancher,
+                  k3s, kubeadm, managed)'
                 enum:
-                - eks
-                - gke
                 - aks
-                - openshift
-                - rancher
-                - k3s
-                - kubeadm
-                - managed
-                - vanilla
-                - rke
-                - rke2
                 - talos
                 type: string
               region:

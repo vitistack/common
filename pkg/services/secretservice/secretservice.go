@@ -9,7 +9,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// SecretService handles secret operations for Talos clusters
+// SecretService handles secret operations for clusters
 type SecretService struct {
 	client.Client
 }
@@ -21,15 +21,15 @@ func NewSecretService(c client.Client) *SecretService {
 	}
 }
 
-// GetTalosSecret retrieves the Talos secret for a cluster
-func (s *SecretService) GetTalosSecret(ctx context.Context, name, namespace string) (*corev1.Secret, error) {
+// GetSecret retrieves the secret for a cluster
+func (s *SecretService) GetSecret(ctx context.Context, name, namespace string) (*corev1.Secret, error) {
 	secret := &corev1.Secret{}
 	err := s.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, secret)
 	return secret, err
 }
 
-// CreateTalosSecret creates a new Talos secret for a cluster
-func (s *SecretService) CreateTalosSecret(ctx context.Context, name, namespace string, labels map[string]string, annotations map[string]string, data map[string][]byte) error {
+// CreateSecret creates a new secret for a cluster
+func (s *SecretService) CreateSecret(ctx context.Context, name, namespace string, labels map[string]string, annotations map[string]string, data map[string][]byte) error {
 	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        name,
@@ -43,7 +43,7 @@ func (s *SecretService) CreateTalosSecret(ctx context.Context, name, namespace s
 	return s.Create(ctx, secret)
 }
 
-// UpdateTalosSecret updates an existing Talos secret for a cluster
-func (s *SecretService) UpdateTalosSecret(ctx context.Context, secret *corev1.Secret) error {
+// UpdateSecret updates an existing secret for a cluster
+func (s *SecretService) UpdateSecret(ctx context.Context, secret *corev1.Secret) error {
 	return s.Update(ctx, secret)
 }
