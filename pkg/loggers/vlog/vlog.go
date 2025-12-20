@@ -224,7 +224,13 @@ func logArgs(level slog.Level, args ...any) {
 	if len(args) == 0 {
 		return
 	}
-	writeRecord(base, level, fmt.Sprint(args...))
+	// First argument is the message, remaining args are key-value pairs
+	msg := fmt.Sprint(args[0])
+	if len(args) > 1 {
+		writeRecordWithAttrs(base, level, msg, args[1:]...)
+	} else {
+		writeRecord(base, level, msg)
+	}
 }
 
 func logMsg(level slog.Level, msg string) {
@@ -249,6 +255,36 @@ func writeRecord(logger *slog.Logger, level slog.Level, msg string) {
 	if addCaller && file != "" {
 		short := shortenPath(file)
 		rec.AddAttrs(slog.String("caller", fmt.Sprintf("%s:%d", short, line)))
+	}
+	_ = h.Handle(context.Background(), rec)
+}
+
+// writeRecordWithAttrs constructs a slog.Record with key-value attributes.
+func writeRecordWithAttrs(logger *slog.Logger, level slog.Level, msg string, keysAndValues ...any) {
+	h := logger.Handler()
+	// Check if this level is enabled before proceeding
+	if !h.Enabled(context.Background(), level) {
+		return
+	}
+	pc := uintptr(0)
+	file := ""
+	line := 0
+	if addCaller {
+		pc, file, line = findExternalCaller()
+	}
+	rec := slog.NewRecord(time.Now(), level, msg, pc)
+	if addCaller && file != "" {
+		short := shortenPath(file)
+		rec.AddAttrs(slog.String("caller", fmt.Sprintf("%s:%d", short, line)))
+	}
+	// Add key-value pairs as attributes
+	kvs := convertKVs(keysAndValues)
+	for i := 0; i < len(kvs); i += 2 {
+		key, _ := kvs[i].(string)
+		if key == "" {
+			key = fmt.Sprint(kvs[i])
+		}
+		rec.AddAttrs(slog.Any(key, kvs[i+1]))
 	}
 	_ = h.Handle(context.Background(), rec)
 }
