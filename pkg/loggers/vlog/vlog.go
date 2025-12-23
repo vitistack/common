@@ -413,6 +413,12 @@ func Pretty(v any) any { return prettyValue{v: v} }
 
 type prettyValue struct{ v any }
 
+// LogValue implements slog.LogValuer so that slog's JSON handler properly
+// serializes the pretty-printed value as a string field with correct separators.
+func (p prettyValue) LogValue() slog.Value {
+	return slog.StringValue(p.String())
+}
+
 func (p prettyValue) String() string {
 	if p.v == nil {
 		return "null"
