@@ -92,6 +92,14 @@ type KubernetesClusterSpecControlPlane struct {
 	MachineClass string                               `json:"machineClass"`
 	Metadata     KubernetesClusterSpecMetadataDetails `json:"metadata"`
 	Storage      []KubernetesClusterStorage           `json:"storage"`
+
+	// Architecture is the CPU architecture for the control plane nodes.
+	// Supported values: "amd64", "arm64", "x86_64" (treated as amd64).
+	// Defaults to "amd64" if not specified.
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:validation:Enum=amd64;arm64;x86_64
+	// +kubebuilder:default=amd64
+	Architecture string `json:"architecture,omitempty"`
 }
 
 type KubernetesClusterSpecMetadataDetails struct {
@@ -119,6 +127,14 @@ type KubernetesClusterNodePool struct {
 	Metadata     KubernetesClusterSpecMetadataDetails `json:"metadata"`
 	Taint        []KubernetesClusterTaint             `json:"taint"`
 	Storage      []KubernetesClusterStorage           `json:"storage"`
+
+	// Architecture is the CPU architecture for the nodes in this pool.
+	// Supported values: "amd64", "arm64", "x86_64" (treated as amd64).
+	// Defaults to "amd64" if not specified.
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:validation:Enum=amd64;arm64;x86_64
+	// +kubebuilder:default=amd64
+	Architecture string `json:"architecture,omitempty"`
 }
 
 type KubernetesClusterTaint struct {

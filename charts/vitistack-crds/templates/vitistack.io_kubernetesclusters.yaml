@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.19.0
+    controller-gen.kubebuilder.io/version: v0.20.0
   name: kubernetesclusters.vitistack.io
 spec:
   group: vitistack.io
@@ -99,6 +99,17 @@ spec:
                 properties:
                   controlplane:
                     properties:
+                      architecture:
+                        default: amd64
+                        description: |-
+                          Architecture is the CPU architecture for the control plane nodes.
+                          Supported values: "amd64", "arm64", "x86_64" (treated as amd64).
+                          Defaults to "amd64" if not specified.
+                        enum:
+                        - amd64
+                        - arm64
+                        - x86_64
+                        type: string
                       machineClass:
                         type: string
                       metadata:
@@ -159,6 +170,17 @@ spec:
                       nodePools:
                         items:
                           properties:
+                            architecture:
+                              default: amd64
+                              description: |-
+                                Architecture is the CPU architecture for the nodes in this pool.
+                                Supported values: "amd64", "arm64", "x86_64" (treated as amd64).
+                                Defaults to "amd64" if not specified.
+                              enum:
+                              - amd64
+                              - arm64
+                              - x86_64
+                              type: string
                             autoscaling:
                               properties:
                                 enabled:
