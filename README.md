@@ -52,7 +52,7 @@ Small, focused libraries for cloud-native applications:
 # Create a PAT at: https://github.com/settings/tokens/new?scopes=read:packages
 helm registry login ghcr.io
 
-helm install vitistack-crds oci://ghcr.io/vitistack/crds
+helm install vitistack-crds oci://ghcr.io/vitistack/helm/crds
 
 # Or using kubectl (no authentication required)
 kubectl apply -f https://github.com/vitistack/common/releases/latest/download/crds.yaml
