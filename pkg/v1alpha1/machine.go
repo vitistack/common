@@ -77,6 +77,9 @@ type MachineSpec struct {
 
 	// Backup configuration
 	Backup MachineBackup `json:"backup,omitempty"`
+
+	// Cloud-init configuration for VM initialization
+	CloudInit *CloudInitConfig `json:"cloudInit,omitempty"`
 }
 
 type MachineCPU struct {
@@ -190,6 +193,93 @@ type MachineBackup struct {
 	Schedule string `json:"schedule,omitempty"`
 	// Retention period in days
 	RetentionDays int `json:"retentionDays,omitempty"`
+}
+
+// CloudInitConfig defines the cloud-init configuration for a VM
+// Cloud-init data can be provided inline, from a ConfigMap, or from a Secret
+type CloudInitConfig struct {
+	// Type specifies the cloud-init type to use
+	// Valid values are: noCloud, configDrive
+	// +kubebuilder:validation:Enum=noCloud;configDrive
+	// +kubebuilder:default=noCloud
+	Type CloudInitType `json:"type,omitempty"`
+
+	// UserData contains cloud-init user data content directly
+	// This is typically a cloud-config YAML starting with #cloud-config
+	// +optional
+	UserData string `json:"userData,omitempty"`
+
+	// UserDataBase64 contains base64-encoded cloud-init user data
+	// Use this for binary or pre-encoded data
+	// +optional
+	UserDataBase64 string `json:"userDataBase64,omitempty"`
+
+	// NetworkData contains cloud-init network configuration directly
+	// This follows the cloud-init network config v1 or v2 format
+	// +optional
+	NetworkData string `json:"networkData,omitempty"`
+
+	// NetworkDataBase64 contains base64-encoded network data
+	// +optional
+	NetworkDataBase64 string `json:"networkDataBase64,omitempty"`
+
+	// UserDataSecretRef references a Secret containing cloud-init user data
+	// The Secret should have a key named 'userdata' or a custom key specified in UserDataSecretKey
+	// +optional
+	UserDataSecretRef *CloudInitSecretRef `json:"userDataSecretRef,omitempty"`
+
+	// NetworkDataSecretRef references a Secret containing cloud-init network data
+	// The Secret should have a key named 'networkdata' or a custom key specified in NetworkDataSecretKey
+	// +optional
+	NetworkDataSecretRef *CloudInitSecretRef `json:"networkDataSecretRef,omitempty"`
+
+	// UserDataConfigMapRef references a ConfigMap containing cloud-init user data
+	// The ConfigMap should have a key named 'userdata' or a custom key specified
+	// +optional
+	UserDataConfigMapRef *CloudInitConfigMapRef `json:"userDataConfigMapRef,omitempty"`
+
+	// NetworkDataConfigMapRef references a ConfigMap containing cloud-init network data
+	// The ConfigMap should have a key named 'networkdata' or a custom key specified
+	// +optional
+	NetworkDataConfigMapRef *CloudInitConfigMapRef `json:"networkDataConfigMapRef,omitempty"`
+}
+
+// CloudInitType specifies the type of cloud-init volume to use
+// +kubebuilder:validation:Enum=noCloud;configDrive
+type CloudInitType string
+
+const (
+	// CloudInitTypeNoCloud uses cloud-init NoCloud datasource
+	// This is the most common type for KubeVirt VMs
+	CloudInitTypeNoCloud CloudInitType = "noCloud"
+
+	// CloudInitTypeConfigDrive uses cloud-init ConfigDrive datasource
+	// This is useful for OpenStack compatibility
+	CloudInitTypeConfigDrive CloudInitType = "configDrive"
+)
+
+// CloudInitSecretRef references a Secret containing cloud-init data
+type CloudInitSecretRef struct {
+	// Name is the name of the Secret in the same namespace as the Machine
+	// +kubebuilder:validation:Required
+	Name string `json:"name"`
+
+	// Key is the key within the Secret containing the cloud-init data
+	// Defaults to 'userdata' for user data secrets and 'networkdata' for network data secrets
+	// +optional
+	Key string `json:"key,omitempty"`
+}
+
+// CloudInitConfigMapRef references a ConfigMap containing cloud-init data
+type CloudInitConfigMapRef struct {
+	// Name is the name of the ConfigMap in the same namespace as the Machine
+	// +kubebuilder:validation:Required
+	Name string `json:"name"`
+
+	// Key is the key within the ConfigMap containing the cloud-init data
+	// Defaults to 'userdata' for user data configs and 'networkdata' for network data configs
+	// +optional
+	Key string `json:"key,omitempty"`
 }
 
 type MachineStatus struct {

@@ -3177,6 +3177,110 @@ spec:
                     description: Backup schedule (cron format)
                     type: string
                 type: object
+              cloudInit:
+                description: Cloud-init configuration for VM initialization
+                properties:
+                  networkData:
+                    description: |-
+                      NetworkData contains cloud-init network configuration directly
+                      This follows the cloud-init network config v1 or v2 format
+                    type: string
+                  networkDataBase64:
+                    description: NetworkDataBase64 contains base64-encoded network
+                      data
+                    type: string
+                  networkDataConfigMapRef:
+                    description: |-
+                      NetworkDataConfigMapRef references a ConfigMap containing cloud-init network data
+                      The ConfigMap should have a key named 'networkdata' or a custom key specified
+                    properties:
+                      key:
+                        description: |-
+                          Key is the key within the ConfigMap containing the cloud-init data
+                          Defaults to 'userdata' for user data configs and 'networkdata' for network data configs
+                        type: string
+                      name:
+                        description: Name is the name of the ConfigMap in the same
+                          namespace as the Machine
+                        type: string
+                    required:
+                    - name
+                    type: object
+                  networkDataSecretRef:
+                    description: |-
+                      NetworkDataSecretRef references a Secret containing cloud-init network data
+                      The Secret should have a key named 'networkdata' or a custom key specified in NetworkDataSecretKey
+                    properties:
+                      key:
+                        description: |-
+                          Key is the key within the Secret containing the cloud-init data
+                          Defaults to 'userdata' for user data secrets and 'networkdata' for network data secrets
+                        type: string
+                      name:
+                        description: Name is the name of the Secret in the same namespace
+                          as the Machine
+                        type: string
+                    required:
+                    - name
+                    type: object
+                  type:
+                    allOf:
+                    - enum:
+                      - noCloud
+                      - configDrive
+                    - enum:
+                      - noCloud
+                      - configDrive
+                    default: noCloud
+                    description: |-
+                      Type specifies the cloud-init type to use
+                      Valid values are: noCloud, configDrive
+                    type: string
+                  userData:
+                    description: |-
+                      UserData contains cloud-init user data content directly
+                      This is typically a cloud-config YAML starting with #cloud-config
+                    type: string
+                  userDataBase64:
+                    description: |-
+                      UserDataBase64 contains base64-encoded cloud-init user data
+                      Use this for binary or pre-encoded data
+                    type: string
+                  userDataConfigMapRef:
+                    description: |-
+                      UserDataConfigMapRef references a ConfigMap containing cloud-init user data
+                      The ConfigMap should have a key named 'userdata' or a custom key specified
+                    properties:
+                      key:
+                        description: |-
+                          Key is the key within the ConfigMap containing the cloud-init data
+                          Defaults to 'userdata' for user data configs and 'networkdata' for network data configs
+                        type: string
+                      name:
+                        description: Name is the name of the ConfigMap in the same
+                          namespace as the Machine
+                        type: string
+                    required:
+                    - name
+                    type: object
+                  userDataSecretRef:
+                    description: |-
+                      UserDataSecretRef references a Secret containing cloud-init user data
+                      The Secret should have a key named 'userdata' or a custom key specified in UserDataSecretKey
+                    properties:
+                      key:
+                        description: |-
+                          Key is the key within the Secret containing the cloud-init data
+                          Defaults to 'userdata' for user data secrets and 'networkdata' for network data secrets
+                        type: string
+                      name:
+                        description: Name is the name of the Secret in the same namespace
+                          as the Machine
+                        type: string
+                    required:
+                    - name
+                    type: object
+                type: object
               cpu:
                 description: CPU configuration
                 properties:

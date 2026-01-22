@@ -155,7 +155,12 @@ func DPanic(args ...any) { logArgs(slog.LevelError, args...) }
 func Panic(args ...any) { logArgs(slog.LevelError, args...); panic(fmt.Sprint(args...)) }
 
 // Fatal logs at Error level then exits(1).
-func Fatal(args ...any) { logArgs(slog.LevelError, args...); os.Exit(1) }
+// Syncs stdout before exiting to ensure logs are flushed in containerized environments.
+func Fatal(args ...any) {
+	logArgs(slog.LevelError, args...)
+	_ = os.Stdout.Sync()
+	os.Exit(1)
+}
 
 // Formatted variants.
 func Debugf(format string, args ...any)  { logMsg(slog.LevelDebug, fmt.Sprintf(format, args...)) }
@@ -168,8 +173,12 @@ func Panicf(format string, args ...any) {
 	logMsg(slog.LevelError, msg)
 	panic(msg)
 }
+
+// Fatalf logs at Error level then exits(1).
+// Syncs stdout before exiting to ensure logs are flushed in containerized environments.
 func Fatalf(format string, args ...any) {
 	logMsg(slog.LevelError, fmt.Sprintf(format, args...))
+	_ = os.Stdout.Sync()
 	os.Exit(1)
 }
 
