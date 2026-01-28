@@ -183,7 +183,7 @@ func (m *MockS3Client) ListObjects(ctx context.Context, bucket string, opts ...L
 		opt(options)
 	}
 
-	var objects []Object
+	objects := make([]Object, 0, len(b.objects))
 	prefixSet := make(map[string]struct{})
 
 	// Collect and sort keys for deterministic output
