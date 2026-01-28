@@ -13,6 +13,7 @@ go get github.com/vitistack/common@latest
 - [vlog](#vlog---structured-logging) - Structured logging with Zap
 - [serialize](#serialize---json-helpers) - JSON serialization helpers
 - [k8sclient](#k8sclient---kubernetes-client) - Kubernetes client initialization
+- [s3client](#s3client---s3-compatible-storage) - S3-compatible storage client
 - [crdcheck](#crdcheck---crd-validation) - CRD prerequisite checking
 - [dotenv](#dotenv---environment-configuration) - Smart .env file loading
 
@@ -227,6 +228,248 @@ See `cmd/examples/main.go` for a runnable sample combining `vlog`, `serialize`, 
 
 ---
 
+## s3client - S3-Compatible Storage
+
+A generic S3 client using the MinIO SDK that works with any S3-compatible storage provider including AWS S3, MinIO, Hetzner Object Storage, DigitalOcean Spaces, Wasabi, Backblaze B2, and Cloudflare R2.
+
+### Quick Start
+
+```go
+import (
+	"context"
+	"bytes"
+	"github.com/vitistack/common/pkg/clients/s3client"
+)
+
+func main() {
+	// Create client with functional options
+	s3, err := s3client.NewGenericS3Client(
+		s3client.WithEndpoint("minio.example.com:9000"),
+		s3client.WithRegion("us-east-1"),
+		s3client.WithCredentials("access-key", "secret-key"),
+		s3client.WithSSL(false),
+		s3client.WithPathStyle(true),
+	)
+	if err != nil {
+		panic(err)
+	}
+	defer s3.Close()
+
+	ctx := context.Background()
+
+	// Upload an object
+	content := []byte("Hello, S3!")
+	_, err = s3.PutObject(ctx, "my-bucket", "hello.txt",
+		bytes.NewReader(content), int64(len(content)),
+		s3client.WithContentType("text/plain"),
+	)
+
+	// List objects
+	list, _ := s3.ListObjects(ctx, "my-bucket",
+		s3client.WithPrefix("documents/"),
+	)
+	for _, obj := range list.Objects {
+		fmt.Printf("Key: %s, Size: %d\n", obj.Key, obj.Size)
+	}
+}
+```
+
+### Environment Variables
+
+Configure the client entirely from environment variables:
+
+```go
+// Load from environment
+s3, err := s3client.NewGenericS3ClientFromEnv()
+if err != nil {
+	panic(err)
+}
+defer s3.Close()
+```
+
+Supported environment variables:
+
+| Variable               | Description                | Default     |
+| ---------------------- | -------------------------- | ----------- |
+| `S3_ENDPOINT`          | S3 endpoint URL (required) | -           |
+| `S3_REGION`            | AWS region                 | `us-east-1` |
+| `S3_ACCESS_KEY_ID`     | Access key (required)      | -           |
+| `S3_SECRET_ACCESS_KEY` | Secret key (required)      | -           |
+| `S3_SESSION_TOKEN`     | Optional session token     | -           |
+| `S3_USE_SSL`           | Use HTTPS                  | `true`      |
+| `S3_PATH_STYLE`        | Use path-style addressing  | `false`     |
+| `S3_CONNECT_TIMEOUT`   | Connection timeout         | `10s`       |
+| `S3_REQUEST_TIMEOUT`   | Request timeout            | `30s`       |
+| `S3_MAX_RETRIES`       | Max retry attempts         | `3`         |
+| `S3_DEBUG`             | Enable debug logging       | `false`     |
+| `S3_BUCKET`            | Default bucket name        | -           |
+
+### Provider-Specific Configuration
+
+**AWS S3:**
+
+```bash
+S3_ENDPOINT=s3.amazonaws.com
+S3_REGION=us-east-1
+S3_USE_SSL=true
+S3_PATH_STYLE=false
+```
+
+**MinIO (self-hosted):**
+
+```bash
+S3_ENDPOINT=minio.example.com:9000
+S3_REGION=us-east-1
+S3_USE_SSL=false
+S3_PATH_STYLE=true
+```
+
+**Hetzner Object Storage:**
+
+```bash
+S3_ENDPOINT=fsn1.your-objectstorage.com
+S3_REGION=fsn1
+S3_USE_SSL=true
+S3_PATH_STYLE=true
+```
+
+**DigitalOcean Spaces:**
+
+```bash
+S3_ENDPOINT=nyc3.digitaloceanspaces.com
+S3_REGION=nyc3
+S3_USE_SSL=true
+S3_PATH_STYLE=false
+```
+
+**Cloudflare R2:**
+
+```bash
+S3_ENDPOINT=<account_id>.r2.cloudflarestorage.com
+S3_REGION=auto
+S3_USE_SSL=true
+S3_PATH_STYLE=true
+```
+
+### Functional Options
+
+Configure the client using the functional options pattern:
+
+```go
+s3, err := s3client.NewGenericS3Client(
+	s3client.WithEndpoint("s3.example.com"),
+	s3client.WithRegion("us-east-1"),
+	s3client.WithCredentials("access-key", "secret-key"),
+	s3client.WithSSL(true),
+	s3client.WithPathStyle(true),
+	s3client.WithConnectTimeout(15*time.Second),
+	s3client.WithRequestTimeout(60*time.Second),
+	s3client.WithMaxRetries(5),
+	s3client.WithDebug(true),
+)
+```
+
+Mix environment variables with explicit options (explicit options override env vars):
+
+```go
+s3, err := s3client.NewGenericS3Client(
+	s3client.WithConfigFromEnv(),              // Load from env first
+	s3client.WithEndpoint("override.example.com"), // Override specific values
+)
+```
+
+### Operations
+
+```go
+ctx := context.Background()
+
+// Bucket operations
+s3.CreateBucket(ctx, "my-bucket")
+exists, _ := s3.BucketExists(ctx, "my-bucket")
+s3.DeleteBucket(ctx, "my-bucket")
+
+// Upload objects
+s3.PutObject(ctx, "bucket", "key", reader, size,
+	s3client.WithContentType("application/json"),
+	s3client.WithMetadata(map[string]string{"author": "me"}),
+	s3client.WithStorageClass("STANDARD"),
+)
+
+// Download objects
+output, _ := s3.GetObject(ctx, "bucket", "key")
+defer output.Body.Close()
+data, _ := io.ReadAll(output.Body)
+
+// Get object metadata
+head, _ := s3.HeadObject(ctx, "bucket", "key")
+fmt.Printf("Size: %d, ContentType: %s\n", head.ContentLength, head.ContentType)
+
+// List objects
+list, _ := s3.ListObjects(ctx, "bucket",
+	s3client.WithPrefix("folder/"),
+	s3client.WithDelimiter("/"),
+	s3client.WithMaxKeys(100),
+)
+
+// Generate presigned URL
+url, _ := s3.GetPresignedURL(ctx, "bucket", "key", 1*time.Hour)
+
+// Delete objects
+s3.DeleteObject(ctx, "bucket", "key")
+```
+
+### Mock Client for Testing
+
+Use the mock client for unit tests:
+
+```go
+func TestMyFunction(t *testing.T) {
+	// Create mock client
+	s3 := s3client.NewMockS3Client(
+		s3client.WithEndpoint("mock.local"),
+	)
+	defer s3.Close()
+
+	ctx := context.Background()
+
+	// Setup test data
+	s3.CreateBucket(ctx, "test-bucket")
+	content := []byte("test data")
+	s3.PutObject(ctx, "test-bucket", "test-key",
+		bytes.NewReader(content), int64(len(content)),
+	)
+
+	// Run your tests...
+}
+```
+
+Use hooks for custom behavior:
+
+```go
+mock := s3client.NewMockS3Client()
+mock.PutObjectHook = func(ctx context.Context, bucket, key string, reader io.Reader, size int64, opts ...s3client.PutObjectOption) (*s3client.PutObjectOutput, error) {
+	// Custom behavior or validation
+	return &s3client.PutObjectOutput{ETag: "custom-etag"}, nil
+}
+```
+
+### Error Handling
+
+```go
+import "github.com/vitistack/common/pkg/clients/s3client"
+
+_, err := s3.GetObject(ctx, "bucket", "nonexistent-key")
+if err != nil {
+	if s3client.IsNotFoundError(err) {
+		// Handle not found
+	} else if s3client.IsAccessDeniedError(err) {
+		// Handle permission error
+	}
+}
+```
+
+---
+
 ## crdcheck - CRD Validation
 
 Verify a set of CRD-backed API resources are served by the cluster before your operator starts reconciling. It uses the Discovery API and will log and panic when required CRDs are missing.
@@ -301,7 +544,6 @@ func main() {
 2. **Environment-specific files**: Environment-specific `.env-<ENV>` files (e.g., `.env-production`, `.env-development`) are **only loaded when the `ENV` environment variable is set**. Without setting `ENV`, only the base `.env` file will be loaded
 
 3. **Load order and precedence**:
-
    - Base `.env` file is loaded first
    - Environment-specific `.env-<ENV>` file overrides base file values
    - Existing OS environment variables are **never overridden**
@@ -475,6 +717,15 @@ func main() {
 - **Connection refused**: Check KUBECONFIG is set correctly for out-of-cluster usage
 - **Permission denied**: Ensure service account has necessary RBAC permissions in-cluster
 - **Client is nil**: Call `k8sclient.Init()` before using the client
+
+### s3client
+
+- **Connection refused**: Verify endpoint URL is correct and accessible
+- **Access denied**: Check access key and secret key are correct
+- **Bucket not found**: Ensure bucket exists; use `BucketExists()` to check
+- **SSL certificate errors**: For self-signed certs, set `S3_USE_SSL=false` or configure trusted CA
+- **Path-style errors**: Some providers (MinIO, Hetzner) require `S3_PATH_STYLE=true`
+- **Region mismatch**: Ensure region matches where your bucket was created
 
 ### crdcheck
 

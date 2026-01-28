@@ -35,6 +35,7 @@ Small, focused libraries for cloud-native applications:
 - **`vlog`** - Structured logging with Zap and logr adapter
 - **`serialize`** - JSON helpers for quick serialization
 - **`k8sclient`** - Kubernetes client initialization
+- **`s3client`** - S3-compatible storage client (AWS, MinIO, Hetzner, etc.)
 - **`crdcheck`** - CRD prerequisite validation
 - **`dotenv`** - Smart environment configuration
 
