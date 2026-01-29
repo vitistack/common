@@ -107,6 +107,9 @@ type Config struct {
 	// UseSSL determines whether to use HTTPS
 	UseSSL bool
 
+	// InsecureSkipVerify skips TLS certificate verification (use with caution)
+	InsecureSkipVerify bool
+
 	// PathStyle forces path-style addressing (required for MinIO and some S3-compatible services)
 	PathStyle bool
 
@@ -162,6 +165,14 @@ func WithSSL(useSSL bool) Option {
 	}
 }
 
+// WithInsecureSkipVerify skips TLS certificate verification.
+// WARNING: This should only be used for testing or in environments with self-signed certificates.
+func WithInsecureSkipVerify(skip bool) Option {
+	return func(c *Config) {
+		c.InsecureSkipVerify = skip
+	}
+}
+
 // WithPathStyle enables or disables path-style addressing.
 func WithPathStyle(pathStyle bool) Option {
 	return func(c *Config) {
@@ -200,13 +211,14 @@ func WithDebug(debug bool) Option {
 // DefaultConfig returns a Config with sensible defaults.
 func DefaultConfig() *Config {
 	return &Config{
-		Region:         "no-west-1",
-		UseSSL:         true,
-		PathStyle:      false,
-		ConnectTimeout: 10 * time.Second,
-		RequestTimeout: 30 * time.Second,
-		MaxRetries:     3,
-		Debug:          false,
+		Region:             "no-west-1",
+		UseSSL:             true,
+		InsecureSkipVerify: false,
+		PathStyle:          false,
+		ConnectTimeout:     10 * time.Second,
+		RequestTimeout:     30 * time.Second,
+		MaxRetries:         3,
+		Debug:              false,
 	}
 }
 

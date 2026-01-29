@@ -2,8 +2,11 @@ package s3client
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"io"
+	"net"
+	"net/http"
 	"net/url"
 	"time"
 
@@ -43,10 +46,32 @@ func NewGenericS3Client(opts ...Option) (*GenericS3Client, error) {
 		endpoint = u.Host
 	}
 
+	// Create custom transport with TLS configuration
+	transport := &http.Transport{
+		Proxy: http.ProxyFromEnvironment,
+		DialContext: (&net.Dialer{
+			Timeout:   cfg.ConnectTimeout,
+			KeepAlive: 30 * time.Second,
+		}).DialContext,
+		MaxIdleConns:          100,
+		IdleConnTimeout:       90 * time.Second,
+		TLSHandshakeTimeout:   10 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
+	}
+
+	// Configure TLS if SSL is enabled
+	if cfg.UseSSL {
+		transport.TLSClientConfig = &tls.Config{
+			MinVersion:         tls.VersionTLS12,
+			InsecureSkipVerify: cfg.InsecureSkipVerify, //#nosec G402 -- User-configurable option for self-signed certs
+		}
+	}
+
 	// Create MinIO client options
 	minioOpts := &minio.Options{
-		Creds:  credentials.NewStaticV4(cfg.AccessKeyID, cfg.SecretAccessKey, cfg.SessionToken),
-		Secure: cfg.UseSSL,
+		Creds:     credentials.NewStaticV4(cfg.AccessKeyID, cfg.SecretAccessKey, cfg.SessionToken),
+		Secure:    cfg.UseSSL,
+		Transport: transport,
 	}
 
 	// Create the MinIO client
