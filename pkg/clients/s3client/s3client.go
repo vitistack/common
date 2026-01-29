@@ -113,6 +113,12 @@ type Config struct {
 	// ForceHTTP2 enables HTTP/2 for connections (default: false for better compatibility)
 	ForceHTTP2 bool
 
+	// DisableKeepAlives disables HTTP keep-alives (default: false)
+	DisableKeepAlives bool
+
+	// TLSMaxVersion sets the maximum TLS version (e.g., "1.2" or "1.3", default: "" for auto)
+	TLSMaxVersion string
+
 	// PathStyle forces path-style addressing (required for MinIO and some S3-compatible services)
 	PathStyle bool
 
@@ -184,6 +190,22 @@ func WithForceHTTP2(force bool) Option {
 	}
 }
 
+// WithDisableKeepAlives disables HTTP keep-alives.
+// When true, the Transport will not reuse connections for subsequent requests.
+func WithDisableKeepAlives(disable bool) Option {
+	return func(c *Config) {
+		c.DisableKeepAlives = disable
+	}
+}
+
+// WithTLSMaxVersion sets the maximum TLS version.
+// Valid values are "1.2" or "1.3". Empty string means no maximum (uses highest available).
+func WithTLSMaxVersion(version string) Option {
+	return func(c *Config) {
+		c.TLSMaxVersion = version
+	}
+}
+
 // WithPathStyle enables or disables path-style addressing.
 func WithPathStyle(pathStyle bool) Option {
 	return func(c *Config) {
@@ -226,6 +248,8 @@ func DefaultConfig() *Config {
 		UseSSL:             true,
 		InsecureSkipVerify: false,
 		ForceHTTP2:         false,
+		DisableKeepAlives:  false,
+		TLSMaxVersion:      "",
 		PathStyle:          false,
 		ConnectTimeout:     10 * time.Second,
 		RequestTimeout:     30 * time.Second,

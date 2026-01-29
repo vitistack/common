@@ -17,6 +17,8 @@ const (
 	EnvS3UseSSL             = "S3_USE_SSL"
 	EnvS3InsecureSkipVerify = "S3_INSECURE_SKIP_VERIFY"
 	EnvS3ForceHTTP2         = "S3_FORCE_HTTP2"
+	EnvS3DisableKeepAlives  = "S3_DISABLE_KEEP_ALIVES"
+	EnvS3TLSMaxVersion      = "S3_TLS_MAX_VERSION"
 	EnvS3PathStyle          = "S3_PATH_STYLE"
 	EnvS3ConnectTimeout     = "S3_CONNECT_TIMEOUT"
 	EnvS3RequestTimeout     = "S3_REQUEST_TIMEOUT"
@@ -39,6 +41,8 @@ const (
 //   - S3_USE_SSL: Whether to use HTTPS (default: "true")
 //   - S3_INSECURE_SKIP_VERIFY: Skip TLS certificate verification (default: "false")
 //   - S3_FORCE_HTTP2: Enable HTTP/2 for connections (default: "false")
+//   - S3_DISABLE_KEEP_ALIVES: Disable HTTP keep-alives (default: "false")
+//   - S3_TLS_MAX_VERSION: Maximum TLS version, e.g. "1.2" or "1.3" (default: auto)
 //   - S3_PATH_STYLE: Use path-style addressing (default: "false")
 //   - S3_CONNECT_TIMEOUT: Connection timeout (default: "10s")
 //   - S3_REQUEST_TIMEOUT: Request timeout (default: "30s")
@@ -56,8 +60,11 @@ func ConfigFromEnv() *Config {
 	applyBoolEnv(&cfg.UseSSL, EnvS3UseSSL, true)
 	applyBoolEnv(&cfg.InsecureSkipVerify, EnvS3InsecureSkipVerify, false)
 	applyBoolEnv(&cfg.ForceHTTP2, EnvS3ForceHTTP2, false)
+	applyBoolEnv(&cfg.DisableKeepAlives, EnvS3DisableKeepAlives, false)
 	applyBoolEnv(&cfg.PathStyle, EnvS3PathStyle, false)
 	applyBoolEnv(&cfg.Debug, EnvS3Debug, false)
+
+	applyStringEnv(&cfg.TLSMaxVersion, EnvS3TLSMaxVersion)
 
 	applyDurationEnv(&cfg.ConnectTimeout, EnvS3ConnectTimeout)
 	applyDurationEnv(&cfg.RequestTimeout, EnvS3RequestTimeout)
@@ -126,48 +133,56 @@ func WithConfigFromEnv() Option {
 	return func(c *Config) {
 		envCfg := ConfigFromEnv()
 
-		// Only apply non-empty values from env
-		if envCfg.Endpoint != "" {
-			c.Endpoint = envCfg.Endpoint
-		}
-		if envCfg.Region != "" {
-			c.Region = envCfg.Region
-		}
-		if envCfg.AccessKeyID != "" {
-			c.AccessKeyID = envCfg.AccessKeyID
-		}
-		if envCfg.SecretAccessKey != "" {
-			c.SecretAccessKey = envCfg.SecretAccessKey
-		}
-		if envCfg.SessionToken != "" {
-			c.SessionToken = envCfg.SessionToken
-		}
+		// Apply string values from env (only non-empty)
+		applyEnvString(&c.Endpoint, envCfg.Endpoint)
+		applyEnvString(&c.Region, envCfg.Region)
+		applyEnvString(&c.AccessKeyID, envCfg.AccessKeyID)
+		applyEnvString(&c.SecretAccessKey, envCfg.SecretAccessKey)
+		applyEnvString(&c.SessionToken, envCfg.SessionToken)
+		applyEnvString(&c.TLSMaxVersion, envCfg.TLSMaxVersion)
 
-		// Apply boolean and numeric values if explicitly set in env
-		if os.Getenv(EnvS3UseSSL) != "" {
-			c.UseSSL = envCfg.UseSSL
-		}
-		if os.Getenv(EnvS3InsecureSkipVerify) != "" {
-			c.InsecureSkipVerify = envCfg.InsecureSkipVerify
-		}
-		if os.Getenv(EnvS3ForceHTTP2) != "" {
-			c.ForceHTTP2 = envCfg.ForceHTTP2
-		}
-		if os.Getenv(EnvS3PathStyle) != "" {
-			c.PathStyle = envCfg.PathStyle
-		}
-		if os.Getenv(EnvS3ConnectTimeout) != "" {
-			c.ConnectTimeout = envCfg.ConnectTimeout
-		}
-		if os.Getenv(EnvS3RequestTimeout) != "" {
-			c.RequestTimeout = envCfg.RequestTimeout
-		}
-		if os.Getenv(EnvS3MaxRetries) != "" {
-			c.MaxRetries = envCfg.MaxRetries
-		}
-		if os.Getenv(EnvS3Debug) != "" {
-			c.Debug = envCfg.Debug
-		}
+		// Apply boolean values if explicitly set in env
+		applyEnvBool(&c.UseSSL, envCfg.UseSSL, EnvS3UseSSL)
+		applyEnvBool(&c.InsecureSkipVerify, envCfg.InsecureSkipVerify, EnvS3InsecureSkipVerify)
+		applyEnvBool(&c.ForceHTTP2, envCfg.ForceHTTP2, EnvS3ForceHTTP2)
+		applyEnvBool(&c.DisableKeepAlives, envCfg.DisableKeepAlives, EnvS3DisableKeepAlives)
+		applyEnvBool(&c.PathStyle, envCfg.PathStyle, EnvS3PathStyle)
+		applyEnvBool(&c.Debug, envCfg.Debug, EnvS3Debug)
+
+		// Apply duration values if explicitly set in env
+		applyEnvDuration(&c.ConnectTimeout, envCfg.ConnectTimeout, EnvS3ConnectTimeout)
+		applyEnvDuration(&c.RequestTimeout, envCfg.RequestTimeout, EnvS3RequestTimeout)
+
+		// Apply int values if explicitly set in env
+		applyEnvInt(&c.MaxRetries, envCfg.MaxRetries, EnvS3MaxRetries)
+	}
+}
+
+// applyEnvString applies the env value to target if not empty.
+func applyEnvString(target *string, envValue string) {
+	if envValue != "" {
+		*target = envValue
+	}
+}
+
+// applyEnvBool applies the env value to target if the env var is set.
+func applyEnvBool(target *bool, envValue bool, envVar string) {
+	if os.Getenv(envVar) != "" {
+		*target = envValue
+	}
+}
+
+// applyEnvDuration applies the env value to target if the env var is set.
+func applyEnvDuration(target *time.Duration, envValue time.Duration, envVar string) {
+	if os.Getenv(envVar) != "" {
+		*target = envValue
+	}
+}
+
+// applyEnvInt applies the env value to target if the env var is set.
+func applyEnvInt(target *int, envValue int, envVar string) {
+	if os.Getenv(envVar) != "" {
+		*target = envValue
 	}
 }
 

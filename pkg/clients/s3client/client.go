@@ -58,14 +58,28 @@ func NewGenericS3Client(opts ...Option) (*GenericS3Client, error) {
 		TLSHandshakeTimeout:   10 * time.Second,
 		ExpectContinueTimeout: 1 * time.Second,
 		ForceAttemptHTTP2:     cfg.ForceHTTP2,
+		DisableKeepAlives:     cfg.DisableKeepAlives,
 	}
 
 	// Configure TLS if SSL is enabled
 	if cfg.UseSSL {
-		transport.TLSClientConfig = &tls.Config{
+		tlsConfig := &tls.Config{
 			MinVersion:         tls.VersionTLS12,
 			InsecureSkipVerify: cfg.InsecureSkipVerify, // #nosec G402 -- User-configurable option for self-signed certs
 		}
+
+		// Set max TLS version if specified
+		switch cfg.TLSMaxVersion {
+		case "1.2":
+			tlsConfig.MaxVersion = tls.VersionTLS12
+		case "1.3":
+			tlsConfig.MaxVersion = tls.VersionTLS13
+		default:
+			// No max version set - use highest available
+			tlsConfig.MaxVersion = 0
+		}
+
+		transport.TLSClientConfig = tlsConfig
 	}
 
 	// Create MinIO client options
