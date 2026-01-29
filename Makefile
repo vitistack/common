@@ -105,7 +105,7 @@ vet: ## Run go vet against code.
 
 .PHONY: lint
 lint: golangci-lint ## Run go vet against code.
-	$(GOLANGCI_LINT) run --timeout 5m ./... --config .golangci.yml
+	$(GOLANGCI_LINT) run --timeout 5m ./...
 
 ##@ Tests
 .PHONY: test
