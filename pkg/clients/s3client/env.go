@@ -16,6 +16,7 @@ const (
 	EnvS3SessionToken       = "S3_SESSION_TOKEN" // #nosec G101 -- This is an env var name, not a credential
 	EnvS3UseSSL             = "S3_USE_SSL"
 	EnvS3InsecureSkipVerify = "S3_INSECURE_SKIP_VERIFY"
+	EnvS3ForceHTTP2         = "S3_FORCE_HTTP2"
 	EnvS3PathStyle          = "S3_PATH_STYLE"
 	EnvS3ConnectTimeout     = "S3_CONNECT_TIMEOUT"
 	EnvS3RequestTimeout     = "S3_REQUEST_TIMEOUT"
@@ -37,6 +38,7 @@ const (
 //   - S3_SESSION_TOKEN: Optional session token for temporary credentials
 //   - S3_USE_SSL: Whether to use HTTPS (default: "true")
 //   - S3_INSECURE_SKIP_VERIFY: Skip TLS certificate verification (default: "false")
+//   - S3_FORCE_HTTP2: Enable HTTP/2 for connections (default: "false")
 //   - S3_PATH_STYLE: Use path-style addressing (default: "false")
 //   - S3_CONNECT_TIMEOUT: Connection timeout (default: "10s")
 //   - S3_REQUEST_TIMEOUT: Request timeout (default: "30s")
@@ -53,6 +55,7 @@ func ConfigFromEnv() *Config {
 
 	applyBoolEnv(&cfg.UseSSL, EnvS3UseSSL, true)
 	applyBoolEnv(&cfg.InsecureSkipVerify, EnvS3InsecureSkipVerify, false)
+	applyBoolEnv(&cfg.ForceHTTP2, EnvS3ForceHTTP2, false)
 	applyBoolEnv(&cfg.PathStyle, EnvS3PathStyle, false)
 	applyBoolEnv(&cfg.Debug, EnvS3Debug, false)
 
@@ -146,6 +149,9 @@ func WithConfigFromEnv() Option {
 		}
 		if os.Getenv(EnvS3InsecureSkipVerify) != "" {
 			c.InsecureSkipVerify = envCfg.InsecureSkipVerify
+		}
+		if os.Getenv(EnvS3ForceHTTP2) != "" {
+			c.ForceHTTP2 = envCfg.ForceHTTP2
 		}
 		if os.Getenv(EnvS3PathStyle) != "" {
 			c.PathStyle = envCfg.PathStyle

@@ -110,6 +110,9 @@ type Config struct {
 	// InsecureSkipVerify skips TLS certificate verification (use with caution)
 	InsecureSkipVerify bool
 
+	// ForceHTTP2 enables HTTP/2 for connections (default: false for better compatibility)
+	ForceHTTP2 bool
+
 	// PathStyle forces path-style addressing (required for MinIO and some S3-compatible services)
 	PathStyle bool
 
@@ -173,6 +176,14 @@ func WithInsecureSkipVerify(skip bool) Option {
 	}
 }
 
+// WithForceHTTP2 enables or disables HTTP/2 for connections.
+// Default is false for better compatibility with various S3 providers.
+func WithForceHTTP2(force bool) Option {
+	return func(c *Config) {
+		c.ForceHTTP2 = force
+	}
+}
+
 // WithPathStyle enables or disables path-style addressing.
 func WithPathStyle(pathStyle bool) Option {
 	return func(c *Config) {
@@ -214,6 +225,7 @@ func DefaultConfig() *Config {
 		Region:             "no-west-1",
 		UseSSL:             true,
 		InsecureSkipVerify: false,
+		ForceHTTP2:         false,
 		PathStyle:          false,
 		ConnectTimeout:     10 * time.Second,
 		RequestTimeout:     30 * time.Second,

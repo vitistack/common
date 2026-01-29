@@ -57,13 +57,14 @@ func NewGenericS3Client(opts ...Option) (*GenericS3Client, error) {
 		IdleConnTimeout:       90 * time.Second,
 		TLSHandshakeTimeout:   10 * time.Second,
 		ExpectContinueTimeout: 1 * time.Second,
+		ForceAttemptHTTP2:     cfg.ForceHTTP2,
 	}
 
 	// Configure TLS if SSL is enabled
 	if cfg.UseSSL {
 		transport.TLSClientConfig = &tls.Config{
 			MinVersion:         tls.VersionTLS12,
-			InsecureSkipVerify: cfg.InsecureSkipVerify, //#nosec G402 -- User-configurable option for self-signed certs
+			InsecureSkipVerify: cfg.InsecureSkipVerify, // #nosec G402 -- User-configurable option for self-signed certs
 		}
 	}
 
@@ -72,6 +73,14 @@ func NewGenericS3Client(opts ...Option) (*GenericS3Client, error) {
 		Creds:     credentials.NewStaticV4(cfg.AccessKeyID, cfg.SecretAccessKey, cfg.SessionToken),
 		Secure:    cfg.UseSSL,
 		Transport: transport,
+		Region:    cfg.Region,
+	}
+
+	// Set bucket lookup type based on path style setting
+	if cfg.PathStyle {
+		minioOpts.BucketLookup = minio.BucketLookupPath
+	} else {
+		minioOpts.BucketLookup = minio.BucketLookupAuto
 	}
 
 	// Create the MinIO client
@@ -90,6 +99,12 @@ func NewGenericS3Client(opts ...Option) (*GenericS3Client, error) {
 func NewGenericS3ClientFromEnv(opts ...Option) (*GenericS3Client, error) {
 	allOpts := append([]Option{WithConfigFromEnv()}, opts...)
 	return NewGenericS3Client(allOpts...)
+}
+
+// GetConfig returns the configuration used by the client.
+// This is useful for debugging and verifying that the client is configured correctly.
+func (c *GenericS3Client) GetConfig() Config {
+	return *c.config
 }
 
 // PutObject uploads an object to the specified bucket.

@@ -128,11 +128,24 @@ func demonstrateS3Client() {
 		// Use real S3 client
 		vlog.Info("Using real S3 client")
 		var err error
-		s3, err = s3client.NewGenericS3ClientFromEnv()
+		realClient, err := s3client.NewGenericS3ClientFromEnv()
 		if err != nil {
 			vlog.Error("Failed to create S3 client from env", err)
 			return
 		}
+		s3 = realClient
+
+		// Log the configuration for debugging
+		cfg := realClient.GetConfig()
+		vlog.Debug("S3 Client Configuration",
+			"endpoint", cfg.Endpoint,
+			"region", cfg.Region,
+			"useSSL", cfg.UseSSL,
+			"insecureSkipVerify", cfg.InsecureSkipVerify,
+			"pathStyle", cfg.PathStyle,
+			"connectTimeout", cfg.ConnectTimeout,
+			"requestTimeout", cfg.RequestTimeout,
+		)
 	}
 	defer func() { _ = s3.Close() }()
 
