@@ -25,6 +25,10 @@ func main() {
 		_, _ = fmt.Fprintln(os.Stderr, "missing S3_BUCKET")
 		return
 	}
+	if cfg.Endpoint == "" {
+		_, _ = fmt.Fprintln(os.Stderr, "missing S3_ENDPOINT (example requires explicit endpoint)")
+		return
+	}
 	store, err := objectstorage.New(&cfg)
 	if err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "init objectstorage: %v\n", err)

@@ -25,26 +25,28 @@ func newS3Storage(cfg *Config) (ObjectStorage, error) {
 	}
 	cfg = &cfgCopy
 
-	// Decide SSL + strip scheme for s3client/minio-style endpoints.
-	endpoint, ssl, err := splitEndpoint(cfg.Endpoint)
-	if err != nil {
-		return nil, err
-	}
-
 	opts := []s3client.Option{
-		s3client.WithEndpoint(endpoint),
-		s3client.WithSSL(ssl),
 		s3client.WithRegion(cfg.Region),
 		s3client.WithPathStyle(cfg.ForcePathStyle),
 		s3client.WithInsecureSkipVerify(cfg.InsecureSkipTLSVerify),
 	}
 
-	// Credentials: prefer S3_* but allow AWS_* as fallback.
+	// Only wire endpoint/SSL if user provided endpoint.
+	if cfg.Endpoint != "" {
+		endpoint, ssl, err := splitEndpoint(cfg.Endpoint)
+		if err != nil {
+			return nil, err
+		}
+		opts = append(opts,
+			s3client.WithEndpoint(endpoint),
+			s3client.WithSSL(ssl),
+		)
+	}
+
 	accessKey := firstNonEmpty(os.Getenv("S3_ACCESS_KEY_ID"), os.Getenv("AWS_ACCESS_KEY_ID"))
 	secretKey := firstNonEmpty(os.Getenv("S3_SECRET_ACCESS_KEY"), os.Getenv("AWS_SECRET_ACCESS_KEY"))
 	sessionTok := firstNonEmpty(os.Getenv("S3_SESSION_TOKEN"), os.Getenv("AWS_SESSION_TOKEN"))
 
-	// s3client expects creds to exist (no IAM role support).
 	opts = append(opts, s3client.WithCredentials(accessKey, secretKey))
 	if sessionTok != "" {
 		opts = append(opts, s3client.WithSessionToken(sessionTok))
@@ -96,17 +98,14 @@ func normalizeConfig(cfg *Config) error {
 		cfg.Region = "us-east-1"
 	}
 
-	// Endpoint is optional: default to AWS S3.
+	// Endpoint optional: do NOT default to AWS.
 	if cfg.Endpoint == "" {
-		cfg.Endpoint = "https://s3.amazonaws.com"
 		return nil
 	}
 
-	// If user sets endpoint, require explicit scheme so we can reliably decide SSL.
 	if !strings.HasPrefix(cfg.Endpoint, "http://") && !strings.HasPrefix(cfg.Endpoint, "https://") {
 		return fmt.Errorf("object storage: endpoint must start with http:// or https:// (got %q)", cfg.Endpoint)
 	}
-
 	return nil
 }
 
