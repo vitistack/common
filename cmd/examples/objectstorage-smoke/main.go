@@ -25,8 +25,7 @@ func main() {
 		_, _ = fmt.Fprintln(os.Stderr, "missing S3_BUCKET")
 		return
 	}
-
-	store, err := objectstorage.New(cfg)
+	store, err := objectstorage.New(&cfg)
 	if err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "init objectstorage: %v\n", err)
 		return

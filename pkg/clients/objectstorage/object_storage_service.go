@@ -24,8 +24,8 @@ type ObjectStorage interface {
 
 // New returns an ObjectStorage implementation based on config.
 // For now, return nil when disabled; caller should handle nil safely.
-func New(cfg Config) (ObjectStorage, error) {
-	if !cfg.Enabled {
+func New(cfg *Config) (ObjectStorage, error) {
+	if cfg == nil || !cfg.Enabled {
 		return nil, nil
 	}
 	return newS3Storage(cfg)

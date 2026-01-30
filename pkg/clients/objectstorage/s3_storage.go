@@ -18,11 +18,12 @@ type s3Storage struct {
 
 var _ ObjectStorage = (*s3Storage)(nil)
 
-func newS3Storage(cfg Config) (ObjectStorage, error) {
-	cfg, err := normalizeConfig(cfg)
+func newS3Storage(cfg *Config) (ObjectStorage, error) {
+	normalized, err := normalizeConfig(*cfg)
 	if err != nil {
 		return nil, err
 	}
+	cfg = &normalized
 
 	// Decide SSL + strip scheme for s3client/minio-style endpoints.
 	endpoint, ssl, err := splitEndpoint(cfg.Endpoint)
@@ -54,7 +55,7 @@ func newS3Storage(cfg Config) (ObjectStorage, error) {
 		return nil, fmt.Errorf("object storage: init s3 client: %w", err)
 	}
 
-	return &s3Storage{cfg: cfg, client: c}, nil
+	return &s3Storage{cfg: *cfg, client: c}, nil
 }
 
 func (s *s3Storage) Put(ctx context.Context, key string, body io.Reader, size int64, contentType string) error {
