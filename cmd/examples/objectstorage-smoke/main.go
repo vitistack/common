@@ -23,13 +23,13 @@ func main() {
 
 	if cfg.Bucket == "" {
 		_, _ = fmt.Fprintln(os.Stderr, "missing S3_BUCKET")
-		os.Exit(2)
+		return
 	}
 
 	store, err := objectstorage.New(cfg)
 	if err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "init objectstorage: %v\n", err)
-		os.Exit(1)
+		return
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
@@ -37,12 +37,11 @@ func main() {
 
 	if err := objectstorage.SmokeUpload(ctx, store); err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "smoke upload failed: %v\n", err)
-		os.Exit(1)
+		return
 	}
 
 	_, _ = fmt.Fprintln(os.Stdout, "smoke upload ok")
 }
-
 func getenvDefault(k, def string) string {
 	if v := os.Getenv(k); v != "" {
 		return v
