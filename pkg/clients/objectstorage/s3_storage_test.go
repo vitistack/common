@@ -33,28 +33,32 @@ func TestJoinKey(t *testing.T) {
 }
 
 func TestNormalizeConfig_Defaults(t *testing.T) {
-	cfg, err := normalizeConfig(Config{
+	cfg := Config{
 		Bucket: "b",
 		Region: "",
 		// Endpoint empty -> defaults to AWS endpoint in normalizeConfig
-	})
-	if err != nil {
+	}
+
+	if err := normalizeConfig(&cfg); err != nil {
 		t.Fatalf("normalizeConfig unexpected error: %v", err)
 	}
+
 	if cfg.Region != "us-east-1" {
 		t.Fatalf("expected default region us-east-1, got %q", cfg.Region)
 	}
+
 	if cfg.Endpoint == "" {
 		t.Fatalf("expected default endpoint to be set when empty")
 	}
 }
-
 func TestNormalizeConfig_EndpointSchemeRequiredWhenProvided(t *testing.T) {
-	_, err := normalizeConfig(Config{
+	cfg := Config{
 		Bucket:   "b",
 		Region:   "us-east-1",
 		Endpoint: "s3.example.com",
-	})
+	}
+
+	err := normalizeConfig(&cfg)
 	if err == nil {
 		t.Fatalf("expected error when endpoint has no scheme")
 	}

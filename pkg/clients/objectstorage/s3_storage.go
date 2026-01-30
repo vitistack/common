@@ -19,11 +19,11 @@ type s3Storage struct {
 var _ ObjectStorage = (*s3Storage)(nil)
 
 func newS3Storage(cfg *Config) (ObjectStorage, error) {
-	normalized, err := normalizeConfig(*cfg)
-	if err != nil {
+	cfgCopy := *cfg
+	if err := normalizeConfig(&cfgCopy); err != nil {
 		return nil, err
 	}
-	cfg = &normalized
+	cfg = &cfgCopy
 
 	// Decide SSL + strip scheme for s3client/minio-style endpoints.
 	endpoint, ssl, err := splitEndpoint(cfg.Endpoint)
@@ -87,9 +87,10 @@ func firstNonEmpty(vals ...string) string {
 }
 
 // normalizeConfig keeps objectstorage behavior predictable and testable.
-func normalizeConfig(cfg Config) (Config, error) {
+// Mutates cfg in-place to avoid copying a "heavy" Config (gocritic: hugeParam).
+func normalizeConfig(cfg *Config) error {
 	if cfg.Bucket == "" {
-		return cfg, fmt.Errorf("object storage: bucket is required when enabled")
+		return fmt.Errorf("object storage: bucket is required when enabled")
 	}
 	if cfg.Region == "" {
 		cfg.Region = "us-east-1"
@@ -98,15 +99,15 @@ func normalizeConfig(cfg Config) (Config, error) {
 	// Endpoint is optional: default to AWS S3.
 	if cfg.Endpoint == "" {
 		cfg.Endpoint = "https://s3.amazonaws.com"
-		return cfg, nil
+		return nil
 	}
 
 	// If user sets endpoint, require explicit scheme so we can reliably decide SSL.
-	if !(strings.HasPrefix(cfg.Endpoint, "http://") || strings.HasPrefix(cfg.Endpoint, "https://")) {
-		return cfg, fmt.Errorf("object storage: endpoint must start with http:// or https:// (got %q)", cfg.Endpoint)
+	if !strings.HasPrefix(cfg.Endpoint, "http://") && !strings.HasPrefix(cfg.Endpoint, "https://") {
+		return fmt.Errorf("object storage: endpoint must start with http:// or https:// (got %q)", cfg.Endpoint)
 	}
 
-	return cfg, nil
+	return nil
 }
 
 // splitEndpoint converts "http(s)://host[:port]" -> ("host[:port]", sslBool)
