@@ -110,7 +110,6 @@ func getKubernetesPodsAndLogWithVLog(kubernetesConfigSet string) {
 		vlog.Debug("Pod:", pod.Name, "Pod labels:", serialize.Pretty(pod.Labels))
 	}
 	vlog.Info("Number of pods in default namespace:", len(pods.Items))
-	return
 }
 
 type TestStruct struct {
