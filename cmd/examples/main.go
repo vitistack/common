@@ -56,18 +56,10 @@ func main() {
 	vlog.Debug("Log line ", "with extra parameters ", test)
 
 	// Initialize Kubernetes client
-	k8sclient.Init()
-	vlog.Info("Kubernetes client initialized successfully")
-	pods, err := k8sclient.Kubernetes.CoreV1().Pods("default").List(context.TODO(), metav1.ListOptions{})
-	if err != nil {
-		vlog.Error("Failed to list pods", err)
-		return
+	kubernetesConfigSet := os.Getenv("KUBECONFIG")
+	if kubernetesConfigSet != "" {
+		getKubernetesPodsAndLogWithVLog(kubernetesConfigSet)
 	}
-	for i := range pods.Items {
-		pod := pods.Items[i]
-		vlog.Debug("Pod:", pod.Name, "Pod labels:", serialize.Pretty(pod.Labels))
-	}
-	vlog.Info("Number of pods in default namespace:", len(pods.Items))
 
 	// create test struct and log it
 	testStruct := TestStruct{
@@ -101,6 +93,24 @@ func main() {
 	// Demonstrate YAML formatting
 	vlog.Info("YAML formatted struct", "yaml", serialize.YAML(testStruct))
 	vlog.Info("YAML formatted map", "yaml", serialize.PrettyYAML(configMap))
+}
+
+func getKubernetesPodsAndLogWithVLog(kubernetesConfigSet string) {
+	vlog.Info("Using KUBECONFIG from environment:", kubernetesConfigSet)
+
+	k8sclient.Init()
+	vlog.Info("Kubernetes client initialized successfully")
+	pods, err := k8sclient.Kubernetes.CoreV1().Pods("default").List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		vlog.Error("Failed to list pods", err)
+		return
+	}
+	for i := range pods.Items {
+		pod := pods.Items[i]
+		vlog.Debug("Pod:", pod.Name, "Pod labels:", serialize.Pretty(pod.Labels))
+	}
+	vlog.Info("Number of pods in default namespace:", len(pods.Items))
+	return
 }
 
 type TestStruct struct {
