@@ -32,7 +32,7 @@ updates:
 
   # Maintain dependencies for Helm charts
   - package-ecosystem: "github-actions"
-    directory: "/charts/kea-operator/"
+    directory: "/charts/vitistack-crds/"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 10
