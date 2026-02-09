@@ -1,0 +1,144 @@
+package s3client
+
+// A generic S3 client implementation using MinIO SDK
+
+import (
+	"context"
+	"io"
+
+	"github.com/minio/minio-go/v7"
+	"github.com/minio/minio-go/v7/pkg/credentials"
+	"github.com/vitistack/common/pkg/loggers/vlog"
+)
+
+type S3Client interface {
+	//Objects
+	PutObject(ctx context.Context, bucketName string, objectName string, file io.Reader, size int64) error
+	GetObject(ctx context.Context, objectName string) ([]byte, error)
+	DeleteObject(ctx context.Context, objectName string) error
+	/*
+	   //objects
+	   GetObject
+	   PutObject
+	   listObjects
+	   DeleteObjects
+
+	   //buckets
+	   CreateBucket
+	   DeleteBucket
+	   ListBuckets
+	*/
+}
+
+type MinioS3Client struct {
+	client     *minio.Client
+	bucketName string
+}
+
+type Options struct {
+	Endpoint   string
+	AccessKey  string
+	SecretKey  string
+	Secure     bool
+	BucketName string
+}
+
+type Option func(*Options)
+
+func NewS3Client(opt ...Option) (*MinioS3Client, error) {
+	var options Options
+	for _, o := range opt {
+		o(&options)
+	}
+	m, err := minio.New(options.Endpoint, &minio.Options{
+		Creds:  credentials.NewStaticV4(options.AccessKey, options.SecretKey, ""),
+		Secure: options.Secure,
+	})
+
+	if err != nil {
+		vlog.Errorf("Failed to create S3 client: %v", err)
+		return nil, err
+	}
+
+	s3client := &MinioS3Client{
+		client:     m,
+		bucketName: options.BucketName,
+	}
+
+	return s3client, nil
+}
+
+func WithEndpoint(endpoint string) Option {
+	return func(o *Options) {
+		o.Endpoint = endpoint
+	}
+}
+
+func WithAccessKey(accessKey string) Option {
+	return func(o *Options) {
+		o.AccessKey = accessKey
+	}
+}
+
+func WithSecretKey(secretKey string) Option {
+	return func(o *Options) {
+		o.SecretKey = secretKey
+	}
+}
+
+func WithSecure(secure bool) Option {
+	return func(o *Options) {
+		o.Secure = secure
+	}
+}
+
+func WithBucketName(bucketName string) Option {
+	return func(o *Options) {
+		o.BucketName = bucketName
+	}
+}
+
+// implement struct for get options and get output
+func (c *MinioS3Client) GetObject(ctx context.Context, objectName string) ([]byte, error) {
+
+	object, err := c.client.GetObject(ctx, c.bucketName, objectName, minio.GetObjectOptions{})
+
+	if err != nil {
+		vlog.Warnf("Failed to get object: %v", err)
+		return nil, err
+	}
+
+	defer object.Close()
+
+	data, err := io.ReadAll(object)
+	if err != nil {
+		vlog.Errorf("Failed to read object data: %v", err)
+		return nil, err
+	}
+
+	return data, nil
+}
+
+// should maybe support streaming data instead of reading all at once
+// implement struct for put options and put output
+func (c *MinioS3Client) PutObject(ctx context.Context, objectName string, file io.Reader, size int64) error {
+
+	_, err := c.client.PutObject(ctx, c.bucketName, objectName, file, size, minio.PutObjectOptions{})
+	if err != nil {
+		vlog.Warnf("Failed to put object: %v", err)
+		return err
+	}
+
+	return nil
+}
+
+func (c *MinioS3Client) DeleteObject(ctx context.Context, objectName string) error {
+
+	err := c.client.RemoveObject(ctx, c.bucketName, objectName, minio.RemoveObjectOptions{})
+	if err != nil {
+		vlog.Warnf("Failed to delete object: %v", err)
+		return err
+	}
+
+	return nil
+}
