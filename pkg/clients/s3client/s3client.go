@@ -16,6 +16,12 @@ type S3Client interface {
 	PutObject(ctx context.Context, bucketName string, objectName string, file io.Reader, size int64) error
 	GetObject(ctx context.Context, objectName string) ([]byte, error)
 	DeleteObject(ctx context.Context, objectName string) error
+	ListObject(ctx context.Context, listOpt ListObjectsOptions) ([]string, error)
+
+	//buckets
+	CreateBucket(ctx context.Context, bucketName string) error
+	DeleteBucket(ctx context.Context, bucketName string) error
+
 	/*
 	   //objects
 	   GetObject
@@ -27,6 +33,7 @@ type S3Client interface {
 	   CreateBucket
 	   DeleteBucket
 	   ListBuckets
+	   modifybucket
 	*/
 }
 
@@ -119,7 +126,6 @@ func (c *MinioS3Client) GetObject(ctx context.Context, objectName string) ([]byt
 	return data, nil
 }
 
-// should maybe support streaming data instead of reading all at once
 // implement struct for put options and put output
 func (c *MinioS3Client) PutObject(ctx context.Context, objectName string, file io.Reader, size int64) error {
 
@@ -142,3 +148,56 @@ func (c *MinioS3Client) DeleteObject(ctx context.Context, objectName string) err
 
 	return nil
 }
+
+
+type ListObjectsOptions struct {
+	Prefix    string
+	Recursive bool
+}
+
+// implement struct for list options and list output
+func (c *MinioS3Client) ListObject(ctx context.Context, listOpt ListObjectsOptions) ([]string, error) {
+
+	objectCh := c.client.ListObjects(ctx, c.bucketName, minio.ListObjectsOptions{
+		Prefix:    listOpt.Prefix,
+		Recursive: listOpt.Recursive,
+	})
+
+	var objects []string
+	for object := range objectCh {
+		if object.Err != nil {
+			vlog.Warnf("Failed to list objects: %v", object.Err)
+			return nil, object.Err
+		}
+		objects = append(objects, object.Key)
+	}
+
+	return objects, nil
+}
+
+
+
+func (c *MinioS3Client) CreateBucket(ctx context.Context, bucketName string) error {
+
+	err := c.client.MakeBucket(ctx, bucketName, minio.MakeBucketOptions{})
+	if err != nil {
+		vlog.Warnf("Failed to create bucket: %v", err)
+		return err
+	}
+
+	return nil
+}
+
+
+func (c *MinioS3Client) DeleteBucket(ctx context.Context, bucketName string) error {
+
+	err := c.client.RemoveBucket(ctx, bucketName)
+	if err != nil {
+		vlog.Warnf("Failed to delete bucket: %v", err)
+		return err
+	}
+
+	return nil
+}
+
+
