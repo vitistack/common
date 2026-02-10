@@ -125,13 +125,14 @@ func s3Example() {
 		vlog.Info("Using Mock S3 Client for testing")
 		s3 = s3client.NewMockS3Client()
 	} else {
-		vlog.Info("Using real S3 Client (not implemented in this example, using mock instead)")
+		vlog.Info("Using real S3 Client with endpoint:", os.Getenv("S3_ENDPOINT"))
 		s3, err = s3client.NewS3Client(
 			s3client.WithEndpoint(os.Getenv("S3_ENDPOINT")),
 			s3client.WithAccessKey(os.Getenv("S3_ACCESS_KEY")),
 			s3client.WithSecretKey(os.Getenv("S3_SECRET_KEY")),
 			s3client.WithBucketName(os.Getenv("S3_BUCKET_NAME")),
 			s3client.WithSecure(os.Getenv("S3_SECURE") == trueString),
+			s3client.WithRegion(os.Getenv("S3_REGION")),
 		)
 		if err != nil {
 			vlog.Error("Failed to create real S3 client", err)

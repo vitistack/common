@@ -45,6 +45,7 @@ type MinioS3Client struct {
 
 type Options struct {
 	Endpoint   string
+	Region     string
 	AccessKey  string
 	SecretKey  string
 	Secure     bool
@@ -61,6 +62,7 @@ func NewS3Client(opt ...Option) (*MinioS3Client, error) {
 	m, err := minio.New(options.Endpoint, &minio.Options{
 		Creds:  credentials.NewStaticV4(options.AccessKey, options.SecretKey, ""),
 		Secure: options.Secure,
+		Region: options.Region,
 	})
 
 	if err != nil {
@@ -103,6 +105,12 @@ func WithSecure(secure bool) Option {
 func WithBucketName(bucketName string) Option {
 	return func(o *Options) {
 		o.BucketName = bucketName
+	}
+}
+
+func WithRegion(region string) Option {
+	return func(o *Options) {
+		o.Region = region
 	}
 }
 
