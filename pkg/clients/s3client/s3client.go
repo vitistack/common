@@ -13,14 +13,15 @@ import (
 
 type S3Client interface {
 	//Objects
-	PutObject(ctx context.Context, bucketName string, objectName string, file io.Reader, size int64) error
+	PutObject(ctx context.Context, objectName string, file io.Reader, size int64) error
 	GetObject(ctx context.Context, objectName string) ([]byte, error)
 	DeleteObject(ctx context.Context, objectName string) error
 	ListObject(ctx context.Context, listOpt ListObjectsOptions) ([]string, error)
 
 	//buckets
-	CreateBucket(ctx context.Context, bucketName string) error
-	DeleteBucket(ctx context.Context, bucketName string) error
+	CreateBucket(ctx context.Context) error
+	DeleteBucket(ctx context.Context) error
+	//BucketExists
 
 	/*
 	   //objects
@@ -149,7 +150,6 @@ func (c *MinioS3Client) DeleteObject(ctx context.Context, objectName string) err
 	return nil
 }
 
-
 type ListObjectsOptions struct {
 	Prefix    string
 	Recursive bool
@@ -175,11 +175,9 @@ func (c *MinioS3Client) ListObject(ctx context.Context, listOpt ListObjectsOptio
 	return objects, nil
 }
 
+func (c *MinioS3Client) CreateBucket(ctx context.Context) error {
 
-
-func (c *MinioS3Client) CreateBucket(ctx context.Context, bucketName string) error {
-
-	err := c.client.MakeBucket(ctx, bucketName, minio.MakeBucketOptions{})
+	err := c.client.MakeBucket(ctx, c.bucketName, minio.MakeBucketOptions{})
 	if err != nil {
 		vlog.Warnf("Failed to create bucket: %v", err)
 		return err
@@ -188,10 +186,9 @@ func (c *MinioS3Client) CreateBucket(ctx context.Context, bucketName string) err
 	return nil
 }
 
+func (c *MinioS3Client) DeleteBucket(ctx context.Context) error {
 
-func (c *MinioS3Client) DeleteBucket(ctx context.Context, bucketName string) error {
-
-	err := c.client.RemoveBucket(ctx, bucketName)
+	err := c.client.RemoveBucket(ctx, c.bucketName)
 	if err != nil {
 		vlog.Warnf("Failed to delete bucket: %v", err)
 		return err
@@ -199,5 +196,3 @@ func (c *MinioS3Client) DeleteBucket(ctx context.Context, bucketName string) err
 
 	return nil
 }
-
-
