@@ -96,6 +96,8 @@ func main() {
 	vlog.Info("YAML formatted struct", "yaml", serialize.YAML(testStruct))
 	vlog.Info("YAML formatted map", "yaml", serialize.PrettyYAML(configMap))
 
+
+	// Demonstrate S3 client usage (using mock or real client based on env var)
 	s3Example()
 }
 

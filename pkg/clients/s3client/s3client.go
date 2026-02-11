@@ -21,21 +21,6 @@ type S3Client interface {
 	//buckets
 	CreateBucket(ctx context.Context) error
 	DeleteBucket(ctx context.Context) error
-	//BucketExists
-
-	/*
-	   //objects
-	   GetObject
-	   PutObject
-	   listObjects
-	   DeleteObjects
-
-	   //buckets
-	   CreateBucket
-	   DeleteBucket
-	   ListBuckets
-	   modifybucket
-	*/
 }
 
 type MinioS3Client struct {
@@ -114,7 +99,7 @@ func WithRegion(region string) Option {
 	}
 }
 
-// implement struct for get options and get output
+
 func (c *MinioS3Client) GetObject(ctx context.Context, objectName string) ([]byte, error) {
 
 	object, err := c.client.GetObject(ctx, c.bucketName, objectName, minio.GetObjectOptions{})
@@ -135,7 +120,7 @@ func (c *MinioS3Client) GetObject(ctx context.Context, objectName string) ([]byt
 	return data, nil
 }
 
-// implement struct for put options and put output
+
 func (c *MinioS3Client) PutObject(ctx context.Context, objectName string, file io.Reader, size int64) error {
 
 	_, err := c.client.PutObject(ctx, c.bucketName, objectName, file, size, minio.PutObjectOptions{})
@@ -163,7 +148,7 @@ type ListObjectsOptions struct {
 	Recursive bool
 }
 
-// implement struct for list options and list output
+
 func (c *MinioS3Client) ListObject(ctx context.Context, listOpt ListObjectsOptions) ([]string, error) {
 
 	objectCh := c.client.ListObjects(ctx, c.bucketName, minio.ListObjectsOptions{
