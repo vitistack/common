@@ -21,8 +21,8 @@ type S3Client interface {
 type Options struct {
 	Endpoint   string
 	Region     string
-	AccessKey  string
-	SecretKey  string
+	AccessKey  string // #nosec G117 -- configuration field, not a hardcoded secret
+	SecretKey  string // #nosec G117 -- configuration field, not a hardcoded secret
 	Secure     bool
 	BucketName string
 }
