@@ -36,11 +36,6 @@ func TestMockS3Client_PutObject(t *testing.T) {
 		t.Error("Object should exist after PutObject")
 	}
 
-	// Verify call count
-	if mock.PutObjectCalls != 1 {
-		t.Errorf("Expected 1 PutObject call, got %d", mock.PutObjectCalls)
-	}
-
 	// Verify stored data
 	stored, exists := mock.objects[objectName]
 	if !exists {
@@ -70,11 +65,6 @@ func TestMockS3Client_GetObject(t *testing.T) {
 	// Verify data
 	if !bytes.Equal(data, testData) {
 		t.Errorf("Expected %s, got %s", testData, data)
-	}
-
-	// Verify call count
-	if mock.GetObjectCalls != 1 {
-		t.Errorf("Expected 1 GetObject call, got %d", mock.GetObjectCalls)
 	}
 }
 
@@ -110,11 +100,6 @@ func TestMockS3Client_DeleteObject(t *testing.T) {
 	if mock.ObjectExists(objectName) {
 		t.Error("Object should not exist after deletion")
 	}
-
-	// Verify call count
-	if mock.DeleteObjectCalls != 1 {
-		t.Errorf("Expected 1 DeleteObject call, got %d", mock.DeleteObjectCalls)
-	}
 }
 
 func TestMockS3Client_DeleteObject_NotFound(t *testing.T) {
@@ -144,11 +129,6 @@ func TestMockS3Client_ListObject(t *testing.T) {
 
 	if len(objects) != 3 {
 		t.Errorf("Expected 3 objects, got %d", len(objects))
-	}
-
-	// Verify call count
-	if mock.ListObjectCalls != 1 {
-		t.Errorf("Expected 1 ListObject call, got %d", mock.ListObjectCalls)
 	}
 }
 
@@ -188,10 +168,6 @@ func TestMockS3Client_CreateBucket(t *testing.T) {
 	if err != nil {
 		t.Fatalf("CreateBucket failed: %v", err)
 	}
-
-	if mock.CreateBucketCalls != 1 {
-		t.Errorf("Expected 1 CreateBucket call, got %d", mock.CreateBucketCalls)
-	}
 }
 
 func TestMockS3Client_DeleteBucket(t *testing.T) {
@@ -201,10 +177,6 @@ func TestMockS3Client_DeleteBucket(t *testing.T) {
 	err := mock.DeleteBucket(ctx)
 	if err != nil {
 		t.Fatalf("DeleteBucket failed: %v", err)
-	}
-
-	if mock.DeleteBucketCalls != 1 {
-		t.Errorf("Expected 1 DeleteBucket call, got %d", mock.DeleteBucketCalls)
 	}
 }
 
@@ -274,9 +246,6 @@ func TestMockS3Client_Reset(t *testing.T) {
 	if mock.ObjectCount() != 2 {
 		t.Errorf("Expected 2 objects before reset, got %d", mock.ObjectCount())
 	}
-	if mock.PutObjectCalls != 1 {
-		t.Errorf("Expected 1 PutObject call before reset, got %d", mock.PutObjectCalls)
-	}
 
 	// Reset
 	mock.Reset()
@@ -284,12 +253,6 @@ func TestMockS3Client_Reset(t *testing.T) {
 	// Verify state after reset
 	if mock.ObjectCount() != 0 {
 		t.Errorf("Expected 0 objects after reset, got %d", mock.ObjectCount())
-	}
-	if mock.PutObjectCalls != 0 {
-		t.Errorf("Expected 0 PutObject calls after reset, got %d", mock.PutObjectCalls)
-	}
-	if mock.GetObjectCalls != 0 {
-		t.Errorf("Expected 0 GetObject calls after reset, got %d", mock.GetObjectCalls)
 	}
 	if mock.PutObjectErr != nil {
 		t.Error("Expected error to be cleared after reset")
@@ -339,9 +302,6 @@ func TestMockS3Client_ConcurrentAccess(t *testing.T) {
 	// Verify no race conditions occurred
 	if mock.ObjectCount() == 0 {
 		t.Error("Expected objects to be created")
-	}
-	if mock.PutObjectCalls != numGoroutines {
-		t.Errorf("Expected %d PutObject calls, got %d", numGoroutines, mock.PutObjectCalls)
 	}
 }
 

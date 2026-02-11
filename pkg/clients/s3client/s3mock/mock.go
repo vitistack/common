@@ -14,14 +14,6 @@ type MockS3Client struct {
 	mu      sync.RWMutex
 	objects map[string][]byte // objectName -> data
 
-	// Track method calls for test verification
-	PutObjectCalls    int
-	GetObjectCalls    int
-	DeleteObjectCalls int
-	ListObjectCalls   int
-	CreateBucketCalls int
-	DeleteBucketCalls int
-
 	// Error injection for testing error scenarios
 	PutObjectErr    error
 	GetObjectErr    error
@@ -43,8 +35,6 @@ func (m *MockS3Client) PutObject(ctx context.Context, objectName string, file io
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	m.PutObjectCalls++
-
 	if m.PutObjectErr != nil {
 		return m.PutObjectErr
 	}
@@ -62,8 +52,6 @@ func (m *MockS3Client) PutObject(ctx context.Context, objectName string, file io
 func (m *MockS3Client) GetObject(ctx context.Context, objectName string) ([]byte, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-
-	m.GetObjectCalls++
 
 	if m.GetObjectErr != nil {
 		return nil, m.GetObjectErr
@@ -85,8 +73,6 @@ func (m *MockS3Client) DeleteObject(ctx context.Context, objectName string) erro
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	m.DeleteObjectCalls++
-
 	if m.DeleteObjectErr != nil {
 		return m.DeleteObjectErr
 	}
@@ -103,8 +89,6 @@ func (m *MockS3Client) DeleteObject(ctx context.Context, objectName string) erro
 func (m *MockS3Client) ListObject(ctx context.Context, listOpt s3interface.ListObjectsOptions) ([]string, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-
-	m.ListObjectCalls++
 
 	if m.ListObjectErr != nil {
 		return nil, m.ListObjectErr
@@ -130,7 +114,6 @@ func (m *MockS3Client) CreateBucket(ctx context.Context) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	m.CreateBucketCalls++
 
 	if m.CreateBucketErr != nil {
 		return m.CreateBucketErr
@@ -143,8 +126,6 @@ func (m *MockS3Client) CreateBucket(ctx context.Context) error {
 func (m *MockS3Client) DeleteBucket(ctx context.Context) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-
-	m.DeleteBucketCalls++
 
 	if m.DeleteBucketErr != nil {
 		return m.DeleteBucketErr
@@ -161,12 +142,6 @@ func (m *MockS3Client) Reset() {
 	defer m.mu.Unlock()
 
 	m.objects = make(map[string][]byte)
-	m.PutObjectCalls = 0
-	m.GetObjectCalls = 0
-	m.DeleteObjectCalls = 0
-	m.ListObjectCalls = 0
-	m.CreateBucketCalls = 0
-	m.DeleteBucketCalls = 0
 	m.PutObjectErr = nil
 	m.GetObjectErr = nil
 	m.DeleteObjectErr = nil
