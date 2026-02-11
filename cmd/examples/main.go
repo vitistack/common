@@ -6,7 +6,10 @@ import (
 	"os"
 
 	"github.com/vitistack/common/pkg/clients/k8sclient"
-	"github.com/vitistack/common/pkg/clients/s3client"
+	"github.com/vitistack/common/pkg/clients/s3client/s3interface"
+	"github.com/vitistack/common/pkg/clients/s3client/s3minioclient"
+	"github.com/vitistack/common/pkg/clients/s3client/s3mock"
+
 	"github.com/vitistack/common/pkg/loggers/vlog"
 	"github.com/vitistack/common/pkg/serialize"
 
@@ -96,7 +99,6 @@ func main() {
 	vlog.Info("YAML formatted struct", "yaml", serialize.YAML(testStruct))
 	vlog.Info("YAML formatted map", "yaml", serialize.PrettyYAML(configMap))
 
-
 	// Demonstrate S3 client usage (using mock or real client based on env var)
 	s3Example()
 }
@@ -120,21 +122,21 @@ func getKubernetesPodsAndLogWithVLog(kubernetesConfigSet string) {
 
 func s3Example() {
 
-	var s3 s3client.S3Client
+	var s3 s3interface.S3Client
 	var err error
 
 	if os.Getenv("S3_USE_MOCK") == trueString {
 		vlog.Info("Using Mock S3 Client for testing")
-		s3 = s3client.NewMockS3Client()
+		s3 = s3mock.NewMockS3Client()
 	} else {
 		vlog.Info("Using real S3 Client with endpoint:", os.Getenv("S3_ENDPOINT"))
-		s3, err = s3client.NewS3Client(
-			s3client.WithEndpoint(os.Getenv("S3_ENDPOINT")),
-			s3client.WithAccessKey(os.Getenv("S3_ACCESS_KEY")),
-			s3client.WithSecretKey(os.Getenv("S3_SECRET_KEY")),
-			s3client.WithBucketName(os.Getenv("S3_BUCKET_NAME")),
-			s3client.WithSecure(os.Getenv("S3_SECURE") == trueString),
-			s3client.WithRegion(os.Getenv("S3_REGION")),
+		s3, err = s3minioclient.NewS3Client(
+			s3interface.WithEndpoint(os.Getenv("S3_ENDPOINT")),
+			s3interface.WithAccessKey(os.Getenv("S3_ACCESS_KEY")),
+			s3interface.WithSecretKey(os.Getenv("S3_SECRET_KEY")),
+			s3interface.WithBucketName(os.Getenv("S3_BUCKET_NAME")),
+			s3interface.WithSecure(os.Getenv("S3_SECURE") == trueString),
+			s3interface.WithRegion(os.Getenv("S3_REGION")),
 		)
 		if err != nil {
 			vlog.Error("Failed to create real S3 client", err)
@@ -165,7 +167,7 @@ func s3Example() {
 	}
 	vlog.Info("Object data:", string(data))
 
-	list, err := s3.ListObject(context.Background(), s3client.ListObjectsOptions{Prefix: "test", Recursive: true})
+	list, err := s3.ListObject(context.Background(), s3interface.ListObjectsOptions{Prefix: "test", Recursive: true})
 	if err != nil {
 		vlog.Error("Failed to list objects", err)
 		return

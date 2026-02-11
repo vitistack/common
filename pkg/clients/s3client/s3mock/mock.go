@@ -1,10 +1,12 @@
-package s3client
+package s3mock
 
 import (
 	"context"
 	"fmt"
 	"io"
 	"sync"
+
+	"github.com/vitistack/common/pkg/clients/s3client/s3interface"
 )
 
 // MockS3Client is a mock implementation of the S3Client interface for testing
@@ -98,7 +100,7 @@ func (m *MockS3Client) DeleteObject(ctx context.Context, objectName string) erro
 }
 
 // ListObject returns a list of object names matching the criteria
-func (m *MockS3Client) ListObject(ctx context.Context, listOpt ListObjectsOptions) ([]string, error) {
+func (m *MockS3Client) ListObject(ctx context.Context, listOpt s3interface.ListObjectsOptions) ([]string, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
@@ -194,3 +196,6 @@ func (m *MockS3Client) ObjectCount() int {
 	defer m.mu.RUnlock()
 	return len(m.objects)
 }
+
+// Ensure MockS3Client implements the S3Client interface
+var _ s3interface.S3Client = (*MockS3Client)(nil)

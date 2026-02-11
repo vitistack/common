@@ -1,4 +1,4 @@
-package s3client
+package s3minioclient
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
+	"github.com/vitistack/common/pkg/clients/s3client/s3interface"
 	"github.com/vitistack/common/pkg/loggers/vlog"
 )
 
@@ -18,8 +19,8 @@ type MinioS3Client struct {
 // need to be called with options:
 // Required: Endpoint, AccessKey, SecretKey, Secure(https), BucketName
 // Optional: Region
-func NewS3Client(opt ...Option) (*MinioS3Client, error) {
-	var options Options
+func NewS3Client(opt ...s3interface.Option) (*MinioS3Client, error) {
+	var options s3interface.Options
 	for _, o := range opt {
 		o(&options)
 	}
@@ -87,7 +88,7 @@ func (c *MinioS3Client) DeleteObject(ctx context.Context, objectName string) err
 	return nil
 }
 
-func (c *MinioS3Client) ListObject(ctx context.Context, listOpt ListObjectsOptions) ([]string, error) {
+func (c *MinioS3Client) ListObject(ctx context.Context, listOpt s3interface.ListObjectsOptions) ([]string, error) {
 
 	objectCh := c.client.ListObjects(ctx, c.bucketName, minio.ListObjectsOptions{
 		Prefix:    listOpt.Prefix,
@@ -129,4 +130,4 @@ func (c *MinioS3Client) DeleteBucket(ctx context.Context) error {
 }
 
 // Ensure MinioS3Client s3client implements the S3Client interface
-var _ S3Client = (*MinioS3Client)(nil)
+var _ s3interface.S3Client = (*MinioS3Client)(nil)

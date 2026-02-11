@@ -1,4 +1,4 @@
-package s3client
+package s3interface
 
 // A generic S3 client implementation using MinIO SDK
 
@@ -69,4 +69,3 @@ func WithRegion(region string) Option {
 		o.Region = region
 	}
 }
-

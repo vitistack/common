@@ -1,10 +1,12 @@
-package s3client
+package s3mock
 
 import (
 	"bytes"
 	"context"
 	"errors"
 	"testing"
+
+	"github.com/vitistack/common/pkg/clients/s3client/s3interface"
 )
 
 func TestNewMockS3Client(t *testing.T) {
@@ -135,7 +137,7 @@ func TestMockS3Client_ListObject(t *testing.T) {
 	mock.SetObject("dir/file3.txt", []byte("data3"))
 
 	// Test: list all objects
-	objects, err := mock.ListObject(ctx, ListObjectsOptions{})
+	objects, err := mock.ListObject(ctx, s3interface.ListObjectsOptions{})
 	if err != nil {
 		t.Fatalf("ListObject failed: %v", err)
 	}
@@ -161,7 +163,7 @@ func TestMockS3Client_ListObject_WithPrefix(t *testing.T) {
 	mock.SetObject("config.json", []byte("config"))
 
 	// Test: list with prefix
-	objects, err := mock.ListObject(ctx, ListObjectsOptions{Prefix: "logs/"})
+	objects, err := mock.ListObject(ctx, s3interface.ListObjectsOptions{Prefix: "logs/"})
 	if err != nil {
 		t.Fatalf("ListObject with prefix failed: %v", err)
 	}
@@ -252,7 +254,7 @@ func TestMockS3Client_ErrorInjection_ListObject(t *testing.T) {
 	expectedErr := errors.New("timeout")
 	mock.ListObjectErr = expectedErr
 
-	_, err := mock.ListObject(ctx, ListObjectsOptions{})
+	_, err := mock.ListObject(ctx, s3interface.ListObjectsOptions{})
 	if !errors.Is(err, expectedErr) {
 		t.Errorf("Expected error %v, got %v", expectedErr, err)
 	}
