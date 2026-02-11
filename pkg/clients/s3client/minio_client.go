@@ -9,11 +9,11 @@ import (
 	"github.com/vitistack/common/pkg/loggers/vlog"
 )
 
-
 type MinioS3Client struct {
 	client     *minio.Client
 	bucketName string
 }
+
 // NewS3Client creates a new MinioS3Client with the provided options
 // need to be called with options:
 // Required: Endpoint, AccessKey, SecretKey, Secure(https), BucketName
@@ -46,13 +46,15 @@ func NewS3Client(opt ...Option) (*MinioS3Client, error) {
 func (c *MinioS3Client) GetObject(ctx context.Context, objectName string) ([]byte, error) {
 
 	object, err := c.client.GetObject(ctx, c.bucketName, objectName, minio.GetObjectOptions{})
-
 	if err != nil {
 		vlog.Warnf("Failed to get object: %v", err)
 		return nil, err
 	}
-
-	defer object.Close()
+	defer func() {
+		if closeErr := object.Close(); closeErr != nil {
+			vlog.Warnf("Failed to close object: %v", closeErr)
+		}
+	}()
 
 	data, err := io.ReadAll(object)
 	if err != nil {

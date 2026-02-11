@@ -8,13 +8,12 @@ import (
 )
 
 type S3Client interface {
-	//Objects
+	// Objects
 	PutObject(ctx context.Context, objectName string, file io.Reader, size int64) error
 	GetObject(ctx context.Context, objectName string) ([]byte, error)
 	DeleteObject(ctx context.Context, objectName string) error
 	ListObject(ctx context.Context, listOpt ListObjectsOptions) ([]string, error)
-
-	//buckets
+	// buckets
 	CreateBucket(ctx context.Context) error
 	DeleteBucket(ctx context.Context) error
 }

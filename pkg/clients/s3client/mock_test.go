@@ -1,6 +1,5 @@
 package s3client
 
-
 import (
 	"bytes"
 	"context"
@@ -215,7 +214,7 @@ func TestMockS3Client_ErrorInjection_PutObject(t *testing.T) {
 	mock.PutObjectErr = expectedErr
 
 	err := mock.PutObject(ctx, "test.txt", bytes.NewReader([]byte("data")), 4)
-	if err != expectedErr {
+	if !errors.Is(err, expectedErr) {
 		t.Errorf("Expected error %v, got %v", expectedErr, err)
 	}
 }
@@ -228,7 +227,7 @@ func TestMockS3Client_ErrorInjection_GetObject(t *testing.T) {
 	mock.GetObjectErr = expectedErr
 
 	_, err := mock.GetObject(ctx, "test.txt")
-	if err != expectedErr {
+	if !errors.Is(err, expectedErr) {
 		t.Errorf("Expected error %v, got %v", expectedErr, err)
 	}
 }
@@ -241,7 +240,7 @@ func TestMockS3Client_ErrorInjection_DeleteObject(t *testing.T) {
 	mock.DeleteObjectErr = expectedErr
 
 	err := mock.DeleteObject(ctx, "test.txt")
-	if err != expectedErr {
+	if !errors.Is(err, expectedErr) {
 		t.Errorf("Expected error %v, got %v", expectedErr, err)
 	}
 }
@@ -254,7 +253,7 @@ func TestMockS3Client_ErrorInjection_ListObject(t *testing.T) {
 	mock.ListObjectErr = expectedErr
 
 	_, err := mock.ListObject(ctx, ListObjectsOptions{})
-	if err != expectedErr {
+	if !errors.Is(err, expectedErr) {
 		t.Errorf("Expected error %v, got %v", expectedErr, err)
 	}
 }
@@ -265,8 +264,8 @@ func TestMockS3Client_Reset(t *testing.T) {
 
 	// Populate with data and calls
 	mock.SetObject("test.txt", []byte("data"))
-	mock.PutObject(ctx, "another.txt", bytes.NewReader([]byte("data")), 4)
-	mock.GetObject(ctx, "test.txt")
+	_ = mock.PutObject(ctx, "another.txt", bytes.NewReader([]byte("data")), 4)
+	_, _ = mock.GetObject(ctx, "test.txt")
 	mock.PutObjectErr = errors.New("some error")
 
 	// Verify state before reset
@@ -323,9 +322,9 @@ func TestMockS3Client_ConcurrentAccess(t *testing.T) {
 			objectName := bytes.NewBufferString("file")
 			objectName.WriteString(string(rune('0' + (index % 10))))
 			objectName.WriteString(".txt")
-			
+
 			data := []byte("data")
-			mock.PutObject(ctx, objectName.String(), bytes.NewReader(data), int64(len(data)))
+			_ = mock.PutObject(ctx, objectName.String(), bytes.NewReader(data), int64(len(data)))
 			done <- true
 		}(i)
 	}
