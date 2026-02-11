@@ -35,6 +35,7 @@ Small, focused libraries for cloud-native applications:
 - **`vlog`** - Structured logging with Zap and logr adapter
 - **`serialize`** - JSON helpers for quick serialization
 - **`k8sclient`** - Kubernetes client initialization
+- **`S3client`** - General s3 client
 - **`crdcheck`** - CRD prerequisite validation
 - **`dotenv`** - Smart environment configuration
 
@@ -60,9 +61,12 @@ kubectl apply -f https://github.com/vitistack/common/releases/latest/download/cr
 
 ### Use Go Libraries
 
+
 ```bash
 go get github.com/vitistack/common@latest
 ```
+
+#### k8sclient
 
 ```go
 import (
@@ -76,6 +80,32 @@ func main() {
 
     k8sclient.Init()
     vlog.Info("connected to kubernetes")
+}
+```
+
+#### s3Client
+
+```go
+package main
+
+import (
+    "github.com/vitistack/common/pkg/loggers/vlog"
+    "github.com/vitistack/common/pkg/clients/s3client/s3interface"
+    "github.com/vitistack/common/pkg/clients/s3client/s3minioclient"
+)
+
+func main() {
+  vlog.Setup(vlog.Options{Level: "info", JSON: true})
+  defer vlog.Sync()
+
+  s3, err := s3minioclient.NewS3Client(
+	  s3interface.WithAccessKey("accesskey"),
+	  s3interface.WithSecretKey("secretkey"),
+	  s3interface.WithEndpoint("your-endpoint"),
+	  s3interface.WithRegion("your region"),
+	  s3interface.WithSecure(false),
+  )
+  vlog.Info("s3 client created")
 }
 ```
 
