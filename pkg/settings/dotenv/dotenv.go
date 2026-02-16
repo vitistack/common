@@ -78,6 +78,7 @@ func findUpwards(startDir, name string) (string, bool) {
 	dir := startDir
 	for {
 		candidate := filepath.Join(dir, name)
+		// #nosec G703 -- intentional upward directory traversal for .env file discovery
 		if _, err := os.Stat(candidate); err == nil {
 			if abs, err2 := filepath.Abs(candidate); err2 == nil {
 				return abs, true

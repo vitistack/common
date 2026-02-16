@@ -1,10 +1,15 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"os"
 
 	"github.com/vitistack/common/pkg/clients/k8sclient"
+	"github.com/vitistack/common/pkg/clients/s3client/s3interface"
+	"github.com/vitistack/common/pkg/clients/s3client/s3minioclient"
+	"github.com/vitistack/common/pkg/clients/s3client/s3mock"
+
 	"github.com/vitistack/common/pkg/loggers/vlog"
 	"github.com/vitistack/common/pkg/serialize"
 
@@ -93,6 +98,9 @@ func main() {
 	// Demonstrate YAML formatting
 	vlog.Info("YAML formatted struct", "yaml", serialize.YAML(testStruct))
 	vlog.Info("YAML formatted map", "yaml", serialize.PrettyYAML(configMap))
+
+	// Demonstrate S3 client usage (using mock or real client based on env var)
+	s3Example()
 }
 
 func getKubernetesPodsAndLogWithVLog(kubernetesConfigSet string) {
@@ -110,6 +118,75 @@ func getKubernetesPodsAndLogWithVLog(kubernetesConfigSet string) {
 		vlog.Debug("Pod:", pod.Name, "Pod labels:", serialize.Pretty(pod.Labels))
 	}
 	vlog.Info("Number of pods in default namespace:", len(pods.Items))
+}
+
+func s3Example() {
+
+	var s3 s3interface.S3Client
+	var err error
+
+	if os.Getenv("S3_USE_MOCK") == trueString {
+		vlog.Info("Using Mock S3 Client for testing")
+		s3 = s3mock.NewMockS3Client()
+	} else {
+		vlog.Info("Using real S3 Client with endpoint:", os.Getenv("S3_ENDPOINT"))
+		s3, err = s3minioclient.NewS3Client(
+			s3interface.WithEndpoint(os.Getenv("S3_ENDPOINT")),
+			s3interface.WithAccessKey(os.Getenv("S3_ACCESS_KEY")),
+			s3interface.WithSecretKey(os.Getenv("S3_SECRET_KEY")),
+			s3interface.WithBucketName(os.Getenv("S3_BUCKET_NAME")),
+			s3interface.WithSecure(os.Getenv("S3_SECURE") == trueString),
+			s3interface.WithRegion(os.Getenv("S3_REGION")),
+		)
+		if err != nil {
+			vlog.Error("Failed to create real S3 client", err)
+			return
+		}
+	}
+
+	err = s3.CreateBucket(context.Background())
+	if err != nil {
+		vlog.Error("Failed to create bucket", err)
+		return
+	}
+	vlog.Info("Bucket created successfully")
+
+	// Create test data
+	testData := []byte("Hello from S3! This is test data.")
+	err = s3.PutObject(context.Background(), "test.txt", bytes.NewReader(testData), int64(len(testData)))
+	if err != nil {
+		vlog.Error("Failed to put object", err)
+		return
+	}
+	vlog.Info("Object uploaded successfully")
+
+	data, err := s3.GetObject(context.Background(), "test.txt")
+	if err != nil {
+		vlog.Error("Failed to get object", err)
+		return
+	}
+	vlog.Info("Object data:", string(data))
+
+	list, err := s3.ListObject(context.Background(), s3interface.ListObjectsOptions{Prefix: "test", Recursive: true})
+	if err != nil {
+		vlog.Error("Failed to list objects", err)
+		return
+	}
+	vlog.Info("Objects with prefix 'test':", serialize.Pretty(list))
+
+	err = s3.DeleteObject(context.Background(), "test.txt")
+	if err != nil {
+		vlog.Error("Failed to delete object", err)
+		return
+	}
+	vlog.Info("Object deleted successfully")
+
+	err = s3.DeleteBucket(context.Background())
+	if err != nil {
+		vlog.Error("Failed to delete bucket", err)
+		return
+	}
+	vlog.Info("Bucket deleted successfully")
 }
 
 type TestStruct struct {
