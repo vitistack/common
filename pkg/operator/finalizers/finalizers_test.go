@@ -303,7 +303,7 @@ func TestEnsureIdempotent(t *testing.T) {
 	finalizerName := "test-finalizer"
 
 	// Call Ensure multiple times
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		err := Ensure(ctx, fakeClient, obj, finalizerName)
 		if err != nil {
 			t.Fatalf("Ensure() iteration %d unexpected error: %v", i, err)
@@ -348,7 +348,7 @@ func TestRemoveIdempotent(t *testing.T) {
 	finalizerName := "test-finalizer"
 
 	// Call Remove multiple times
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		err := Remove(ctx, fakeClient, obj, finalizerName)
 		if err != nil {
 			t.Fatalf("Remove() iteration %d unexpected error: %v", i, err)

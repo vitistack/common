@@ -192,7 +192,7 @@ func s3Example() {
 type TestStruct struct {
 	Field1 string      `json:"field1,omitempty" yaml:"field1,omitempty"`
 	Field2 int         `json:"field2,omitempty" yaml:"field2,omitempty"`
-	Field3 TestStruct2 `json:"field3,omitempty" yaml:"field3,omitempty"`
+	Field3 TestStruct2 `json:"field3" yaml:"field3,omitempty"`
 }
 
 type TestStruct2 struct {

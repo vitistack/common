@@ -743,7 +743,7 @@ func unescapeMsgSegment(seg []byte) []byte {
 	var out bytes.Buffer
 	out.Grow(len(seg) + 8)
 	esc := false
-	for i := 0; i < len(seg); i++ {
+	for i := range seg {
 		c := seg[i]
 		if esc {
 			switch c {

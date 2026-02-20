@@ -282,7 +282,7 @@ func TestMockS3Client_ConcurrentAccess(t *testing.T) {
 	done := make(chan bool)
 	numGoroutines := 100
 
-	for i := 0; i < numGoroutines; i++ {
+	for i := range numGoroutines {
 		go func(index int) {
 			objectName := bytes.NewBufferString("file")
 			objectName.WriteString(string(rune('0' + (index % 10))))
@@ -295,7 +295,7 @@ func TestMockS3Client_ConcurrentAccess(t *testing.T) {
 	}
 
 	// Wait for all goroutines
-	for i := 0; i < numGoroutines; i++ {
+	for range numGoroutines {
 		<-done
 	}
 

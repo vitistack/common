@@ -31,10 +31,7 @@ func Backoff(retry int, base, maxDelay time.Duration) time.Duration {
 	}
 	// Exponential growth: base * 2^retry, capped at max
 	exp := float64(base) * math.Pow(2, float64(retry))
-	d := time.Duration(exp)
-	if d > maxDelay {
-		d = maxDelay
-	}
+	d := min(time.Duration(exp), maxDelay)
 	// Full jitter: [0, d]
 	if d <= 0 {
 		return 0
