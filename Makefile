@@ -103,8 +103,12 @@ fmt: ## Run go fmt against code.
 vet: ## Run go vet against code.
 	go vet ./...
 
+.PHONY: fix
+fix: ## Run go fix against code.
+	go fix ./...
+
 .PHONY: lint
-lint: golangci-lint ## Run go vet against code.
+lint: golangci-lint ## Run golangci-lint against code.
 	$(GOLANGCI_LINT) run --timeout 5m ./...
 
 ##@ Tests
