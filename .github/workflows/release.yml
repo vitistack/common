@@ -88,13 +88,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download Helm chart
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: helm-chart
           path: /tmp/helm
 
       - name: Download crds.yaml
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: crds-yaml
           path: .
