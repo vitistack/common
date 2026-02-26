@@ -68,14 +68,14 @@ jobs:
         run: helm package charts/vitistack-crds
 
       - name: Upload chart artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: helm-chart
           path: crds-*.tgz
           retention-days: 1
 
       - name: Upload crds.yaml artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: crds-yaml
           path: crds.yaml
