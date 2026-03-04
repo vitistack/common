@@ -33,6 +33,14 @@ type NetworkConfigurationList struct {
 }
 
 type NetworkConfigurationSpec struct {
+	// NetworkNamespaceName is the name of the NetworkNamespace object to use.
+	// When set, the operator will look up this specific NetworkNamespace by name
+	// instead of listing all NetworkNamespaces in the namespace and picking the first one.
+	// This field is optional for backward compatibility; if empty, the legacy
+	// list-based lookup is used (with a deprecation warning).
+	// +kubebuilder:validation:Optional
+	NetworkNamespaceName string `json:"networkNamespaceName,omitempty"`
+
 	// Name of the NetworkConfiguration
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:MinLength=2

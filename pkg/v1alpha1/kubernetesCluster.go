@@ -66,6 +66,14 @@ type KubernetesClusterSpecData struct {
 
 	// +kubebuilder:validation:Required
 	Environment string `json:"environment"`
+
+	// NetworkNamespaceName is the name of the NetworkNamespace object in the same namespace
+	// that should be used for network configuration (VLAN, IP prefix, etc.).
+	// Operators will look up this specific NetworkNamespace by name to resolve
+	// VLAN, IP prefix, and other network settings.
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:MinLength=1
+	NetworkNamespaceName string `json:"networkNamespaceName"`
 }
 
 type KubernetesClusterSpecTopology struct {

@@ -123,6 +123,13 @@ type MachineSpecDisk struct {
 }
 
 type MachineNetwork struct {
+	// NetworkNamespaceName is the name of the NetworkNamespace object in the same namespace
+	// that provides network configuration (VLAN, IP prefix, etc.) for this machine.
+	// When set, operators will look up this specific NetworkNamespace by name instead of
+	// listing all NetworkNamespaces in the namespace and picking the first one.
+	// This is typically propagated from the KubernetesCluster spec.
+	// +kubebuilder:validation:Optional
+	NetworkNamespaceName string `json:"networkNamespaceName,omitempty"`
 	// VPC/Virtual Network ID
 	VPC string `json:"vpc,omitempty"`
 	// Subnet ID

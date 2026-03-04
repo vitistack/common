@@ -123,6 +123,14 @@ spec:
                       type: string
                   type: object
                 type: array
+              networkNamespaceName:
+                description: |-
+                  NetworkNamespaceName is the name of the NetworkNamespace object to use.
+                  When set, the operator will look up this specific NetworkNamespace by name
+                  instead of listing all NetworkNamespaces in the namespace and picking the first one.
+                  This field is optional for backward compatibility; if empty, the legacy
+                  list-based lookup is used (with a deprecation warning).
+                type: string
               provider:
                 maxLength: 32
                 minLength: 1

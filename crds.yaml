@@ -438,6 +438,14 @@ spec:
                     type: string
                   environment:
                     type: string
+                  networkNamespaceName:
+                    description: |-
+                      NetworkNamespaceName is the name of the NetworkNamespace object in the same namespace
+                      that should be used for network configuration (VLAN, IP prefix, etc.).
+                      Operators will look up this specific NetworkNamespace by name to resolve
+                      VLAN, IP prefix, and other network settings.
+                    minLength: 1
+                    type: string
                   project:
                     type: string
                   provider:
@@ -455,6 +463,7 @@ spec:
                 - clusterUid
                 - datacenter
                 - environment
+                - networkNamespaceName
                 - project
                 - provider
                 - region
@@ -3381,6 +3390,14 @@ spec:
                           type: string
                       type: object
                     type: array
+                  networkNamespaceName:
+                    description: |-
+                      NetworkNamespaceName is the name of the NetworkNamespace object in the same namespace
+                      that provides network configuration (VLAN, IP prefix, etc.) for this machine.
+                      When set, operators will look up this specific NetworkNamespace by name instead of
+                      listing all NetworkNamespaces in the namespace and picking the first one.
+                      This is typically propagated from the KubernetesCluster spec.
+                    type: string
                   privateIP:
                     description: Static private IP address
                     type: string
@@ -3803,6 +3820,14 @@ spec:
                       type: string
                   type: object
                 type: array
+              networkNamespaceName:
+                description: |-
+                  NetworkNamespaceName is the name of the NetworkNamespace object to use.
+                  When set, the operator will look up this specific NetworkNamespace by name
+                  instead of listing all NetworkNamespaces in the namespace and picking the first one.
+                  This field is optional for backward compatibility; if empty, the legacy
+                  list-based lookup is used (with a deprecation warning).
+                type: string
               provider:
                 maxLength: 32
                 minLength: 1
