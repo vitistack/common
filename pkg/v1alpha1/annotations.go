@@ -26,13 +26,31 @@ const (
 	// The availability zone of the cluster
 	AzAnnotation = "vitistack.io/az"
 
-	// The infrastructure of the cluster
+	// The project of the cluster
+	ClusterProjectAnnotation = "vitistack.io/clusterproject"
+
+	// The environment of the cluster (e.g. dev, test, qa, prod)
+	EnvironmentAnnotation = "vitistack.io/environment"
+
+	// The infrastructure tier of the machine (defaults to "prod")
+	MachineInfrastructureAnnotation = "vitistack.io/machineinfrastructure"
+
+	// The machine provider (e.g. kubevirt, proxmox)
+	MachineProviderAnnotation = "vitistack.io/machineprovider"
+
+	// The machine class (e.g. small, medium, large)
+	MachineClassAnnotation = "vitistack.io/machineclass"
+
+	// The machine ID (name of the machine in the provider)
+	MachineIdAnnotation = "vitistack.io/machineid"
+
+	// Deprecated: use MachineInfrastructureAnnotation instead. Will be removed in a future release.
 	InfrastructureAnnotation = "vitistack.io/infrastructure"
 
-	// The VM provider of the cluster
+	// Deprecated: use MachineProviderAnnotation instead. Will be removed in a future release.
 	VMProviderAnnotation = "vitistack.io/vmprovider"
 
-	// The VM ID of the cluster
+	// Deprecated: use MachineIdAnnotation instead. Will be removed in a future release.
 	VMIdAnnotation = "vitistack.io/vmid"
 
 	// The Kubernetes provider of the cluster
@@ -56,19 +74,28 @@ const (
 
 func GetAllVitistackAnnotations() []string {
 	return []string{
+		ClusterIdAnnotation,
 		ClusterNameAnnotation,
 		ClusterWorkspaceAnnotation,
+		ClusterProjectAnnotation,
+		ClusterFQDNAnnotation,
+		EnvironmentAnnotation,
 		CountryAnnotation,
 		RegionAnnotation,
-		InfrastructureAnnotation,
 		AzAnnotation,
+		KubernetesProviderAnnotation,
+		K8sEndpointAnnotation,
+		MachineProviderAnnotation,
+		MachineClassAnnotation,
+		MachineIdAnnotation,
+		MachineInfrastructureAnnotation,
+		NodeFQDNAnnotation,
+		NodeRoleAnnotation,
+		NodePoolAnnotation,
+		// Deprecated: kept for backward compatibility during transition
+		InfrastructureAnnotation,
 		VMProviderAnnotation,
 		VMIdAnnotation,
-		KubernetesProviderAnnotation,
-		ClusterIdAnnotation,
-		K8sEndpointAnnotation,
-		ClusterFQDNAnnotation,
-		NodeFQDNAnnotation,
 	}
 }
 
