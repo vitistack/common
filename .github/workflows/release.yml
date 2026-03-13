@@ -11,6 +11,7 @@ permissions:
   id-token: write # Required for keyless signing with Sigstore
 
 env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   REGISTRY: ghcr.io
   HELM_REGISTRY: ghcr.io/vitistack/helm
   # Optional override for pushing/signing to an org-owned GHCR package (e.g. ghcr.io/vitistack/helm/*).
