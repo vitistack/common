@@ -149,8 +149,12 @@ spec:
                 type: string
               namespaceId:
                 type: string
+              observedGeneration:
+                type: integer
               phase:
                 type: string
+              retryCount:
+                type: integer
               status:
                 type: string
               supervisorIdentifier:

@@ -53,6 +53,9 @@ type NetworkNamespaceStatus struct {
 	Message    string             `json:"message,omitempty"`
 	Created    metav1.Time        `json:"created,omitempty"`
 
+	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
+	RetryCount         int   `json:"retryCount,omitempty"`
+
 	DataCenterIdentifier string `json:"datacenterIdentifier,omitempty"`
 	SupervisorIdentifier string `json:"supervisorIdentifier,omitempty"`
 	NamespaceID          string `json:"namespaceId,omitempty"`
