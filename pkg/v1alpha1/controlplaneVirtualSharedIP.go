@@ -75,6 +75,9 @@ type ControlPlaneVirtualSharedIPStatus struct {
 	Message    string             `json:"message,omitempty"`
 	Created    metav1.Time        `json:"created,omitempty"`
 
+	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
+	RetryCount         int   `json:"retryCount,omitempty"`
+
 	DatacenterIdentifier       string   `json:"datacenterIdentifier,omitempty"`
 	SupervisorIdentifier       string   `json:"supervisorIdentifier,omitempty"`
 	ClusterIdentifier          string   `json:"clusterIdentifier,omitempty"`
