@@ -223,16 +223,6 @@ func s3ListBucketFilesExample() {
 		vlog.Infof("File: %s | Size: %d | LastModified: %s | ContentType: %s", file.Key, file.Size, file.LastModified, file.ContentType)
 	}
 
-	// vlog.Infof("Deleting all %d files in bucket...", len(files))
-	// for _, file := range files {
-	// 	err := s3.DeleteObject(context.Background(), file.Key)
-	// 	if err != nil {
-	// 		vlog.Errorf("Failed to delete %s: %v", file.Key, err)
-	// 		continue
-	// 	}
-	// 	vlog.Infof("Deleted: %s", file.Key)
-	// }
-	// vlog.Info("All files deleted")
 }
 
 type TestStruct struct {
