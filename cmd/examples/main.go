@@ -100,7 +100,12 @@ func main() {
 	vlog.Info("YAML formatted map", "yaml", serialize.PrettyYAML(configMap))
 
 	// Demonstrate S3 client usage (using mock or real client based on env var)
-	s3Example()
+	if os.Getenv("S3_USE_MOCK") == trueString {
+		s3MockExample()
+	} else {
+		vlog.Info("S3_USE_MOCK is not set to true, skipping S3 mock example")
+		s3ListBucketFilesExample()
+	}
 }
 
 func getKubernetesPodsAndLogWithVLog(kubernetesConfigSet string) {
@@ -120,7 +125,7 @@ func getKubernetesPodsAndLogWithVLog(kubernetesConfigSet string) {
 	vlog.Info("Number of pods in default namespace:", len(pods.Items))
 }
 
-func s3Example() {
+func s3MockExample() {
 
 	var s3 s3interface.S3Client
 	var err error
@@ -187,6 +192,47 @@ func s3Example() {
 		return
 	}
 	vlog.Info("Bucket deleted successfully")
+}
+
+func s3ListBucketFilesExample() {
+	vlog.Info("Listing all files in S3 bucket")
+
+	var s3 s3interface.S3Client
+	var err error
+
+	s3, err = s3minioclient.NewS3Client(
+		s3interface.WithEndpoint(os.Getenv("S3_ENDPOINT")),
+		s3interface.WithAccessKey(os.Getenv("S3_ACCESS_KEY")),
+		s3interface.WithSecretKey(os.Getenv("S3_SECRET_KEY")),
+		s3interface.WithBucketName(os.Getenv("S3_BUCKET_NAME")),
+		s3interface.WithSecure(os.Getenv("S3_SECURE") == trueString),
+		s3interface.WithRegion(os.Getenv("S3_REGION")),
+	)
+	if err != nil {
+		vlog.Error("Failed to create S3 client", err)
+		return
+	}
+
+	files, err := s3.ListObject(context.Background(), s3interface.ListObjectsOptions{Prefix: "", Recursive: true})
+	if err != nil {
+		vlog.Error("Failed to list files in bucket", err)
+		return
+	}
+
+	for _, file := range files {
+		vlog.Infof("File: %s | Size: %d | LastModified: %s | ContentType: %s", file.Key, file.Size, file.LastModified, file.ContentType)
+	}
+
+	// vlog.Infof("Deleting all %d files in bucket...", len(files))
+	// for _, file := range files {
+	// 	err := s3.DeleteObject(context.Background(), file.Key)
+	// 	if err != nil {
+	// 		vlog.Errorf("Failed to delete %s: %v", file.Key, err)
+	// 		continue
+	// 	}
+	// 	vlog.Infof("Deleted: %s", file.Key)
+	// }
+	// vlog.Info("All files deleted")
 }
 
 type TestStruct struct {

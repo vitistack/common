@@ -88,20 +88,25 @@ func (c *MinioS3Client) DeleteObject(ctx context.Context, objectName string) err
 	return nil
 }
 
-func (c *MinioS3Client) ListObject(ctx context.Context, listOpt s3interface.ListObjectsOptions) ([]string, error) {
+func (c *MinioS3Client) ListObject(ctx context.Context, listOpt s3interface.ListObjectsOptions) ([]s3interface.ObjectInfo, error) {
 
 	objectCh := c.client.ListObjects(ctx, c.bucketName, minio.ListObjectsOptions{
 		Prefix:    listOpt.Prefix,
 		Recursive: listOpt.Recursive,
 	})
 
-	var objects []string
+	var objects []s3interface.ObjectInfo
 	for object := range objectCh {
 		if object.Err != nil {
 			vlog.Warnf("Failed to list objects: %v", object.Err)
 			return nil, object.Err
 		}
-		objects = append(objects, object.Key)
+		objects = append(objects, s3interface.ObjectInfo{
+			Key:          object.Key,
+			Size:         object.Size,
+			LastModified: object.LastModified,
+			ContentType:  object.ContentType,
+		})
 	}
 
 	return objects, nil

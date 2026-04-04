@@ -86,7 +86,7 @@ func (m *MockS3Client) DeleteObject(ctx context.Context, objectName string) erro
 }
 
 // ListObject returns a list of object names matching the criteria
-func (m *MockS3Client) ListObject(ctx context.Context, listOpt s3interface.ListObjectsOptions) ([]string, error) {
+func (m *MockS3Client) ListObject(ctx context.Context, listOpt s3interface.ListObjectsOptions) ([]s3interface.ObjectInfo, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
@@ -94,16 +94,16 @@ func (m *MockS3Client) ListObject(ctx context.Context, listOpt s3interface.ListO
 		return nil, m.ListObjectErr
 	}
 
-	var objects []string
-	for key := range m.objects {
+	var objects []s3interface.ObjectInfo
+	for key, data := range m.objects {
 		// Filter by prefix if specified
-		if listOpt.Prefix != "" {
-			if len(key) >= len(listOpt.Prefix) && key[:len(listOpt.Prefix)] == listOpt.Prefix {
-				objects = append(objects, key)
-			}
-		} else {
-			objects = append(objects, key)
+		if listOpt.Prefix != "" && (len(key) < len(listOpt.Prefix) || key[:len(listOpt.Prefix)] != listOpt.Prefix) {
+			continue
 		}
+		objects = append(objects, s3interface.ObjectInfo{
+			Key:  key,
+			Size: int64(len(data)),
+		})
 	}
 
 	return objects, nil

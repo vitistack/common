@@ -154,8 +154,8 @@ func TestMockS3Client_ListObject_WithPrefix(t *testing.T) {
 
 	// Verify only log files are returned
 	for _, obj := range objects {
-		if len(obj) < 5 || obj[:5] != "logs/" {
-			t.Errorf("Object %s does not match prefix 'logs/'", obj)
+		if len(obj.Key) < 5 || obj.Key[:5] != "logs/" {
+			t.Errorf("Object %s does not match prefix 'logs/'", obj.Key)
 		}
 	}
 }

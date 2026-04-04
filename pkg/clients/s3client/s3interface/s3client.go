@@ -5,6 +5,7 @@ package s3interface
 import (
 	"context"
 	"io"
+	"time"
 )
 
 type S3Client interface {
@@ -12,7 +13,7 @@ type S3Client interface {
 	PutObject(ctx context.Context, objectName string, file io.Reader, size int64) error
 	GetObject(ctx context.Context, objectName string) ([]byte, error)
 	DeleteObject(ctx context.Context, objectName string) error
-	ListObject(ctx context.Context, listOpt ListObjectsOptions) ([]string, error)
+	ListObject(ctx context.Context, listOpt ListObjectsOptions) ([]ObjectInfo, error)
 	// buckets
 	CreateBucket(ctx context.Context) error
 	DeleteBucket(ctx context.Context) error
@@ -32,6 +33,13 @@ type Option func(*Options)
 type ListObjectsOptions struct {
 	Prefix    string
 	Recursive bool
+}
+
+type ObjectInfo struct {
+	Key          string    `json:"key"`
+	Size         int64     `json:"size"`
+	LastModified time.Time `json:"lastModified"`
+	ContentType  string    `json:"contentType,omitempty"`
 }
 
 func WithEndpoint(endpoint string) Option {
