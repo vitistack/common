@@ -63,12 +63,15 @@ spec:
               reuseExisting:
                 default: false
                 type: boolean
+              storageConfigClass:
+                type: string
               type:
                 type: string
             required:
             - clusterId
             - clusterNamespace
             - name
+            - storageConfigClass
             - type
             type: object
           status:
@@ -4334,9 +4337,6 @@ spec:
   scope: Cluster
   versions:
   - additionalPrinterColumns:
-    - jsonPath: .spec.name
-      name: Name
-      type: string
     - jsonPath: .spec.type
       name: Type
       type: string

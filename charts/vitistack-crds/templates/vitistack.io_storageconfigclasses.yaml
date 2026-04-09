@@ -17,9 +17,6 @@ spec:
   scope: Cluster
   versions:
   - additionalPrinterColumns:
-    - jsonPath: .spec.name
-      name: Name
-      type: string
     - jsonPath: .spec.type
       name: Type
       type: string

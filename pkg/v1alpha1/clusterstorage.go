@@ -46,6 +46,9 @@ type ClusterStorageSpec struct {
 	// +kubebuilder:validation:Required
 	Type string `json:"type,omitempty"`
 
+	// +kubebuilder:validation:Required
+	StorageConfigClass string `json:"storageConfigClass,omitempty"`
+
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:default:=false
 	ReuseExisting bool `json:"reuseExisting,omitempty"`
