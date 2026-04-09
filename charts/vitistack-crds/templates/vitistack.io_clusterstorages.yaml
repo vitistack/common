@@ -73,6 +73,11 @@ spec:
             type: object
           status:
             properties:
+              guestResource:
+                properties:
+                  condition:
+                    type: string
+                type: object
               message:
                 type: string
               name:
