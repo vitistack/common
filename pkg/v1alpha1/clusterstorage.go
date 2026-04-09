@@ -62,6 +62,12 @@ type ClusterStorageStatus struct {
 	Message string `json:"message,omitempty"`
 
 	Secret secretStatus `json:"secret,omitempty"`
+
+	GuestResource GuestResourceStatus `json:"guestResource,omitempty"`
+}
+
+type GuestResourceStatus struct {
+	Condition string `json:"condition,omitempty"`
 }
 
 type secretStatus struct {
