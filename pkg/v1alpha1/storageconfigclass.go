@@ -11,7 +11,6 @@ import (
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:path=storageconfigclasses,scope=Cluster,shortName=scc
-// +kubebuilder:printcolumn:name="Name",type=string,JSONPath=`.spec.name`
 // +kubebuilder:printcolumn:name="Type",type=string,JSONPath=`.spec.type`
 // +kubebuilder:printcolumn:name="Enabled",type=string,JSONPath=`.spec.enabled`
 
@@ -50,6 +49,6 @@ type StorageConfigClassStatus struct {
 	Name string `json:"name,omitempty"`
 }
 
-func Init() {
+func init() {
 	SchemeBuilder.Register(&StorageConfigClass{}, &StorageConfigClassList{})
 }

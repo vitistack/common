@@ -63,12 +63,15 @@ spec:
               reuseExisting:
                 default: false
                 type: boolean
+              storageConfigClass:
+                type: string
               type:
                 type: string
             required:
             - clusterId
             - clusterNamespace
             - name
+            - storageConfigClass
             - type
             type: object
           status:
