@@ -71,6 +71,12 @@ type NetworkConfigurationSpec struct {
 	// +kubebuilder:validation:Pattern=`^[A-Za-z0-9_-]+$`
 	ClusterIdentifier string `json:"clusterIdentifier,omitempty"`
 
+	// Provider identifies which IP allocation operator handles this NetworkConfiguration.
+	// Examples: "kea" (Kea DHCP), "static-ip-operator" (static IP allocation).
+	// When empty, the operator determines ownership from the referenced NetworkNamespace's
+	// ipAllocation.provider field (with a deprecation warning).
+	// Setting this field explicitly is recommended to avoid ambiguity when multiple
+	// IP allocation operators run in the same cluster.
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=32
@@ -112,6 +118,21 @@ type NetworkConfigurationInterface struct {
 	DNS []string `json:"dns,omitempty"`
 	// DHCP reserved in dchp server(s)
 	DHCPReserved bool `json:"dhcpReserved,omitempty"`
+
+	// IPAllocated indicates whether an IP address has been successfully allocated
+	// for this interface, regardless of allocation method.
+	// +kubebuilder:validation:Optional
+	IPAllocated bool `json:"ipAllocated,omitempty"`
+
+	// AllocationMethod indicates how the IP address was allocated for this interface.
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:validation:Enum=dhcp;static
+	AllocationMethod IPAllocationType `json:"allocationMethod,omitempty"`
+
+	// AllocationExpiry is when the IP allocation expires.
+	// Only set for static allocations with a TTL configured on the NetworkNamespace.
+	// +kubebuilder:validation:Optional
+	AllocationExpiry *metav1.Time `json:"allocationExpiry,omitempty"`
 }
 
 func init() {

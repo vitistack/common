@@ -82,6 +82,23 @@ spec:
               networkInterfaces:
                 items:
                   properties:
+                    allocationExpiry:
+                      description: |-
+                        AllocationExpiry is when the IP allocation expires.
+                        Only set for static allocations with a TTL configured on the NetworkNamespace.
+                      format: date-time
+                      type: string
+                    allocationMethod:
+                      allOf:
+                      - enum:
+                        - dhcp
+                        - static
+                      - enum:
+                        - dhcp
+                        - static
+                      description: AllocationMethod indicates how the IP address was
+                        allocated for this interface.
+                      type: string
                     dhcpReserved:
                       description: DHCP reserved in dchp server(s)
                       type: boolean
@@ -90,6 +107,11 @@ spec:
                       items:
                         type: string
                       type: array
+                    ipAllocated:
+                      description: |-
+                        IPAllocated indicates whether an IP address has been successfully allocated
+                        for this interface, regardless of allocation method.
+                      type: boolean
                     ipv4Addresses:
                       description: IPv4 addresses
                       items:
@@ -132,6 +154,13 @@ spec:
                   list-based lookup is used (with a deprecation warning).
                 type: string
               provider:
+                description: |-
+                  Provider identifies which IP allocation operator handles this NetworkConfiguration.
+                  Examples: "kea" (Kea DHCP), "static-ip-operator" (static IP allocation).
+                  When empty, the operator determines ownership from the referenced NetworkNamespace's
+                  ipAllocation.provider field (with a deprecation warning).
+                  Setting this field explicitly is recommended to avoid ambiguity when multiple
+                  IP allocation operators run in the same cluster.
                 maxLength: 32
                 minLength: 1
                 pattern: ^[A-Za-z0-9_-]+$
@@ -209,6 +238,23 @@ spec:
               networkInterfaces:
                 items:
                   properties:
+                    allocationExpiry:
+                      description: |-
+                        AllocationExpiry is when the IP allocation expires.
+                        Only set for static allocations with a TTL configured on the NetworkNamespace.
+                      format: date-time
+                      type: string
+                    allocationMethod:
+                      allOf:
+                      - enum:
+                        - dhcp
+                        - static
+                      - enum:
+                        - dhcp
+                        - static
+                      description: AllocationMethod indicates how the IP address was
+                        allocated for this interface.
+                      type: string
                     dhcpReserved:
                       description: DHCP reserved in dchp server(s)
                       type: boolean
@@ -217,6 +263,11 @@ spec:
                       items:
                         type: string
                       type: array
+                    ipAllocated:
+                      description: |-
+                        IPAllocated indicates whether an IP address has been successfully allocated
+                        for this interface, regardless of allocation method.
+                      type: boolean
                     ipv4Addresses:
                       description: IPv4 addresses
                       items:

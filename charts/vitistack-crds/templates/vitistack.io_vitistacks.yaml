@@ -350,6 +350,65 @@ spec:
                           type: object
                         type: array
                     type: object
+                  ipAllocation:
+                    description: |-
+                      IPAllocation defines the available IP allocation providers,
+                      optionally configured per availability zone.
+                    items:
+                      description: |-
+                        VitistackIPAllocationZone defines IP allocation provider availability for
+                        a specific availability zone, or as a default for all zones when Zone is empty.
+                      properties:
+                        providers:
+                          description: Providers lists the IP allocation providers
+                            available in this zone.
+                          items:
+                            description: |-
+                              VitistackIPAllocationProviderConfig defines an IP allocation provider
+                              available within a vitistack zone.
+                            properties:
+                              configuration:
+                                additionalProperties:
+                                  type: string
+                                description: Configuration provides provider-specific
+                                  settings as key-value pairs.
+                                type: object
+                              default:
+                                description: |-
+                                  Default indicates whether this is the default provider for the zone.
+                                  When a NetworkNamespace does not explicitly set an IP allocation provider,
+                                  the default provider for its zone is used.
+                                type: boolean
+                              enabled:
+                                default: true
+                                description: Enabled indicates whether this provider
+                                  is currently available for use.
+                                type: boolean
+                              type:
+                                allOf:
+                                - enum:
+                                  - dhcp
+                                  - static
+                                - enum:
+                                  - dhcp
+                                  - static
+                                description: Type of IP allocation.
+                                type: string
+                            required:
+                            - type
+                            type: object
+                          minItems: 1
+                          type: array
+                        zone:
+                          description: |-
+                            Zone is the availability zone this configuration applies to.
+                            When empty, this entry serves as the default for all zones
+                            that do not have a zone-specific configuration.
+                          type: string
+                      required:
+                      - providers
+                      type: object
+                    type: array
                   loadBalancers:
                     description: LoadBalancers define available load balancer configurations
                     items:
