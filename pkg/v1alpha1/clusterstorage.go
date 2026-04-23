@@ -11,10 +11,10 @@ import (
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:path=clusterstorages,scope=Namespaced,shortName=cls
-// +kubebuilder:printcolumn:name="Name",type=string,JSONPath=`.spec.name`
-// +kubebuilder:printcolumn:name="Cluster",type=string,JSONPath=`.spec.clusterId`
-// +kubebuilder:printcolumn:name="Namespace",type=string,JSONPath=`.spec.clusterNamespace`
+// +kubebuilder:printcolumn:name="ClusterId",type=string,JSONPath=`.spec.clusterId`
 // +kubebuilder:printcolumn:name="Type",type=string,JSONPath=`.spec.type`
+// +kubebuilder:printcolumn:name="StorageConfigClass",type=string,JSONPath=`.spec.storageConfigClass`
+// +kubebuilder:printcolumn:name="Phase",type=string,JSONPath=`.status.phase`
 
 type ClusterStorage struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -35,13 +35,7 @@ type ClusterStorageList struct {
 
 type ClusterStorageSpec struct {
 	// +kubebuilder:validation:Required
-	Name string `json:"name,omitempty"`
-
-	// +kubebuilder:validation:Required
 	ClusterId string `json:"clusterId,omitempty"`
-
-	// +kubebuilder:validation:Required
-	ClusterNamespace string `json:"clusterNamespace,omitempty"`
 
 	// +kubebuilder:validation:Required
 	Type string `json:"type,omitempty"`
