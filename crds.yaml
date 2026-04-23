@@ -17,17 +17,17 @@ spec:
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
-    - jsonPath: .spec.name
-      name: Name
-      type: string
     - jsonPath: .spec.clusterId
-      name: Cluster
-      type: string
-    - jsonPath: .spec.clusterNamespace
-      name: Namespace
+      name: ClusterId
       type: string
     - jsonPath: .spec.type
       name: Type
+      type: string
+    - jsonPath: .spec.storageConfigClass
+      name: StorageConfigClass
+      type: string
+    - jsonPath: .status.phase
+      name: Phase
       type: string
     name: v1alpha1
     schema:
@@ -54,11 +54,7 @@ spec:
             properties:
               clusterId:
                 type: string
-              clusterNamespace:
-                type: string
               existingRef:
-                type: string
-              name:
                 type: string
               reuseExisting:
                 default: false
@@ -69,8 +65,6 @@ spec:
                 type: string
             required:
             - clusterId
-            - clusterNamespace
-            - name
             - storageConfigClass
             - type
             type: object
