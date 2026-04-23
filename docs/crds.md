@@ -164,9 +164,12 @@ spec:
 
 `networkconfigurations.vitistack.io/v1alpha1`
 
-Defines network topology, VLANs, subnets, and routing.
+Describes the network interfaces a machine should be attached to and reports the
+IP addresses that were allocated for those interfaces. A NetworkConfiguration
+references a NetworkNamespace (by name) and is processed by the IP allocation
+operator identified in `spec.provider` (e.g. `kea`, `static-ip-operator`).
 
-**Short Name**: `netconf`
+**Short Name**: `nc`
 
 **Example**:
 
@@ -174,38 +177,52 @@ Defines network topology, VLANs, subnets, and routing.
 apiVersion: vitistack.io/v1alpha1
 kind: NetworkConfiguration
 metadata:
-  name: production-network
+  name: web-server-01-net
   namespace: default
 spec:
-  cidr: "10.0.0.0/16"
-  gateway: "10.0.0.1"
-  vlan:
-    id: 100
-    name: production
-  subnets:
-    - name: web-tier
-      cidr: "10.0.1.0/24"
-      gateway: "10.0.1.1"
-    - name: app-tier
-      cidr: "10.0.2.0/24"
-      gateway: "10.0.2.1"
-  dns:
-    servers:
-      - 8.8.8.8
-      - 8.8.4.4
-    searchDomains:
-      - example.com
+  name: test-network
+  description: Primary network configuration for web-server-01
+  networkNamespaceName: tenant-acme
+  provider: static-ip-operator # "kea" for DHCP, "static-ip-operator" for static
+  datacenterIdentifier: no-west-az1
+  supervisorIdentifier: p-west-mgmt
+  clusterIdentifier: production
+  networkInterfaces:
+    - name: eth0
+      macAddress: "52:54:00:12:34:56"
 ```
+
+**Key Spec Fields**:
+
+- `spec.name`: Unique name for the NetworkConfiguration (required, 2–32 chars, `[A-Za-z0-9_-]`)
+- `spec.description`: Free-text description (optional, max 256 chars)
+- `spec.networkNamespaceName`: Name of the NetworkNamespace to allocate from. If empty, the operator falls back to a list-based lookup (deprecated — emits a warning)
+- `spec.provider`: Identifies which IP allocation operator handles this resource. Recommended when multiple allocation operators run in the same cluster. When empty, the operator inherits from the referenced NetworkNamespace's `ipAllocation.provider` (deprecated — emits a warning)
+- `spec.datacenterIdentifier` / `supervisorIdentifier` / `clusterIdentifier`: Scoping identifiers (optional, same pattern rules as above)
+- `spec.networkInterfaces[]`: Interfaces to attach. Each entry accepts `name`, `macAddress`, `vlan`, `ipv4Subnet`/`ipv6Subnet`, `ipv4Gateway`/`ipv6Gateway`, `dns[]`, and pre-seeded addresses
+
+**Key Status Fields**:
+
+- `status.phase` / `status.status` / `status.message`: High-level reconciliation state
+- `status.networkInterfaces[]`: Per-interface allocation result, including:
+  - `ipv4Addresses[]` / `ipv6Addresses[]`: Allocated addresses
+  - `dhcpReserved`: Whether a reservation has been recorded on the DHCP server
+  - `ipAllocated`: `true` once an IP has been successfully allocated, regardless of method
+  - `allocationMethod`: `dhcp` or `static` — how this interface's address was assigned
+  - `allocationExpiry`: Expiry timestamp for static allocations that carry a TTL (see `NetworkNamespace.spec.ipAllocation.static.ttlSeconds`)
 
 ### NetworkNamespace
 
 `networknamespaces.vitistack.io/v1alpha1`
 
-Provides network isolation and segmentation for multi-tenancy.
+Represents a logical network segment within a datacenter/supervisor. A
+NetworkNamespace declares how IP addresses are allocated (DHCP via an external
+server such as Kea, or static allocation from a defined pool) and is referenced
+by NetworkConfigurations that need addresses from it.
 
-**Short Name**: `netns`
+**Short Name**: `nn`
 
-**Example**:
+**Example — DHCP (default behavior)**:
 
 ```yaml
 apiVersion: vitistack.io/v1alpha1
@@ -214,12 +231,75 @@ metadata:
   name: tenant-acme
   namespace: default
 spec:
-  cidr: "10.100.0.0/16"
-  isolation: strict
-  allowedNamespaces:
-    - default
-    - monitoring
+  datacenterIdentifier: no-west-az1
+  supervisorIdentifier: tenant-acme
+  # ipAllocation omitted → DHCP-based allocation (nms-operator + kea-operator)
 ```
+
+**Example — static IP allocation**:
+
+```yaml
+apiVersion: vitistack.io/v1alpha1
+kind: NetworkNamespace
+metadata:
+  name: test-network-static
+  namespace: default
+spec:
+  datacenterIdentifier: no-west-az1
+  supervisorIdentifier: p-west-mgmt
+  ipAllocation:
+    type: static
+    provider: static-ip-operator
+    static:
+      ipv4CIDR: "10.100.1.0/24"
+      ipv4Gateway: "10.100.1.1"
+      ipv4RangeStart: "10.100.1.10" # optional, defaults to x.x.x.2
+      ipv4RangeEnd: "10.100.1.200" # optional, defaults to last usable address
+      vlanId: 100 # optional (0–4094); kubevirt-operator uses this to tag the NetworkAttachmentDefinition
+      ttlSeconds: 3600 # optional, min 60, default 3600
+      dns:
+        - 8.8.8.8
+        - 8.8.4.4
+```
+
+**Example — DHCP with Kea client class overrides**:
+
+```yaml
+apiVersion: vitistack.io/v1alpha1
+kind: NetworkNamespace
+metadata:
+  name: tenant-acme-restricted
+  namespace: default
+spec:
+  datacenterIdentifier: no-west-az1
+  supervisorIdentifier: p-west-mgmt
+  ipAllocation:
+    type: dhcp
+    provider: kea
+    dhcp:
+      requireClientClasses:
+        - trusted-vms
+```
+
+**Key Spec Fields**:
+
+- `spec.datacenterIdentifier`: Datacenter identifier (required, 2–32 chars, `[A-Za-z0-9_-]`), e.g. `no-west-az1`
+- `spec.supervisorIdentifier`: Unique name per datacenter (required, same rules as above)
+- `spec.ipAllocation`: IP allocation configuration (optional — omitting it preserves the legacy DHCP-based behavior)
+  - `spec.ipAllocation.type`: `dhcp` or `static` (required when `ipAllocation` is set)
+  - `spec.ipAllocation.provider`: Operator handling the allocation. Known values: `kea`, `static-ip-operator`
+  - `spec.ipAllocation.static`: Required when `type: static`. Fields: `ipv4CIDR`, `ipv4Gateway` (required), `ipv4RangeStart`, `ipv4RangeEnd`, `vlanId`, `dns[]`, `ttlSeconds`
+  - `spec.ipAllocation.dhcp.requireClientClasses[]`: Kea DHCP client classes that must match for lease allocation
+
+**Key Status Fields**:
+
+- `status.phase` / `status.status` / `status.message`: High-level reconciliation state
+- `status.namespaceId`, `status.ipv4Prefix`, `status.ipv6Prefix`, `status.ipv4EgressIp`, `status.ipv6EgressIp`, `status.vlanId`: Observed network attributes
+- `status.associatedKubernetesClusterIds[]`: Clusters that consume this namespace
+- `status.ipAllocationStatus`: Current pool utilization (for both DHCP and static), including:
+  - `type`, `provider`: Active allocation method and operator
+  - `allocatedCount`, `availableCount`, `totalCount`: Pool utilization counters
+  - `allocatedIPs[]`: Each entry reports `{ ip, networkConfiguration }` — the IP and the NetworkConfiguration that owns it
 
 ### KubernetesCluster
 
@@ -446,6 +526,21 @@ spec:
       domain: prod.example.com
       servers:
         - 8.8.8.8
+    ipAllocation:
+      - zone: "" # empty = default for all zones without their own entry
+        providers:
+          - type: dhcp
+            enabled: true
+            default: true
+          - type: static
+            enabled: true
+      - zone: az1
+        providers:
+          - type: static
+            enabled: true
+            default: true
+            configuration:
+              operator: static-ip-operator
   backup:
     enabled: true
     schedule: "0 2 * * *"
@@ -470,7 +565,8 @@ spec:
 - `spec.location`: Detailed location information (country, city, coordinates)
 - `spec.machineProviders`: List of machine provider references
 - `spec.kubernetesProviders`: List of Kubernetes provider references
-- `spec.networking`: Network configuration (VPCs, subnets, DNS, firewall)
+- `spec.networking`: Network configuration (VPCs, subnets, DNS, firewall, IP allocation)
+- `spec.networking.ipAllocation[]`: Per-zone IP allocation providers available in this vitistack. Each entry has a `zone` (empty = default fallback) and a `providers[]` list. Each provider entry sets `type` (`dhcp`|`static`), `enabled` (default `true`), `default` (marks the provider a NetworkNamespace picks when it doesn't set its own), and optional `configuration` key/value settings
 - `spec.security`: Security policies (encryption, access control, audit logging)
 - `spec.monitoring`: Monitoring configuration
 - `spec.backup`: Backup and disaster recovery policies
