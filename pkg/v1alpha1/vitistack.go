@@ -183,6 +183,50 @@ type VitistackNetworking struct {
 	// Firewall rules and security groups
 	// +kubebuilder:validation:Optional
 	Firewall VitistackFirewall `json:"firewall,omitempty"`
+
+	// IPAllocation defines the available IP allocation providers,
+	// optionally configured per availability zone.
+	// +kubebuilder:validation:Optional
+	IPAllocation []VitistackIPAllocationZone `json:"ipAllocation,omitempty"`
+}
+
+// VitistackIPAllocationZone defines IP allocation provider availability for
+// a specific availability zone, or as a default for all zones when Zone is empty.
+type VitistackIPAllocationZone struct {
+	// Zone is the availability zone this configuration applies to.
+	// When empty, this entry serves as the default for all zones
+	// that do not have a zone-specific configuration.
+	// +kubebuilder:validation:Optional
+	Zone string `json:"zone,omitempty"`
+
+	// Providers lists the IP allocation providers available in this zone.
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:MinItems=1
+	Providers []VitistackIPAllocationProviderConfig `json:"providers"`
+}
+
+// VitistackIPAllocationProviderConfig defines an IP allocation provider
+// available within a vitistack zone.
+type VitistackIPAllocationProviderConfig struct {
+	// Type of IP allocation.
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Enum=dhcp;static
+	Type IPAllocationType `json:"type"`
+
+	// Enabled indicates whether this provider is currently available for use.
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:default=true
+	Enabled bool `json:"enabled,omitempty"`
+
+	// Default indicates whether this is the default provider for the zone.
+	// When a NetworkNamespace does not explicitly set an IP allocation provider,
+	// the default provider for its zone is used.
+	// +kubebuilder:validation:Optional
+	Default bool `json:"default,omitempty"`
+
+	// Configuration provides provider-specific settings as key-value pairs.
+	// +kubebuilder:validation:Optional
+	Configuration map[string]string `json:"configuration,omitempty"`
 }
 
 // VitistackVPC defines a virtual private cloud

@@ -3783,6 +3783,23 @@ spec:
               networkInterfaces:
                 items:
                   properties:
+                    allocationExpiry:
+                      description: |-
+                        AllocationExpiry is when the IP allocation expires.
+                        Only set for static allocations with a TTL configured on the NetworkNamespace.
+                      format: date-time
+                      type: string
+                    allocationMethod:
+                      allOf:
+                      - enum:
+                        - dhcp
+                        - static
+                      - enum:
+                        - dhcp
+                        - static
+                      description: AllocationMethod indicates how the IP address was
+                        allocated for this interface.
+                      type: string
                     dhcpReserved:
                       description: DHCP reserved in dchp server(s)
                       type: boolean
@@ -3791,6 +3808,11 @@ spec:
                       items:
                         type: string
                       type: array
+                    ipAllocated:
+                      description: |-
+                        IPAllocated indicates whether an IP address has been successfully allocated
+                        for this interface, regardless of allocation method.
+                      type: boolean
                     ipv4Addresses:
                       description: IPv4 addresses
                       items:
@@ -3833,6 +3855,13 @@ spec:
                   list-based lookup is used (with a deprecation warning).
                 type: string
               provider:
+                description: |-
+                  Provider identifies which IP allocation operator handles this NetworkConfiguration.
+                  Examples: "kea" (Kea DHCP), "static-ip-operator" (static IP allocation).
+                  When empty, the operator determines ownership from the referenced NetworkNamespace's
+                  ipAllocation.provider field (with a deprecation warning).
+                  Setting this field explicitly is recommended to avoid ambiguity when multiple
+                  IP allocation operators run in the same cluster.
                 maxLength: 32
                 minLength: 1
                 pattern: ^[A-Za-z0-9_-]+$
@@ -3910,6 +3939,23 @@ spec:
               networkInterfaces:
                 items:
                   properties:
+                    allocationExpiry:
+                      description: |-
+                        AllocationExpiry is when the IP allocation expires.
+                        Only set for static allocations with a TTL configured on the NetworkNamespace.
+                      format: date-time
+                      type: string
+                    allocationMethod:
+                      allOf:
+                      - enum:
+                        - dhcp
+                        - static
+                      - enum:
+                        - dhcp
+                        - static
+                      description: AllocationMethod indicates how the IP address was
+                        allocated for this interface.
+                      type: string
                     dhcpReserved:
                       description: DHCP reserved in dchp server(s)
                       type: boolean
@@ -3918,6 +3964,11 @@ spec:
                       items:
                         type: string
                       type: array
+                    ipAllocated:
+                      description: |-
+                        IPAllocated indicates whether an IP address has been successfully allocated
+                        for this interface, regardless of allocation method.
+                      type: boolean
                     ipv4Addresses:
                       description: IPv4 addresses
                       items:
@@ -4025,6 +4076,98 @@ spec:
                 minLength: 2
                 pattern: ^[A-Za-z0-9_-]+$
                 type: string
+              ipAllocation:
+                description: |-
+                  IPAllocation defines how IP addresses are allocated within this NetworkNamespace.
+                  When not set, the default behavior is DHCP-based allocation (backward compatible
+                  with existing nms-operator + kea-operator flow).
+                properties:
+                  dhcp:
+                    description: DHCP contains optional configuration overrides for
+                      DHCP-based allocation.
+                    properties:
+                      requireClientClasses:
+                        description: |-
+                          RequireClientClasses specifies Kea DHCP client classes that must be
+                          matched for lease allocation.
+                        items:
+                          type: string
+                        type: array
+                    type: object
+                  provider:
+                    description: |-
+                      Provider identifies the operator or system that implements the allocation.
+                      Examples: "kea" (Kea DHCP server), "static-ip-operator" or others
+                      When empty, the default provider for the type is assumed.
+                    maxLength: 32
+                    pattern: ^[A-Za-z0-9_-]+$
+                    type: string
+                  static:
+                    description: |-
+                      Static contains the IP pool configuration for static allocation.
+                      Required when type is "static".
+                    properties:
+                      dns:
+                        description: DNS is a list of DNS server addresses to use
+                          for machines in this pool.
+                        items:
+                          type: string
+                        type: array
+                      ipv4CIDR:
+                        description: IPv4CIDR is the subnet in CIDR notation (e.g.
+                          "10.0.1.0/24").
+                        pattern: ^([0-9]{1,3}\.){3}[0-9]{1,3}/[0-9]{1,2}$
+                        type: string
+                      ipv4Gateway:
+                        description: IPv4Gateway is the default gateway address for
+                          the subnet (e.g. "10.0.1.1").
+                        type: string
+                      ipv4RangeEnd:
+                        description: |-
+                          IPv4RangeEnd is the last allocatable IP address in the range.
+                          If not set, defaults to the last usable address in the CIDR (e.g. x.x.x.254 for a /24).
+                        type: string
+                      ipv4RangeStart:
+                        description: |-
+                          IPv4RangeStart is the first allocatable IP address in the range.
+                          If not set, defaults to the second usable address in the CIDR (e.g. x.x.x.2).
+                        type: string
+                      ttlSeconds:
+                        default: 3600
+                        description: |-
+                          TTLSeconds is the time-to-live for IP allocations in seconds.
+                          After this period, unused allocations may be reclaimed by the operator.
+                        minimum: 60
+                        type: integer
+                      vlanId:
+                        description: |-
+                          VlanID is the VLAN ID for the subnet. When set, the kubevirt-operator
+                          creates a NetworkAttachmentDefinition with this VLAN tag so VMs are
+                          placed on the correct network segment. When 0 or unset, VMs use the
+                          default pod network.
+                        maximum: 4094
+                        minimum: 0
+                        type: integer
+                    required:
+                    - ipv4CIDR
+                    - ipv4Gateway
+                    type: object
+                  type:
+                    allOf:
+                    - enum:
+                      - dhcp
+                      - static
+                    - enum:
+                      - dhcp
+                      - static
+                    description: |-
+                      Type specifies the IP allocation method to use.
+                      "dhcp" uses an external DHCP server for address assignment.
+                      "static" uses a static IP operator to allocate from a defined range.
+                    type: string
+                required:
+                - type
+                type: object
               supervisorIdentifier:
                 maxLength: 32
                 minLength: 2
@@ -4100,6 +4243,54 @@ spec:
                 type: string
               datacenterIdentifier:
                 type: string
+              ipAllocationStatus:
+                description: |-
+                  IPAllocationStatus reports the current state of IP allocation
+                  within this NetworkNamespace.
+                properties:
+                  allocatedCount:
+                    description: AllocatedCount is the number of IP addresses currently
+                      allocated.
+                    type: integer
+                  allocatedIPs:
+                    description: |-
+                      AllocatedIPs lists each currently allocated IP along with the
+                      NetworkConfiguration that owns it.
+                    items:
+                      description: AllocatedIPEntry records a single IP allocation
+                        and the resource that owns it.
+                      properties:
+                        ip:
+                          description: IP is the allocated IPv4 address.
+                          type: string
+                        networkConfiguration:
+                          description: NetworkConfiguration is the name of the NetworkConfiguration
+                            that owns this allocation.
+                          type: string
+                      required:
+                      - ip
+                      - networkConfiguration
+                      type: object
+                    type: array
+                  availableCount:
+                    description: AvailableCount is the number of IP addresses available
+                      for allocation.
+                    type: integer
+                  provider:
+                    description: Provider is the operator or system that performed
+                      the allocation.
+                    type: string
+                  totalCount:
+                    description: TotalCount is the total number of IP addresses in
+                      the pool.
+                    type: integer
+                  type:
+                    description: Type is the active IP allocation type.
+                    enum:
+                    - dhcp
+                    - static
+                    type: string
+                type: object
               ipv4EgressIp:
                 type: string
               ipv4Prefix:
@@ -4574,6 +4765,65 @@ spec:
                           type: object
                         type: array
                     type: object
+                  ipAllocation:
+                    description: |-
+                      IPAllocation defines the available IP allocation providers,
+                      optionally configured per availability zone.
+                    items:
+                      description: |-
+                        VitistackIPAllocationZone defines IP allocation provider availability for
+                        a specific availability zone, or as a default for all zones when Zone is empty.
+                      properties:
+                        providers:
+                          description: Providers lists the IP allocation providers
+                            available in this zone.
+                          items:
+                            description: |-
+                              VitistackIPAllocationProviderConfig defines an IP allocation provider
+                              available within a vitistack zone.
+                            properties:
+                              configuration:
+                                additionalProperties:
+                                  type: string
+                                description: Configuration provides provider-specific
+                                  settings as key-value pairs.
+                                type: object
+                              default:
+                                description: |-
+                                  Default indicates whether this is the default provider for the zone.
+                                  When a NetworkNamespace does not explicitly set an IP allocation provider,
+                                  the default provider for its zone is used.
+                                type: boolean
+                              enabled:
+                                default: true
+                                description: Enabled indicates whether this provider
+                                  is currently available for use.
+                                type: boolean
+                              type:
+                                allOf:
+                                - enum:
+                                  - dhcp
+                                  - static
+                                - enum:
+                                  - dhcp
+                                  - static
+                                description: Type of IP allocation.
+                                type: string
+                            required:
+                            - type
+                            type: object
+                          minItems: 1
+                          type: array
+                        zone:
+                          description: |-
+                            Zone is the availability zone this configuration applies to.
+                            When empty, this entry serves as the default for all zones
+                            that do not have a zone-specific configuration.
+                          type: string
+                      required:
+                      - providers
+                      type: object
+                    type: array
                   loadBalancers:
                     description: LoadBalancers define available load balancer configurations
                     items:
