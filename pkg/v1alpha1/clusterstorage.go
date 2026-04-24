@@ -75,13 +75,15 @@ type secretStatus struct {
 	Message string `json:"message,omitempty"`
 }
 
+// Common conditions for secret status
 const (
-	secretConditionCreated = "Created"
-	secretConditionError   = "Error"
-	secretConditionPending = "Pending"
-	secretConditionReady   = "Ready"
+	SecretConditionCreated = "Created"
+	SecretConditionError   = "Error"
+	SecretConditionPending = "Pending"
+	SecretConditionReady   = "Ready"
 )
 
+// Common phases for ClusterStorage phases
 const (
 	ClusterStoragePhasePending      = "Pending"
 	ClusterStoragePhaseInitializing = "Initializing"
