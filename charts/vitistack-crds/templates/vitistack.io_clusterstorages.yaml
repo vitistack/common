@@ -23,8 +23,8 @@ spec:
     - jsonPath: .spec.type
       name: Type
       type: string
-    - jsonPath: .spec.storageConfigClass
-      name: StorageConfigClass
+    - jsonPath: .spec.clusterStorageClass
+      name: ClusterStorageClass
       type: string
     - jsonPath: .status.phase
       name: Phase
@@ -54,18 +54,18 @@ spec:
             properties:
               clusterId:
                 type: string
+              clusterStorageClass:
+                type: string
               existingRef:
                 type: string
               reuseExisting:
                 default: false
                 type: boolean
-              storageConfigClass:
-                type: string
               type:
                 type: string
             required:
             - clusterId
-            - storageConfigClass
+            - clusterStorageClass
             - type
             type: object
           status:

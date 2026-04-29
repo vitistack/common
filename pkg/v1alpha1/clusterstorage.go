@@ -13,7 +13,7 @@ import (
 // +kubebuilder:resource:path=clusterstorages,scope=Namespaced,shortName=cls
 // +kubebuilder:printcolumn:name="ClusterId",type=string,JSONPath=`.spec.clusterId`
 // +kubebuilder:printcolumn:name="Type",type=string,JSONPath=`.spec.type`
-// +kubebuilder:printcolumn:name="StorageConfigClass",type=string,JSONPath=`.spec.storageConfigClass`
+// +kubebuilder:printcolumn:name="ClusterStorageClass",type=string,JSONPath=`.spec.clusterStorageClass`
 // +kubebuilder:printcolumn:name="Phase",type=string,JSONPath=`.status.phase`
 
 type ClusterStorage struct {
@@ -41,7 +41,7 @@ type ClusterStorageSpec struct {
 	Type string `json:"type,omitempty"`
 
 	// +kubebuilder:validation:Required
-	StorageConfigClass string `json:"storageConfigClass,omitempty"`
+	ClusterStorageClass string `json:"clusterStorageClass,omitempty"`
 
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:default:=false

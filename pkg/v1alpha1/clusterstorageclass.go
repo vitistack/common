@@ -7,31 +7,31 @@ import (
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// StorageConfigClass is the Schema for the StorageConfigClass API
+// ClusterStorageClass is the Schema for the ClusterStorageClass API
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
-// +kubebuilder:resource:path=storageconfigclasses,scope=Cluster,shortName=scc
+// +kubebuilder:resource:path=clusterstorageclasses,scope=Cluster,shortName=csc
 // +kubebuilder:printcolumn:name="Type",type=string,JSONPath=`.spec.type`
 // +kubebuilder:printcolumn:name="Enabled",type=string,JSONPath=`.spec.enabled`
 
-type StorageConfigClass struct {
+type ClusterStorageClass struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec StorageConfigClassSpec `json:"spec,omitempty"`
+	Spec ClusterStorageClassSpec `json:"spec,omitempty"`
 
-	Status StorageConfigClassStatus `json:"status,omitempty"`
+	Status ClusterStorageClassStatus `json:"status,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-// StorageConfigClassList contains a list of StorageConfigClass
-type StorageConfigClassList struct {
+// ClusterStorageClassList contains a list of ClusterStorageClass
+type ClusterStorageClassList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []StorageConfigClass `json:"items"`
+	Items           []ClusterStorageClass `json:"items"`
 }
 
-type StorageConfigClassSpec struct {
+type ClusterStorageClassSpec struct {
 	// +kubebuilder:validation:Required
 	Enabled bool `json:"enabled,omitempty"`
 
@@ -45,10 +45,10 @@ type StorageConfigClassSpec struct {
 	Data map[string]string `json:"data,omitempty"`
 }
 
-type StorageConfigClassStatus struct {
+type ClusterStorageClassStatus struct {
 	Name string `json:"name,omitempty"`
 }
 
 func init() {
-	SchemeBuilder.Register(&StorageConfigClass{}, &StorageConfigClassList{})
+	SchemeBuilder.Register(&ClusterStorageClass{}, &ClusterStorageClassList{})
 }

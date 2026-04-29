@@ -4,16 +4,16 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.20.1
-  name: storageconfigclasses.vitistack.io
+  name: clusterstorageclasses.vitistack.io
 spec:
   group: vitistack.io
   names:
-    kind: StorageConfigClass
-    listKind: StorageConfigClassList
-    plural: storageconfigclasses
+    kind: ClusterStorageClass
+    listKind: ClusterStorageClassList
+    plural: clusterstorageclasses
     shortNames:
-    - scc
-    singular: storageconfigclass
+    - csc
+    singular: clusterstorageclass
   scope: Cluster
   versions:
   - additionalPrinterColumns:
