@@ -16,6 +16,7 @@ import (
 // +kubebuilder:printcolumn:name="Provider",type=string,JSONPath=`.spec.data.provider`,description="The cloud provider of the Kubernetes cluster"
 // +kubebuilder:printcolumn:name="Region",type=string,JSONPath=`.spec.data.region`,description="The region of the Kubernetes cluster"
 // +kubebuilder:printcolumn:name="ControlPlaneReplicas",type=integer,JSONPath=`.spec.topology.controlplane.replicas`,description="The number of control plane replicas"
+// +kubebuilder:printcolumn:name="Message",type=string,JSONPath=`.status.message`,description="Current activity message",priority=1
 // +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`,description="The age of the Kubernetes cluster"
 type KubernetesCluster struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -165,7 +166,8 @@ type KubernetesClusterAutoscalingSpec struct {
 // It contains the current state, phase, and conditions of the cluster.
 type KubernetesClusterStatus struct {
 	State      KubernetesClusterClusterState `json:"state"`
-	Phase      string                        `json:"phase"` // Provisioning, Running, Deleting, Failed, Updating
+	Phase      string                        `json:"phase"`   // Provisioning, Running, Deleting, Failed, Updating
+	Message    string                        `json:"message"` // Human-readable message describing current activity
 	Conditions []KubernetesClusterCondition  `json:"conditions"`
 }
 
