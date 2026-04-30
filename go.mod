@@ -5,7 +5,7 @@ go 1.26.2
 require (
 	github.com/go-logr/logr v1.4.3
 	github.com/joho/godotenv v1.5.1
-	github.com/minio/minio-go/v7 v7.0.100
+	github.com/minio/minio-go/v7 v7.1.0
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/api v0.35.4
 	k8s.io/apimachinery v0.35.4
@@ -64,6 +64,7 @@ require (
 	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/tinylib/msgp v1.6.4 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
+	github.com/zeebo/xxh3 v1.1.0 // indirect
 	go.uber.org/zap v1.27.1 // indirect
 	go.yaml.in/yaml/v2 v2.4.4 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
