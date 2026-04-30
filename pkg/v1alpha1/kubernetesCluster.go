@@ -167,9 +167,9 @@ type KubernetesClusterAutoscalingSpec struct {
 // It contains the current state, phase, and conditions of the cluster.
 type KubernetesClusterStatus struct {
 	State      KubernetesClusterClusterState `json:"state"`
-	Phase      string                        `json:"phase"`   // Provisioning, Running, Deleting, Failed, Updating
-	Message    string                        `json:"message"` // Human-readable message describing current activity
-	Workers    int                           `json:"workers"` // Total number of worker machines
+	Phase      string                        `json:"phase"`             // Provisioning, Running, Deleting, Failed, Updating
+	Message    string                        `json:"message,omitempty"` // Human-readable message describing current activity
+	Workers    int                           `json:"workers,omitempty"` // Total number of worker machines
 	Conditions []KubernetesClusterCondition  `json:"conditions"`
 }
 
