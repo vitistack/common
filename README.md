@@ -25,6 +25,8 @@ Kubernetes-native APIs for declarative infrastructure management:
 - **VitiStack** - Infrastructure stack definition with auto-discovery of providers and clusters
 - **ProxmoxConfig** - Proxmox-specific configuration
 - **KubevirtConfig** - KubeVirt-specific configuration
+- **ClusterStorage** - Storage instance attached to a cluster
+- **ClusterStorageClass** - Storage configuration preset
 
 📖 **[View full CRD documentation →](docs/crds.md)**
 
