@@ -6,6 +6,12 @@ import (
 	"time"
 )
 
+const (
+	defaultValue              = "default"
+	returnsDefaultWhenNotSet  = "returns default when not set"
+	returnsDefaultForInvalid  = "returns default for invalid value"
+)
+
 func TestGetString(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -20,22 +26,22 @@ func TestGetString(t *testing.T) {
 			key:      "TEST_STRING_VAR",
 			setValue: "hello",
 			setEnv:   true,
-			def:      "default",
+			def:      defaultValue,
 			expected: "hello",
 		},
 		{
-			name:     "returns default when not set",
+			name:     returnsDefaultWhenNotSet,
 			key:      "TEST_STRING_VAR_UNSET",
 			setEnv:   false,
-			def:      "default",
-			expected: "default",
+			def:      defaultValue,
+			expected: defaultValue,
 		},
 		{
 			name:     "returns empty string when set to empty",
 			key:      "TEST_STRING_VAR_EMPTY",
 			setValue: "",
 			setEnv:   true,
-			def:      "default",
+			def:      defaultValue,
 			expected: "",
 		},
 	}
@@ -108,14 +114,14 @@ func TestGetBool(t *testing.T) {
 			expected: true,
 		},
 		{
-			name:     "returns default when not set",
+			name:     returnsDefaultWhenNotSet,
 			key:      "TEST_BOOL_VAR_UNSET",
 			setEnv:   false,
 			def:      true,
 			expected: true,
 		},
 		{
-			name:     "returns default for invalid value",
+			name:     returnsDefaultForInvalid,
 			key:      "TEST_BOOL_VAR_INVALID",
 			setValue: "invalid",
 			setEnv:   true,
@@ -175,14 +181,14 @@ func TestGetInt(t *testing.T) {
 			expected: 0,
 		},
 		{
-			name:     "returns default when not set",
+			name:     returnsDefaultWhenNotSet,
 			key:      "TEST_INT_VAR_UNSET",
 			setEnv:   false,
 			def:      123,
 			expected: 123,
 		},
 		{
-			name:     "returns default for invalid value",
+			name:     returnsDefaultForInvalid,
 			key:      "TEST_INT_VAR_INVALID",
 			setValue: "not-a-number",
 			setEnv:   true,
@@ -266,14 +272,14 @@ func TestGetDuration(t *testing.T) {
 			expected: time.Hour + 30*time.Minute,
 		},
 		{
-			name:     "returns default when not set",
+			name:     returnsDefaultWhenNotSet,
 			key:      "TEST_DUR_VAR_UNSET",
 			setEnv:   false,
 			def:      10 * time.Second,
 			expected: 10 * time.Second,
 		},
 		{
-			name:     "returns default for invalid value",
+			name:     returnsDefaultForInvalid,
 			key:      "TEST_DUR_VAR_INVALID",
 			setValue: "invalid",
 			setEnv:   true,

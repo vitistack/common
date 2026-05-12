@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.20.1
+    controller-gen.kubebuilder.io/version: v0.21.0
   name: networknamespaces.vitistack.io
 spec:
   group: vitistack.io
@@ -139,17 +139,13 @@ spec:
                     - ipv4Gateway
                     type: object
                   type:
-                    allOf:
-                    - enum:
-                      - dhcp
-                      - static
-                    - enum:
-                      - dhcp
-                      - static
                     description: |-
                       Type specifies the IP allocation method to use.
                       "dhcp" uses an external DHCP server for address assignment.
                       "static" uses a static IP operator to allocate from a defined range.
+                    enum:
+                    - dhcp
+                    - static
                     type: string
                 required:
                 - type
