@@ -10,6 +10,15 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
+const (
+	finalizer1Name    = "finalizer1"
+	testFinalizerName = "test-finalizer"
+	mockObjectKind    = "MockObject"
+	testObjectName    = "test-object"
+	defaultNamespace  = "default"
+	firstFinalizer    = "first"
+)
+
 // mockObject is a simple test object that implements client.Object
 type mockObject struct {
 	metav1.TypeMeta
@@ -61,26 +70,26 @@ func TestHas(t *testing.T) {
 	}{
 		{
 			name:          "has finalizer",
-			finalizers:    []string{"finalizer1", "finalizer2"},
-			finalizerName: "finalizer1",
+			finalizers:    []string{finalizer1Name, "finalizer2"},
+			finalizerName: finalizer1Name,
 			expected:      true,
 		},
 		{
 			name:          "does not have finalizer",
-			finalizers:    []string{"finalizer1", "finalizer2"},
+			finalizers:    []string{finalizer1Name, "finalizer2"},
 			finalizerName: "finalizer3",
 			expected:      false,
 		},
 		{
 			name:          "empty finalizers list",
 			finalizers:    []string{},
-			finalizerName: "finalizer1",
+			finalizerName: finalizer1Name,
 			expected:      false,
 		},
 		{
 			name:          "nil finalizers list",
 			finalizers:    nil,
-			finalizerName: "finalizer1",
+			finalizerName: finalizer1Name,
 			expected:      false,
 		},
 		{
@@ -121,16 +130,16 @@ func TestEnsure(t *testing.T) {
 		{
 			name:               "adds finalizer when not present",
 			initialFinalizers:  []string{},
-			finalizerName:      "test-finalizer",
+			finalizerName:      testFinalizerName,
 			expectError:        false,
-			expectedFinalizers: []string{"test-finalizer"},
+			expectedFinalizers: []string{testFinalizerName},
 		},
 		{
 			name:               "does not duplicate when already present",
-			initialFinalizers:  []string{"test-finalizer"},
-			finalizerName:      "test-finalizer",
+			initialFinalizers:  []string{testFinalizerName},
+			finalizerName:      testFinalizerName,
 			expectError:        false,
-			expectedFinalizers: []string{"test-finalizer"},
+			expectedFinalizers: []string{testFinalizerName},
 		},
 		{
 			name:               "adds to existing finalizers",
@@ -146,11 +155,11 @@ func TestEnsure(t *testing.T) {
 			obj := &mockObject{
 				TypeMeta: metav1.TypeMeta{
 					APIVersion: "v1",
-					Kind:       "MockObject",
+					Kind:       mockObjectKind,
 				},
 				ObjectMeta: metav1.ObjectMeta{
-					Name:       "test-object",
-					Namespace:  "default",
+					Name:       testObjectName,
+					Namespace:  defaultNamespace,
 					Finalizers: tt.initialFinalizers,
 				},
 			}
@@ -196,15 +205,15 @@ func TestRemove(t *testing.T) {
 	}{
 		{
 			name:               "removes existing finalizer",
-			initialFinalizers:  []string{"test-finalizer"},
-			finalizerName:      "test-finalizer",
+			initialFinalizers:  []string{testFinalizerName},
+			finalizerName:      testFinalizerName,
 			expectError:        false,
 			expectedFinalizers: []string{},
 		},
 		{
 			name:               "no-op when finalizer not present",
 			initialFinalizers:  []string{"other-finalizer"},
-			finalizerName:      "test-finalizer",
+			finalizerName:      testFinalizerName,
 			expectError:        false,
 			expectedFinalizers: []string{"other-finalizer"},
 		},
@@ -217,22 +226,22 @@ func TestRemove(t *testing.T) {
 		},
 		{
 			name:               "removes first finalizer",
-			initialFinalizers:  []string{"first", "second"},
-			finalizerName:      "first",
+			initialFinalizers:  []string{firstFinalizer, "second"},
+			finalizerName:      firstFinalizer,
 			expectError:        false,
 			expectedFinalizers: []string{"second"},
 		},
 		{
 			name:               "removes last finalizer",
-			initialFinalizers:  []string{"first", "last"},
+			initialFinalizers:  []string{firstFinalizer, "last"},
 			finalizerName:      "last",
 			expectError:        false,
-			expectedFinalizers: []string{"first"},
+			expectedFinalizers: []string{firstFinalizer},
 		},
 		{
 			name:               "no-op on empty list",
 			initialFinalizers:  []string{},
-			finalizerName:      "test-finalizer",
+			finalizerName:      testFinalizerName,
 			expectError:        false,
 			expectedFinalizers: []string{},
 		},
@@ -243,11 +252,11 @@ func TestRemove(t *testing.T) {
 			obj := &mockObject{
 				TypeMeta: metav1.TypeMeta{
 					APIVersion: "v1",
-					Kind:       "MockObject",
+					Kind:       mockObjectKind,
 				},
 				ObjectMeta: metav1.ObjectMeta{
-					Name:       "test-object",
-					Namespace:  "default",
+					Name:       testObjectName,
+					Namespace:  defaultNamespace,
 					Finalizers: tt.initialFinalizers,
 				},
 			}
@@ -286,11 +295,11 @@ func TestEnsureIdempotent(t *testing.T) {
 	obj := &mockObject{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v1",
-			Kind:       "MockObject",
+			Kind:       mockObjectKind,
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-object",
-			Namespace: "default",
+			Name:      testObjectName,
+			Namespace: defaultNamespace,
 		},
 	}
 
@@ -300,7 +309,7 @@ func TestEnsureIdempotent(t *testing.T) {
 		Build()
 
 	ctx := context.Background()
-	finalizerName := "test-finalizer"
+	finalizerName := testFinalizerName
 
 	// Call Ensure multiple times
 	for i := range 3 {
@@ -330,12 +339,12 @@ func TestRemoveIdempotent(t *testing.T) {
 	obj := &mockObject{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v1",
-			Kind:       "MockObject",
+			Kind:       mockObjectKind,
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:       "test-object",
+			Name:       testObjectName,
 			Namespace:  "default",
-			Finalizers: []string{"test-finalizer"},
+			Finalizers: []string{testFinalizerName},
 		},
 	}
 
@@ -345,7 +354,7 @@ func TestRemoveIdempotent(t *testing.T) {
 		Build()
 
 	ctx := context.Background()
-	finalizerName := "test-finalizer"
+	finalizerName := testFinalizerName
 
 	// Call Remove multiple times
 	for i := range 3 {

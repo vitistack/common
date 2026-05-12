@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.20.1
+    controller-gen.kubebuilder.io/version: v0.21.0
   name: machines.vitistack.io
 spec:
   group: vitistack.io
@@ -119,17 +119,13 @@ spec:
                     - name
                     type: object
                   type:
-                    allOf:
-                    - enum:
-                      - noCloud
-                      - configDrive
-                    - enum:
-                      - noCloud
-                      - configDrive
                     default: noCloud
                     description: |-
                       Type specifies the cloud-init type to use
                       Valid values are: noCloud, configDrive
+                    enum:
+                    - noCloud
+                    - configDrive
                     type: string
                   userData:
                     description: |-

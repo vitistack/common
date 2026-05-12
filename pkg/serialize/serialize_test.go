@@ -5,6 +5,12 @@ import (
 	"testing"
 )
 
+const (
+	testString  = "test"
+	keyString   = "key"
+	valueString = "value"
+)
+
 func TestJSON(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -13,7 +19,7 @@ func TestJSON(t *testing.T) {
 	}{
 		{
 			name:     "simple struct",
-			input:    struct{ Name string }{"test"},
+			input:    struct{ Name string }{testString},
 			expected: `{"Name":"test"}`,
 		},
 		{
@@ -60,7 +66,7 @@ func TestJSON(t *testing.T) {
 
 func TestJSONIndent(t *testing.T) {
 	input := map[string]any{
-		"name": "test",
+		"name": testString,
 		"age":  30,
 	}
 
@@ -120,7 +126,7 @@ func TestJSONIndentN(t *testing.T) {
 }
 
 func TestPretty(t *testing.T) {
-	input := map[string]string{"key": "value"}
+	input := map[string]string{keyString: valueString}
 	result := Pretty(input)
 
 	if !strings.Contains(result, "\n") {
@@ -139,8 +145,8 @@ func TestYAML(t *testing.T) {
 	}{
 		{
 			name:     "simple struct",
-			input:    struct{ Name string }{"test"},
-			contains: []string{"name:", "test"},
+			input:    struct{ Name string }{testString},
+			contains: []string{"name:", testString},
 		},
 		{
 			name:     "map",
@@ -172,7 +178,7 @@ func TestYAML(t *testing.T) {
 }
 
 func TestPrettyYAML(t *testing.T) {
-	input := map[string]string{"key": "value"}
+	input := map[string]string{keyString: valueString}
 	result := PrettyYAML(input)
 
 	// PrettyYAML is an alias for YAML, should behave the same
@@ -183,7 +189,7 @@ func TestPrettyYAML(t *testing.T) {
 }
 
 func TestBytesYAML(t *testing.T) {
-	input := map[string]string{"key": "value"}
+	input := map[string]string{keyString: valueString}
 	bytes, err := BytesYAML(input)
 
 	if err != nil {
@@ -198,7 +204,7 @@ func TestBytesYAML(t *testing.T) {
 }
 
 func TestBytesJSON(t *testing.T) {
-	input := map[string]string{"key": "value"}
+	input := map[string]string{keyString: valueString}
 	bytes, err := BytesJSON(input)
 
 	if err != nil {
@@ -214,7 +220,7 @@ func TestBytesJSON(t *testing.T) {
 }
 
 func TestBytesJSONIndent(t *testing.T) {
-	input := map[string]string{"key": "value"}
+	input := map[string]string{keyString: valueString}
 	bytes, err := BytesJSONIndent(input, "  ")
 
 	if err != nil {
@@ -229,7 +235,7 @@ func TestBytesJSONIndent(t *testing.T) {
 }
 
 func TestAs(t *testing.T) {
-	input := map[string]string{"key": "value"}
+	input := map[string]string{keyString: valueString}
 
 	t.Run("compact when indent is 0", func(t *testing.T) {
 		result := As(input, 0)
