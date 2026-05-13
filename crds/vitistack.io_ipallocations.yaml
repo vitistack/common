@@ -1,0 +1,131 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.20.1
+  name: ipallocations.vitistack.io
+spec:
+  group: vitistack.io
+  names:
+    kind: IPAllocation
+    listKind: IPAllocationList
+    plural: ipallocations
+    shortNames:
+    - ipa
+    singular: ipallocation
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .status.address
+      name: Address
+      type: string
+    - jsonPath: .spec.networkNamespaceName
+      name: NetworkNamespace
+      type: string
+    - jsonPath: .spec.networkConfigurationName
+      name: NetworkConfiguration
+      type: string
+    - jsonPath: .status.phase
+      name: Phase
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1alpha2
+    schema:
+      openAPIV3Schema:
+        description: |-
+          IPAllocation represents a single IP address allocation within a NetworkNamespace.
+          Each IPAllocation is owned (via ownerReference) by its NetworkConfiguration,
+          so it is garbage-collected when the NC is deleted.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: IPAllocationSpec defines the desired state of an IP allocation.
+            properties:
+              interfaceName:
+                description: |-
+                  InterfaceName is the network interface name within the NetworkConfiguration
+                  that this allocation is for. Supports multi-NIC VMs.
+                type: string
+              networkConfigurationName:
+                description: |-
+                  NetworkConfigurationName is the name of the NetworkConfiguration that
+                  requested this allocation.
+                minLength: 1
+                type: string
+              networkNamespaceName:
+                description: |-
+                  NetworkNamespaceName is the name of the NetworkNamespace this allocation
+                  belongs to. Used to look up the IP pool configuration.
+                minLength: 1
+                type: string
+              requestedAddress:
+                description: |-
+                  RequestedAddress allows requesting a specific IP address from the pool.
+                  The allocator will try to honor this request if the address is available.
+                type: string
+            required:
+            - networkConfigurationName
+            - networkNamespaceName
+            type: object
+          status:
+            description: IPAllocationStatus defines the observed state of an IP allocation.
+            properties:
+              address:
+                description: Address is the allocated IPv4 address (e.g. "10.0.2.50").
+                type: string
+              dns:
+                description: DNS is the list of DNS server addresses for this allocation.
+                items:
+                  type: string
+                type: array
+              expiresAt:
+                description: ExpiresAt is when this allocation expires (for static
+                  allocations with TTL).
+                format: date-time
+                type: string
+              gateway:
+                description: Gateway is the gateway address for the allocated subnet.
+                type: string
+              message:
+                description: Message provides human-readable details about the current
+                  phase.
+                type: string
+              phase:
+                description: Phase is the current lifecycle phase of this allocation.
+                enum:
+                - Pending
+                - Allocated
+                - Released
+                - Error
+                type: string
+              prefix:
+                description: Prefix is the CIDR prefix length (e.g. 24 for a /24).
+                type: integer
+              vlanId:
+                description: VlanID is the VLAN ID of the network segment.
+                type: integer
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

@@ -31,8 +31,17 @@ spec:
       type: string
     - description: The number of control plane replicas
       jsonPath: .spec.topology.controlplane.replicas
-      name: ControlPlaneReplicas
+      name: CPs
       type: integer
+    - description: The total number of worker nodes
+      jsonPath: .status.workers
+      name: Workers
+      type: integer
+    - description: Current activity message
+      jsonPath: .status.message
+      name: Message
+      priority: 1
+      type: string
     - description: The age of the Kubernetes cluster
       jsonPath: .metadata.creationTimestamp
       name: Age
@@ -312,6 +321,8 @@ spec:
                   - type
                   type: object
                 type: array
+              message:
+                type: string
               phase:
                 type: string
               state:
@@ -722,6 +733,8 @@ spec:
                 - lastUpdatedBy
                 - versions
                 type: object
+              workers:
+                type: integer
             required:
             - conditions
             - phase
