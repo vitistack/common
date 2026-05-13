@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.20.1
+    controller-gen.kubebuilder.io/version: v0.21.0
   name: clusterstorageclasses.vitistack.io
 spec:
   group: vitistack.io
@@ -76,7 +76,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.20.1
+    controller-gen.kubebuilder.io/version: v0.21.0
   name: clusterstorages.vitistack.io
 spec:
   group: vitistack.io
@@ -174,7 +174,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.20.1
+    controller-gen.kubebuilder.io/version: v0.21.0
   name: controlplanevirtualsharedips.vitistack.io
 spec:
   group: vitistack.io
@@ -371,7 +371,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.20.1
+    controller-gen.kubebuilder.io/version: v0.21.0
   name: etcdbackups.vitistack.io
 spec:
   group: vitistack.io
@@ -545,7 +545,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.20.1
+    controller-gen.kubebuilder.io/version: v0.21.0
   name: kubernetesclusters.vitistack.io
 spec:
   group: vitistack.io
@@ -573,8 +573,17 @@ spec:
       type: string
     - description: The number of control plane replicas
       jsonPath: .spec.topology.controlplane.replicas
-      name: ControlPlaneReplicas
+      name: CPs
       type: integer
+    - description: The total number of worker nodes
+      jsonPath: .status.workers
+      name: Workers
+      type: integer
+    - description: Current activity message
+      jsonPath: .status.message
+      name: Message
+      priority: 1
+      type: string
     - description: The age of the Kubernetes cluster
       jsonPath: .metadata.creationTimestamp
       name: Age
@@ -854,6 +863,8 @@ spec:
                   - type
                   type: object
                 type: array
+              message:
+                type: string
               phase:
                 type: string
               state:
@@ -1264,6 +1275,8 @@ spec:
                 - lastUpdatedBy
                 - versions
                 type: object
+              workers:
+                type: integer
             required:
             - conditions
             - phase
@@ -1279,7 +1292,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.20.1
+    controller-gen.kubebuilder.io/version: v0.21.0
   name: kubernetesproviders.vitistack.io
 spec:
   group: vitistack.io
@@ -2330,7 +2343,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.20.1
+    controller-gen.kubebuilder.io/version: v0.21.0
   name: kubevirtconfigs.vitistack.io
 spec:
   group: vitistack.io
@@ -2418,7 +2431,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.20.1
+    controller-gen.kubebuilder.io/version: v0.21.0
   name: machineclasses.vitistack.io
 spec:
   group: vitistack.io
@@ -2578,7 +2591,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.20.1
+    controller-gen.kubebuilder.io/version: v0.21.0
   name: machineproviders.vitistack.io
 spec:
   group: vitistack.io
@@ -3292,7 +3305,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.20.1
+    controller-gen.kubebuilder.io/version: v0.21.0
   name: machines.vitistack.io
 spec:
   group: vitistack.io
@@ -3408,17 +3421,13 @@ spec:
                     - name
                     type: object
                   type:
-                    allOf:
-                    - enum:
-                      - noCloud
-                      - configDrive
-                    - enum:
-                      - noCloud
-                      - configDrive
                     default: noCloud
                     description: |-
                       Type specifies the cloud-init type to use
                       Valid values are: noCloud, configDrive
+                    enum:
+                    - noCloud
+                    - configDrive
                     type: string
                   userData:
                     description: |-
@@ -3875,7 +3884,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.20.1
+    controller-gen.kubebuilder.io/version: v0.21.0
   name: networkconfigurations.vitistack.io
 spec:
   group: vitistack.io
@@ -3961,15 +3970,11 @@ spec:
                       format: date-time
                       type: string
                     allocationMethod:
-                      allOf:
-                      - enum:
-                        - dhcp
-                        - static
-                      - enum:
-                        - dhcp
-                        - static
                       description: AllocationMethod indicates how the IP address was
                         allocated for this interface.
+                      enum:
+                      - dhcp
+                      - static
                       type: string
                     dhcpReserved:
                       description: DHCP reserved in dchp server(s)
@@ -4117,15 +4122,11 @@ spec:
                       format: date-time
                       type: string
                     allocationMethod:
-                      allOf:
-                      - enum:
-                        - dhcp
-                        - static
-                      - enum:
-                        - dhcp
-                        - static
                       description: AllocationMethod indicates how the IP address was
                         allocated for this interface.
+                      enum:
+                      - dhcp
+                      - static
                       type: string
                     dhcpReserved:
                       description: DHCP reserved in dchp server(s)
@@ -4188,7 +4189,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.20.1
+    controller-gen.kubebuilder.io/version: v0.21.0
   name: networknamespaces.vitistack.io
 spec:
   group: vitistack.io
@@ -4324,17 +4325,13 @@ spec:
                     - ipv4Gateway
                     type: object
                   type:
-                    allOf:
-                    - enum:
-                      - dhcp
-                      - static
-                    - enum:
-                      - dhcp
-                      - static
                     description: |-
                       Type specifies the IP allocation method to use.
                       "dhcp" uses an external DHCP server for address assignment.
                       "static" uses a static IP operator to allocate from a defined range.
+                    enum:
+                    - dhcp
+                    - static
                     type: string
                 required:
                 - type
@@ -4497,7 +4494,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.20.1
+    controller-gen.kubebuilder.io/version: v0.21.0
   name: proxmoxconfigs.vitistack.io
 spec:
   group: vitistack.io
@@ -4589,7 +4586,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.20.1
+    controller-gen.kubebuilder.io/version: v0.21.0
   name: vitistacks.vitistack.io
 spec:
   group: vitistack.io
@@ -4971,14 +4968,10 @@ spec:
                                   is currently available for use.
                                 type: boolean
                               type:
-                                allOf:
-                                - enum:
-                                  - dhcp
-                                  - static
-                                - enum:
-                                  - dhcp
-                                  - static
                                 description: Type of IP allocation.
+                                enum:
+                                - dhcp
+                                - static
                                 type: string
                             required:
                             - type
