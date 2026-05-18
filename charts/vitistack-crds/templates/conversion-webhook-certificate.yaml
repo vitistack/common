@@ -1,0 +1,36 @@
+{{- if and .Values.conversionWebhook.enabled .Values.conversionWebhook.certManager.enabled }}
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "vitistack-crds.name" . }}-conversion-webhook-cert
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "vitistack-crds.labels" . | nindent 4 }}
+    app.kubernetes.io/component: conversion-webhook
+spec:
+  secretName: {{ include "vitistack-crds.name" . }}-conversion-webhook-cert
+  dnsNames:
+    - {{ include "vitistack-crds.name" . }}-conversion-webhook.{{ .Release.Namespace }}.svc
+    - {{ include "vitistack-crds.name" . }}-conversion-webhook.{{ .Release.Namespace }}.svc.cluster.local
+  {{- if .Values.conversionWebhook.certManager.issuerRef }}
+  issuerRef:
+    {{- toYaml .Values.conversionWebhook.certManager.issuerRef | nindent 4 }}
+  {{- else }}
+  issuerRef:
+    name: {{ include "vitistack-crds.name" . }}-selfsigned-issuer
+    kind: Issuer
+  {{- end }}
+---
+{{- if not .Values.conversionWebhook.certManager.issuerRef }}
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: {{ include "vitistack-crds.name" . }}-selfsigned-issuer
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "vitistack-crds.labels" . | nindent 4 }}
+    app.kubernetes.io/component: conversion-webhook
+spec:
+  selfSigned: {}
+{{- end }}
+{{- end }}

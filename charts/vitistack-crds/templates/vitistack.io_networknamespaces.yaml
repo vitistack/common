@@ -4,8 +4,23 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.21.0
+    {{- if and .Values.conversionWebhook.enabled .Values.conversionWebhook.certManager.enabled }}
+    cert-manager.io/inject-ca-from: {{ .Release.Namespace }}/{{ include "vitistack-crds.name" . }}-conversion-webhook-cert
+    {{- end }}
   name: networknamespaces.vitistack.io
 spec:
+  {{- if .Values.conversionWebhook.enabled }}
+  conversion:
+    strategy: Webhook
+    webhook:
+      conversionReviewVersions:
+        - v1
+      clientConfig:
+        service:
+          name: {{ include "vitistack-crds.name" . }}-conversion-webhook
+          namespace: {{ .Release.Namespace }}
+          path: /convert
+  {{- end }}
   group: vitistack.io
   names:
     kind: NetworkNamespace

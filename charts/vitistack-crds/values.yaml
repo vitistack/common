@@ -14,3 +14,28 @@ annotations: {}
 # Labels to add to all CRD resources
 labels: {}
   # example.com/label: "value"
+
+# Conversion webhook server — serves v1alpha1 <-> v1alpha2 conversion
+# for CRDs that have multiple API versions.
+conversionWebhook:
+  enabled: true
+  image:
+    repository: ghcr.io/vitistack/viti-crd-conversion-webhook
+    tag: ""  # Defaults to appVersion
+    pullPolicy: IfNotPresent
+  replicas: 2
+  port: 9443
+  resources:
+    limits:
+      cpu: 100m
+      memory: 64Mi
+    requests:
+      cpu: 10m
+      memory: 32Mi
+  # cert-manager is used to provision TLS certificates for the webhook.
+  certManager:
+    enabled: true
+    issuerRef: {}
+    #   name: my-issuer
+    #   kind: ClusterIssuer
+
