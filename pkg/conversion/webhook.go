@@ -132,13 +132,14 @@ func convertObject(obj *unstructured.Unstructured, srcVersion, dstVersion string
 		return nil, fmt.Errorf("unsupported kind %q for conversion", kind)
 	}
 
-	if srcVersion == "vitistack.io/v1alpha1" && dstVersion == "vitistack.io/v1alpha2" {
+	switch {
+	case srcVersion == "vitistack.io/v1alpha1" && dstVersion == "vitistack.io/v1alpha2":
 		return convertV1alpha1ToV1alpha2(obj)
-	}
-	if srcVersion == "vitistack.io/v1alpha2" && dstVersion == "vitistack.io/v1alpha1" {
+	case srcVersion == "vitistack.io/v1alpha2" && dstVersion == "vitistack.io/v1alpha1":
 		return convertV1alpha2ToV1alpha1(obj)
+	default:
+		return nil, fmt.Errorf("unsupported conversion from %s to %s", srcVersion, dstVersion)
 	}
-	return nil, fmt.Errorf("unsupported conversion from %s to %s", srcVersion, dstVersion)
 }
 
 func convertV1alpha1ToV1alpha2(obj *unstructured.Unstructured) (*unstructured.Unstructured, error) {
