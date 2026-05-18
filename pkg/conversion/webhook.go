@@ -43,6 +43,11 @@ var log = logf.Log.WithName("conversion-webhook")
 // for NetworkNamespace resources.
 func Handler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			writeError(w, http.StatusMethodNotAllowed, errors.New("only POST method is allowed"))
+			return
+		}
+
 		body, err := io.ReadAll(r.Body)
 		if err != nil {
 			writeError(w, http.StatusBadRequest, fmt.Errorf("reading request body: %w", err))
