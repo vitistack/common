@@ -1,6 +1,8 @@
 package v1alpha2
 
 import (
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	v1alpha1 "github.com/vitistack/common/pkg/v1alpha1"
 )
 
@@ -49,19 +51,22 @@ func ConvertNetworkNamespaceFromV1alpha1(src *v1alpha1.NetworkNamespace) *Networ
 				IPv4RangeStart: src.Spec.IPAllocation.Static.IPv4RangeStart,
 				IPv4RangeEnd:   src.Spec.IPAllocation.Static.IPv4RangeEnd,
 				VlanID:         src.Spec.IPAllocation.Static.VlanID,
-				DNS:            src.Spec.IPAllocation.Static.DNS,
+				DNS:            append([]string(nil), src.Spec.IPAllocation.Static.DNS...),
 				TTLSeconds:     src.Spec.IPAllocation.Static.TTLSeconds,
 			}
 		}
 		if src.Spec.IPAllocation.DHCP != nil {
 			dst.Spec.IPAllocation.DHCP = &DHCPAllocationConfig{
-				RequireClientClasses: src.Spec.IPAllocation.DHCP.RequireClientClasses,
+				RequireClientClasses: append([]string(nil), src.Spec.IPAllocation.DHCP.RequireClientClasses...),
 			}
 		}
 	}
 
 	// --- Status conversion ---
-	dst.Status.Conditions = src.Status.Conditions
+	if src.Status.Conditions != nil {
+		dst.Status.Conditions = make([]metav1.Condition, len(src.Status.Conditions))
+		copy(dst.Status.Conditions, src.Status.Conditions)
+	}
 	dst.Status.Phase = src.Status.Phase
 	dst.Status.Status = src.Status.Status
 	dst.Status.Message = src.Status.Message
@@ -76,7 +81,9 @@ func ConvertNetworkNamespaceFromV1alpha1(src *v1alpha1.NetworkNamespace) *Networ
 	dst.Status.IPv4EgressIP = src.Status.IPv4EgressIP
 	dst.Status.IPv6EgressIP = src.Status.IPv6EgressIP
 	dst.Status.VlanID = src.Status.VlanID
-	dst.Status.AssociatedKubernetesClusterIDs = src.Status.AssociatedKubernetesClusterIDs
+	if src.Status.AssociatedKubernetesClusterIDs != nil {
+		dst.Status.AssociatedKubernetesClusterIDs = append([]string(nil), src.Status.AssociatedKubernetesClusterIDs...)
+	}
 
 	// Infer provisioningPhase from v1alpha1
 	if src.Status.ProvisioningPhase != "" {
@@ -132,13 +139,13 @@ func ConvertNetworkNamespaceToV1alpha1(src *NetworkNamespace) *v1alpha1.NetworkN
 				IPv4RangeStart: src.Spec.IPAllocation.Static.IPv4RangeStart,
 				IPv4RangeEnd:   src.Spec.IPAllocation.Static.IPv4RangeEnd,
 				VlanID:         src.Spec.IPAllocation.Static.VlanID,
-				DNS:            src.Spec.IPAllocation.Static.DNS,
+				DNS:            append([]string(nil), src.Spec.IPAllocation.Static.DNS...),
 				TTLSeconds:     src.Spec.IPAllocation.Static.TTLSeconds,
 			}
 		}
 		if src.Spec.IPAllocation.DHCP != nil {
 			dst.Spec.IPAllocation.DHCP = &v1alpha1.DHCPAllocationConfig{
-				RequireClientClasses: src.Spec.IPAllocation.DHCP.RequireClientClasses,
+				RequireClientClasses: append([]string(nil), src.Spec.IPAllocation.DHCP.RequireClientClasses...),
 			}
 		}
 	} else if src.Spec.NetworkProvisioning != nil &&
@@ -159,7 +166,10 @@ func ConvertNetworkNamespaceToV1alpha1(src *NetworkNamespace) *v1alpha1.NetworkN
 	}
 
 	// --- Status conversion ---
-	dst.Status.Conditions = src.Status.Conditions
+	if src.Status.Conditions != nil {
+		dst.Status.Conditions = make([]metav1.Condition, len(src.Status.Conditions))
+		copy(dst.Status.Conditions, src.Status.Conditions)
+	}
 	dst.Status.Phase = src.Status.Phase
 	dst.Status.Status = src.Status.Status
 	dst.Status.Message = src.Status.Message
@@ -174,7 +184,9 @@ func ConvertNetworkNamespaceToV1alpha1(src *NetworkNamespace) *v1alpha1.NetworkN
 	dst.Status.IPv4EgressIP = src.Status.IPv4EgressIP
 	dst.Status.IPv6EgressIP = src.Status.IPv6EgressIP
 	dst.Status.VlanID = src.Status.VlanID
-	dst.Status.AssociatedKubernetesClusterIDs = src.Status.AssociatedKubernetesClusterIDs
+	if src.Status.AssociatedKubernetesClusterIDs != nil {
+		dst.Status.AssociatedKubernetesClusterIDs = append([]string(nil), src.Status.AssociatedKubernetesClusterIDs...)
+	}
 	dst.Status.ProvisioningPhase = string(src.Status.ProvisioningPhase)
 
 	// Convert IPAllocationSummary → IPAllocationStatus (no allocatedIPs to fill)
