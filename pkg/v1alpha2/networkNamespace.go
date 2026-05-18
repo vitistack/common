@@ -116,7 +116,6 @@ type ManualProvisioningConfig struct {
 type NetworkNamespaceIPAllocation struct {
 	// Type specifies the IP allocation method.
 	// +kubebuilder:validation:Required
-	// +kubebuilder:validation:Enum=dhcp;static
 	Type IPAllocationType `json:"type"`
 
 	// Provider identifies the operator that implements the allocation.

@@ -121,7 +121,7 @@ func convert(req *apiextensionsv1.ConversionRequest) *apiextensionsv1.Conversion
 		resp.ConvertedObjects = append(resp.ConvertedObjects, runtime.RawExtension{Raw: rawConverted})
 	}
 
-	resp.Result = metav1.Status{Status: "Success"}
+	resp.Result = metav1.Status{Status: metav1.StatusSuccess}
 	return resp
 }
 
