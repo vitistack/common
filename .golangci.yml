@@ -4,24 +4,24 @@ run:
   timeout: 5m
   allow-parallel-runners: true
 
-issues:
-  exclude-use-default: false
-  exclude-rules:
-    - path: "api/*"
-      linters:
-        - lll
-    - path: "internal/*"
-      linters:
-        - dupl
-        - lll
-    - path: _test\.go
-      linters:
-        - gocyclo
-        - errcheck
-        - dupl
-        - gosec
-
 linters:
+  exclusions:
+    presets: []
+    rules:
+      - path: "api/*"
+        linters:
+          - lll
+      - path: "internal/*"
+        linters:
+          - dupl
+          - lll
+      - path: _test\.go
+        linters:
+          - goconst
+          - gocyclo
+          - errcheck
+          - dupl
+          - gosec
   # Enable a balanced set of linters for a Kubernetes operator
   enable:
     # Default linters
@@ -66,3 +66,8 @@ linters:
         - weakCond
         - rangeValCopy
         - hugeParam
+    errcheck:
+      exclude-functions:
+        - fmt.Print
+        - fmt.Printf
+        - fmt.Println
