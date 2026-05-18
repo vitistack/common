@@ -20,6 +20,7 @@ package conversion
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -55,7 +56,7 @@ func Handler() http.Handler {
 		}
 
 		if review.Request == nil {
-			writeError(w, http.StatusBadRequest, fmt.Errorf("ConversionReview.request is nil"))
+			writeError(w, http.StatusBadRequest, errors.New("ConversionReview.request is nil"))
 			return
 		}
 
@@ -131,14 +132,13 @@ func convertObject(obj *unstructured.Unstructured, srcVersion, dstVersion string
 		return nil, fmt.Errorf("unsupported kind %q for conversion", kind)
 	}
 
-	switch {
-	case srcVersion == "vitistack.io/v1alpha1" && dstVersion == "vitistack.io/v1alpha2":
+	if srcVersion == "vitistack.io/v1alpha1" && dstVersion == "vitistack.io/v1alpha2" {
 		return convertV1alpha1ToV1alpha2(obj)
-	case srcVersion == "vitistack.io/v1alpha2" && dstVersion == "vitistack.io/v1alpha1":
-		return convertV1alpha2ToV1alpha1(obj)
-	default:
-		return nil, fmt.Errorf("unsupported conversion from %s to %s", srcVersion, dstVersion)
 	}
+	if srcVersion == "vitistack.io/v1alpha2" && dstVersion == "vitistack.io/v1alpha1" {
+		return convertV1alpha2ToV1alpha1(obj)
+	}
+	return nil, fmt.Errorf("unsupported conversion from %s to %s", srcVersion, dstVersion)
 }
 
 func convertV1alpha1ToV1alpha2(obj *unstructured.Unstructured) (*unstructured.Unstructured, error) {
