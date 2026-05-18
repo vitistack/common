@@ -23,6 +23,7 @@ package main
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"flag"
 	"fmt"
 	"net/http"
@@ -93,7 +94,7 @@ func main() {
 
 	go func() {
 		logger.Info("starting conversion webhook server", "port", port)
-		if err := server.ListenAndServeTLS("", ""); err != nil && err != http.ErrServerClosed {
+		if err := server.ListenAndServeTLS("", ""); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			logger.Error(err, "webhook server failed")
 			os.Exit(1)
 		}
