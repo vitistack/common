@@ -10,7 +10,7 @@ func ConvertNetworkNamespaceFromV1alpha1(src *v1alpha1.NetworkNamespace) *Networ
 	dst := &NetworkNamespace{}
 	dst.ObjectMeta = *src.ObjectMeta.DeepCopy()
 	dst.TypeMeta = src.TypeMeta
-	dst.TypeMeta.APIVersion = GroupVersion.String()
+	dst.APIVersion = GroupVersion.String()
 
 	// --- Spec conversion ---
 	dst.Spec.DatacenterIdentifier = src.Spec.DatacenterIdentifier
@@ -84,9 +84,9 @@ func ConvertNetworkNamespaceFromV1alpha1(src *v1alpha1.NetworkNamespace) *Networ
 	} else {
 		// Backfill from phase for resources that predate the field
 		switch src.Status.Phase {
-		case "Ready":
+		case string(ProvisioningPhaseReady):
 			dst.Status.ProvisioningPhase = ProvisioningPhaseReady
-		case "Error":
+		case string(ProvisioningPhaseError):
 			dst.Status.ProvisioningPhase = ProvisioningPhaseError
 		default:
 			dst.Status.ProvisioningPhase = ProvisioningPhasePending
@@ -113,7 +113,7 @@ func ConvertNetworkNamespaceToV1alpha1(src *NetworkNamespace) *v1alpha1.NetworkN
 	dst := &v1alpha1.NetworkNamespace{}
 	dst.ObjectMeta = *src.ObjectMeta.DeepCopy()
 	dst.TypeMeta = src.TypeMeta
-	dst.TypeMeta.APIVersion = v1alpha1.GroupVersion.String()
+	dst.APIVersion = v1alpha1.GroupVersion.String()
 
 	// --- Spec conversion ---
 	dst.Spec.DatacenterIdentifier = src.Spec.DatacenterIdentifier

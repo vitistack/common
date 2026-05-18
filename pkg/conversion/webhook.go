@@ -34,6 +34,8 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
+const statusFailure = "Failure"
+
 var log = logf.Log.WithName("conversion-webhook")
 
 // Handler returns an http.Handler that serves the CRD conversion webhook
@@ -84,7 +86,7 @@ func convert(req *apiextensionsv1.ConversionRequest) *apiextensionsv1.Conversion
 		obj := &unstructured.Unstructured{}
 		if err := json.Unmarshal(raw.Raw, &obj.Object); err != nil {
 			resp.Result = metav1.Status{
-				Status:  "Failure",
+				Status:  statusFailure,
 				Message: fmt.Sprintf("decoding object %d: %v", i, err),
 			}
 			return resp
@@ -102,7 +104,7 @@ func convert(req *apiextensionsv1.ConversionRequest) *apiextensionsv1.Conversion
 		converted, err := convertObject(obj, srcVersion, dstVersion)
 		if err != nil {
 			resp.Result = metav1.Status{
-				Status:  "Failure",
+				Status:  statusFailure,
 				Message: fmt.Sprintf("converting object %d from %s to %s: %v", i, srcVersion, dstVersion, err),
 			}
 			return resp
@@ -111,7 +113,7 @@ func convert(req *apiextensionsv1.ConversionRequest) *apiextensionsv1.Conversion
 		rawConverted, err := json.Marshal(converted)
 		if err != nil {
 			resp.Result = metav1.Status{
-				Status:  "Failure",
+				Status:  statusFailure,
 				Message: fmt.Sprintf("encoding converted object %d: %v", i, err),
 			}
 			return resp

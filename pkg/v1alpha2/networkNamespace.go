@@ -189,7 +189,3 @@ type IPAllocationSummary struct {
 	// TotalCount is the total number of IP addresses in the pool.
 	TotalCount int32 `json:"totalCount,omitempty"`
 }
-
-func init() {
-	SchemeBuilder.Register(&NetworkNamespace{}, &NetworkNamespaceList{})
-}

@@ -23,16 +23,24 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+const (
+	testNamespace  = "default"
+	testDC         = "dc1"
+	testSV         = "sv1"
+	testIPv4Prefix = "10.0.1.0/24"
+	testStaticCIDR = "10.0.2.0/24"
+)
+
 func TestConvertFromV1alpha1_DHCPDefault(t *testing.T) {
 	src := &v1alpha1.NetworkNamespace{
-		ObjectMeta: metav1.ObjectMeta{Name: "test-ns", Namespace: "default"},
+		ObjectMeta: metav1.ObjectMeta{Name: "test-ns", Namespace: testNamespace},
 		Spec: v1alpha1.NetworkNamespaceSpec{
-			DatacenterIdentifier: "dc1",
-			SupervisorIdentifier: "sv1",
+			DatacenterIdentifier: testDC,
+			SupervisorIdentifier: testSV,
 		},
 		Status: v1alpha1.NetworkNamespaceStatus{
-			Phase:      "Ready",
-			IPv4Prefix: "10.0.1.0/24",
+			Phase:      string(ProvisioningPhaseReady),
+			IPv4Prefix: testIPv4Prefix,
 			VlanID:     100,
 		},
 	}
@@ -51,22 +59,22 @@ func TestConvertFromV1alpha1_DHCPDefault(t *testing.T) {
 	if dst.Status.ProvisioningPhase != ProvisioningPhaseReady {
 		t.Errorf("expected provisioningPhase 'Ready', got %q", dst.Status.ProvisioningPhase)
 	}
-	if dst.Status.IPv4Prefix != "10.0.1.0/24" {
+	if dst.Status.IPv4Prefix != testIPv4Prefix {
 		t.Errorf("expected ipv4Prefix preserved, got %q", dst.Status.IPv4Prefix)
 	}
 }
 
 func TestConvertFromV1alpha1_Static(t *testing.T) {
 	src := &v1alpha1.NetworkNamespace{
-		ObjectMeta: metav1.ObjectMeta{Name: "static-ns", Namespace: "default"},
+		ObjectMeta: metav1.ObjectMeta{Name: "static-ns", Namespace: testNamespace},
 		Spec: v1alpha1.NetworkNamespaceSpec{
-			DatacenterIdentifier: "dc1",
-			SupervisorIdentifier: "sv1",
+			DatacenterIdentifier: testDC,
+			SupervisorIdentifier: testSV,
 			IPAllocation: &v1alpha1.NetworkNamespaceIPAllocation{
 				Type:     v1alpha1.IPAllocationTypeStatic,
 				Provider: v1alpha1.ProviderNameStaticIP,
 				Static: &v1alpha1.StaticIPAllocationConfig{
-					IPv4CIDR:    "10.0.2.0/24",
+					IPv4CIDR:    testStaticCIDR,
 					IPv4Gateway: "10.0.2.1",
 					VlanID:      200,
 					DNS:         []string{"8.8.8.8"},
@@ -75,8 +83,8 @@ func TestConvertFromV1alpha1_Static(t *testing.T) {
 			},
 		},
 		Status: v1alpha1.NetworkNamespaceStatus{
-			Phase:      "Ready",
-			IPv4Prefix: "10.0.2.0/24",
+			Phase:      string(ProvisioningPhaseReady),
+			IPv4Prefix: testStaticCIDR,
 			VlanID:     200,
 			IPAllocationStatus: &v1alpha1.NetworkNamespaceIPAllocationStatus{
 				Type:           v1alpha1.IPAllocationTypeStatic,
@@ -103,8 +111,8 @@ func TestConvertFromV1alpha1_Static(t *testing.T) {
 	if dst.Spec.NetworkProvisioning.Manual == nil {
 		t.Fatal("expected manual config to be set")
 	}
-	if dst.Spec.NetworkProvisioning.Manual.IPv4CIDR != "10.0.2.0/24" {
-		t.Errorf("expected manual.ipv4CIDR '10.0.2.0/24', got %q", dst.Spec.NetworkProvisioning.Manual.IPv4CIDR)
+	if dst.Spec.NetworkProvisioning.Manual.IPv4CIDR != testStaticCIDR {
+		t.Errorf("expected manual.ipv4CIDR %q, got %q", testStaticCIDR, dst.Spec.NetworkProvisioning.Manual.IPv4CIDR)
 	}
 
 	// IPAllocation should be preserved
@@ -129,14 +137,14 @@ func TestConvertFromV1alpha1_Static(t *testing.T) {
 
 func TestRoundTrip_NAM(t *testing.T) {
 	original := &v1alpha1.NetworkNamespace{
-		ObjectMeta: metav1.ObjectMeta{Name: "rt-ns", Namespace: "default"},
+		ObjectMeta: metav1.ObjectMeta{Name: "rt-ns", Namespace: testNamespace},
 		Spec: v1alpha1.NetworkNamespaceSpec{
-			DatacenterIdentifier: "dc1",
-			SupervisorIdentifier: "sv1",
+			DatacenterIdentifier: testDC,
+			SupervisorIdentifier: testSV,
 		},
 		Status: v1alpha1.NetworkNamespaceStatus{
-			Phase:      "Ready",
-			IPv4Prefix: "10.0.1.0/24",
+			Phase:      string(ProvisioningPhaseReady),
+			IPv4Prefix: testIPv4Prefix,
 			VlanID:     100,
 		},
 	}
@@ -158,10 +166,10 @@ func TestRoundTrip_NAM(t *testing.T) {
 
 func TestRoundTrip_Static(t *testing.T) {
 	original := &v1alpha1.NetworkNamespace{
-		ObjectMeta: metav1.ObjectMeta{Name: "rt-static", Namespace: "default"},
+		ObjectMeta: metav1.ObjectMeta{Name: "rt-static", Namespace: testNamespace},
 		Spec: v1alpha1.NetworkNamespaceSpec{
-			DatacenterIdentifier: "dc1",
-			SupervisorIdentifier: "sv1",
+			DatacenterIdentifier: testDC,
+			SupervisorIdentifier: testSV,
 			IPAllocation: &v1alpha1.NetworkNamespaceIPAllocation{
 				Type:     v1alpha1.IPAllocationTypeStatic,
 				Provider: v1alpha1.ProviderNameStaticIP,
@@ -177,7 +185,7 @@ func TestRoundTrip_Static(t *testing.T) {
 			},
 		},
 		Status: v1alpha1.NetworkNamespaceStatus{
-			Phase: "Ready",
+			Phase: string(ProvisioningPhaseReady),
 		},
 	}
 

@@ -104,7 +104,3 @@ type IPAllocationStatus struct {
 	// +kubebuilder:validation:Optional
 	Message string `json:"message,omitempty"`
 }
-
-func init() {
-	SchemeBuilder.Register(&IPAllocation{}, &IPAllocationList{})
-}
