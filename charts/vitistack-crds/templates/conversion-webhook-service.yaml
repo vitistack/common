@@ -1,0 +1,19 @@
+{{- if .Values.conversionWebhook.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "vitistack-crds.name" . }}-conversion-webhook
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "vitistack-crds.labels" . | nindent 4 }}
+    app.kubernetes.io/component: conversion-webhook
+spec:
+  ports:
+    - port: 443
+      targetPort: https
+      protocol: TCP
+      name: https
+  selector:
+    {{- include "vitistack-crds.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: conversion-webhook
+{{- end }}

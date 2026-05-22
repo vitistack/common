@@ -1,4 +1,4 @@
-package v1alpha1
+package v1alpha2
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -7,12 +7,19 @@ import (
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// NetworkNamespace is the Schema for the NetworkNamespace API
+// NetworkNamespace is the Schema for the NetworkNamespace API (v1alpha2).
+//
+// v1alpha2 separates network provisioning (where does the IP prefix come from?)
+// from IP allocation (how are individual IPs assigned?). This enables pluggable
+// IPAM back-ends and explicit provisioning readiness gating.
+//
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:path=networknamespaces,scope=Namespaced,shortName=nn
-// +kubebuilder:printcolumn:name="Name",type=string,JSONPath=`.spec.clusterIdentifier`
+// +kubebuilder:storageversion
+// +kubebuilder:printcolumn:name="Provisioning",type=string,JSONPath=`.spec.networkProvisioning.provider`
 // +kubebuilder:printcolumn:name="DatacenterIdentifier",type=string,JSONPath=`.spec.datacenterIdentifier`
+// +kubebuilder:printcolumn:name="ProvisioningPhase",type=string,JSONPath=`.status.provisioningPhase`
 // +kubebuilder:printcolumn:name="Phase",type=string,JSONPath=`.status.phase`
 // +kubebuilder:printcolumn:name="Status",type=string,JSONPath=`.status.status`
 // +kubebuilder:printcolumn:name="Created",type=string,JSONPath=`.status.created`,description="Creation Timestamp"
@@ -32,38 +39,86 @@ type NetworkNamespaceList struct {
 	Items           []NetworkNamespace `json:"items"`
 }
 
+// NetworkNamespaceSpec defines the desired state of a NetworkNamespace.
 type NetworkNamespaceSpec struct {
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:MinLength=2
 	// +kubebuilder:validation:MaxLength=32
 	// +kubebuilder:validation:Pattern=`^[A-Za-z0-9_-]+$`
-	DatacenterIdentifier string `json:"datacenterIdentifier,omitempty"` // <country>-<region>-<availability zone> ex: no-west-az1
+	DatacenterIdentifier string `json:"datacenterIdentifier,omitempty"`
 
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:MinLength=2
 	// +kubebuilder:validation:MaxLength=32
 	// +kubebuilder:validation:Pattern=`^[A-Za-z0-9_-]+$`
-	SupervisorIdentifier string `json:"supervisorIdentifier,omitempty"` // <unique name per datacenter> ex: my-namespace
+	SupervisorIdentifier string `json:"supervisorIdentifier,omitempty"`
 
-	// IPAllocation defines how IP addresses are allocated within this NetworkNamespace.
-	// When not set, the default behavior is DHCP-based allocation (backward compatible
-	// with existing nms-operator + kea-operator flow).
+	// NetworkProvisioning defines how the network segment (IP prefix + VLAN) is
+	// acquired. When not set, defaults to provider "nam" for backward compatibility.
+	// +kubebuilder:validation:Optional
+	NetworkProvisioning *NetworkProvisioning `json:"networkProvisioning,omitempty"`
+
+	// IPAllocation defines how individual IP addresses are assigned within the
+	// provisioned network. When not set, defaults to DHCP-based allocation.
 	// +kubebuilder:validation:Optional
 	IPAllocation *NetworkNamespaceIPAllocation `json:"ipAllocation,omitempty"`
 }
 
-// NetworkNamespaceIPAllocation configures the IP allocation method for a NetworkNamespace.
-type NetworkNamespaceIPAllocation struct {
-	// Type specifies the IP allocation method to use.
-	// "dhcp" uses an external DHCP server for address assignment.
-	// "static" uses a static IP operator to allocate from a defined range.
+// NetworkProvisioning configures the source of the network segment.
+type NetworkProvisioning struct {
+	// Provider identifies the system that provisions the network.
+	// "nam" uses the Network Administration Management backend (default).
+	// "manual" uses user-supplied configuration from the manual block.
+	// Other values are reserved for future IPAM integrations.
 	// +kubebuilder:validation:Required
-	// +kubebuilder:validation:Enum=dhcp;static
+	// +kubebuilder:validation:Enum=nam;manual
+	// +kubebuilder:default=nam
+	Provider NetworkProvisioningType `json:"provider"`
+
+	// NAM contains configuration specific to NAM-based provisioning.
+	// Reserved for future NAM-specific overrides.
+	// +kubebuilder:validation:Optional
+	NAM *NAMProvisioningConfig `json:"nam,omitempty"`
+
+	// Manual contains user-supplied network configuration.
+	// Required when provider is "manual".
+	// +kubebuilder:validation:Optional
+	Manual *ManualProvisioningConfig `json:"manual,omitempty"`
+}
+
+// NAMProvisioningConfig holds configuration specific to NAM-based network
+// provisioning. Currently empty; reserved for future overrides.
+type NAMProvisioningConfig struct{}
+
+// ManualProvisioningConfig holds user-supplied network segment configuration.
+type ManualProvisioningConfig struct {
+	// IPv4CIDR is the subnet in CIDR notation (e.g. "10.0.2.0/24").
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Pattern=`^([0-9]{1,3}\.){3}[0-9]{1,3}/[0-9]{1,2}$`
+	IPv4CIDR string `json:"ipv4CIDR"`
+
+	// IPv4Gateway is the default gateway address for the subnet.
+	// +kubebuilder:validation:Optional
+	IPv4Gateway string `json:"ipv4Gateway,omitempty"`
+
+	// IPv6CIDR is the IPv6 subnet in CIDR notation.
+	// +kubebuilder:validation:Optional
+	IPv6CIDR string `json:"ipv6CIDR,omitempty"`
+
+	// VlanID is the VLAN ID for the network segment.
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:validation:Minimum=0
+	// +kubebuilder:validation:Maximum=4094
+	VlanID int `json:"vlanId,omitempty"`
+}
+
+// NetworkNamespaceIPAllocation configures the IP allocation method.
+type NetworkNamespaceIPAllocation struct {
+	// Type specifies the IP allocation method.
+	// +kubebuilder:validation:Required
 	Type IPAllocationType `json:"type"`
 
-	// Provider identifies the operator or system that implements the allocation.
-	// Examples: "kea" (Kea DHCP server), "static-ip-operator" or others
-	// When empty, the default provider for the type is assumed.
+	// Provider identifies the operator that implements the allocation.
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:validation:MaxLength=32
 	// +kubebuilder:validation:Pattern=`^[A-Za-z0-9_-]+$`
@@ -79,6 +134,7 @@ type NetworkNamespaceIPAllocation struct {
 	DHCP *DHCPAllocationConfig `json:"dhcp,omitempty"`
 }
 
+// NetworkNamespaceStatus defines the observed state of a NetworkNamespace.
 type NetworkNamespaceStatus struct {
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
 	Phase      string             `json:"phase,omitempty"`
@@ -91,12 +147,12 @@ type NetworkNamespaceStatus struct {
 
 	// ProvisioningPhase indicates whether the network segment has been
 	// successfully provisioned. Downstream operators (kea, static-ip)
-	// should wait for "Ready" before acting.
-	// Added in preparation for v1alpha2 migration.
+	// must wait for "Ready" before acting.
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:validation:Enum=Pending;Ready;Error
-	ProvisioningPhase string `json:"provisioningPhase,omitempty"`
+	ProvisioningPhase ProvisioningPhase `json:"provisioningPhase,omitempty"`
 
+	// Network fields populated by the provisioning layer.
 	DataCenterIdentifier string `json:"datacenterIdentifier,omitempty"`
 	SupervisorIdentifier string `json:"supervisorIdentifier,omitempty"`
 	NamespaceID          string `json:"namespaceId,omitempty"`
@@ -108,48 +164,27 @@ type NetworkNamespaceStatus struct {
 
 	AssociatedKubernetesClusterIDs []string `json:"associatedKubernetesClusterIds,omitempty"`
 
-	// IPAllocationStatus reports the current state of IP allocation
-	// within this NetworkNamespace.
+	// IPAllocationSummary reports aggregate IP allocation state. This is a
+	// projection computed from IPAllocation resources, not the source of truth.
 	// +kubebuilder:validation:Optional
-	IPAllocationStatus *NetworkNamespaceIPAllocationStatus `json:"ipAllocationStatus,omitempty"`
+	IPAllocationSummary *IPAllocationSummary `json:"ipAllocationSummary,omitempty"`
 }
 
-// NetworkNamespaceIPAllocationStatus reports the observed IP allocation state.
-type NetworkNamespaceIPAllocationStatus struct {
+// IPAllocationSummary reports aggregate counts for IP allocation within
+// a NetworkNamespace. Individual allocations are tracked in IPAllocation CRs.
+type IPAllocationSummary struct {
 	// Type is the active IP allocation type.
-	// +kubebuilder:validation:Optional
 	Type IPAllocationType `json:"type,omitempty"`
 
-	// Provider is the operator or system that performed the allocation.
-	// +kubebuilder:validation:Optional
+	// Provider is the operator that performed the allocation.
 	Provider string `json:"provider,omitempty"`
 
 	// AllocatedCount is the number of IP addresses currently allocated.
-	// +kubebuilder:validation:Optional
 	AllocatedCount int32 `json:"allocatedCount,omitempty"`
 
 	// AvailableCount is the number of IP addresses available for allocation.
-	// +kubebuilder:validation:Optional
 	AvailableCount int32 `json:"availableCount,omitempty"`
 
 	// TotalCount is the total number of IP addresses in the pool.
-	// +kubebuilder:validation:Optional
 	TotalCount int32 `json:"totalCount,omitempty"`
-
-	// AllocatedIPs lists each currently allocated IP along with the
-	// NetworkConfiguration that owns it.
-	// +kubebuilder:validation:Optional
-	AllocatedIPs []AllocatedIPEntry `json:"allocatedIPs,omitempty"`
-}
-
-// AllocatedIPEntry records a single IP allocation and the resource that owns it.
-type AllocatedIPEntry struct {
-	// IP is the allocated IPv4 address.
-	IP string `json:"ip"`
-	// NetworkConfiguration is the name of the NetworkConfiguration that owns this allocation.
-	NetworkConfiguration string `json:"networkConfiguration"`
-}
-
-func init() {
-	SchemeBuilder.Register(&NetworkNamespace{}, &NetworkNamespaceList{})
 }

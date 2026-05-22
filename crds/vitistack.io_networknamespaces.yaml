@@ -289,6 +289,349 @@ spec:
                 type: integer
               phase:
                 type: string
+              provisioningPhase:
+                description: |-
+                  ProvisioningPhase indicates whether the network segment has been
+                  successfully provisioned. Downstream operators (kea, static-ip)
+                  should wait for "Ready" before acting.
+                  Added in preparation for v1alpha2 migration.
+                enum:
+                - Pending
+                - Ready
+                - Error
+                type: string
+              retryCount:
+                type: integer
+              status:
+                type: string
+              supervisorIdentifier:
+                type: string
+              vlanId:
+                type: integer
+            type: object
+        type: object
+    served: true
+    storage: false
+    subresources:
+      status: {}
+  - additionalPrinterColumns:
+    - jsonPath: .spec.networkProvisioning.provider
+      name: Provisioning
+      type: string
+    - jsonPath: .spec.datacenterIdentifier
+      name: DatacenterIdentifier
+      type: string
+    - jsonPath: .status.provisioningPhase
+      name: ProvisioningPhase
+      type: string
+    - jsonPath: .status.phase
+      name: Phase
+      type: string
+    - jsonPath: .status.status
+      name: Status
+      type: string
+    - description: Creation Timestamp
+      jsonPath: .status.created
+      name: Created
+      type: string
+    name: v1alpha2
+    schema:
+      openAPIV3Schema:
+        description: |-
+          NetworkNamespace is the Schema for the NetworkNamespace API (v1alpha2).
+
+          v1alpha2 separates network provisioning (where does the IP prefix come from?)
+          from IP allocation (how are individual IPs assigned?). This enables pluggable
+          IPAM back-ends and explicit provisioning readiness gating.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: NetworkNamespaceSpec defines the desired state of a NetworkNamespace.
+            properties:
+              datacenterIdentifier:
+                maxLength: 32
+                minLength: 2
+                pattern: ^[A-Za-z0-9_-]+$
+                type: string
+              ipAllocation:
+                description: |-
+                  IPAllocation defines how individual IP addresses are assigned within the
+                  provisioned network. When not set, defaults to DHCP-based allocation.
+                properties:
+                  dhcp:
+                    description: DHCP contains optional configuration overrides for
+                      DHCP-based allocation.
+                    properties:
+                      requireClientClasses:
+                        description: |-
+                          RequireClientClasses specifies Kea DHCP client classes that must be
+                          matched for lease allocation.
+                        items:
+                          type: string
+                        type: array
+                    type: object
+                  provider:
+                    description: Provider identifies the operator that implements
+                      the allocation.
+                    maxLength: 32
+                    pattern: ^[A-Za-z0-9_-]+$
+                    type: string
+                  static:
+                    description: |-
+                      Static contains the IP pool configuration for static allocation.
+                      Required when type is "static".
+                    properties:
+                      dns:
+                        description: DNS is a list of DNS server addresses to use
+                          for machines in this pool.
+                        items:
+                          type: string
+                        type: array
+                      ipv4CIDR:
+                        description: IPv4CIDR is the subnet in CIDR notation (e.g.
+                          "10.0.1.0/24").
+                        pattern: ^([0-9]{1,3}\.){3}[0-9]{1,3}/[0-9]{1,2}$
+                        type: string
+                      ipv4Gateway:
+                        description: IPv4Gateway is the default gateway address for
+                          the subnet (e.g. "10.0.1.1").
+                        type: string
+                      ipv4RangeEnd:
+                        description: |-
+                          IPv4RangeEnd is the last allocatable IP address in the range.
+                          If not set, defaults to the last usable address in the CIDR.
+                        type: string
+                      ipv4RangeStart:
+                        description: |-
+                          IPv4RangeStart is the first allocatable IP address in the range.
+                          If not set, defaults to the second usable address in the CIDR.
+                        type: string
+                      ttlSeconds:
+                        default: 3600
+                        description: |-
+                          TTLSeconds is the time-to-live for IP allocations in seconds.
+                          After this period, unused allocations may be reclaimed by the operator.
+                        minimum: 60
+                        type: integer
+                      vlanId:
+                        description: |-
+                          VlanID is the VLAN ID for the subnet. When set, the kubevirt-operator
+                          creates a NetworkAttachmentDefinition with this VLAN tag.
+                        maximum: 4094
+                        minimum: 0
+                        type: integer
+                    required:
+                    - ipv4CIDR
+                    - ipv4Gateway
+                    type: object
+                  type:
+                    allOf:
+                    - enum:
+                      - dhcp
+                      - static
+                    - enum:
+                      - dhcp
+                      - static
+                    description: Type specifies the IP allocation method.
+                    type: string
+                required:
+                - type
+                type: object
+              networkProvisioning:
+                description: |-
+                  NetworkProvisioning defines how the network segment (IP prefix + VLAN) is
+                  acquired. When not set, defaults to provider "nam" for backward compatibility.
+                properties:
+                  manual:
+                    description: |-
+                      Manual contains user-supplied network configuration.
+                      Required when provider is "manual".
+                    properties:
+                      ipv4CIDR:
+                        description: IPv4CIDR is the subnet in CIDR notation (e.g.
+                          "10.0.2.0/24").
+                        pattern: ^([0-9]{1,3}\.){3}[0-9]{1,3}/[0-9]{1,2}$
+                        type: string
+                      ipv4Gateway:
+                        description: IPv4Gateway is the default gateway address for
+                          the subnet.
+                        type: string
+                      ipv6CIDR:
+                        description: IPv6CIDR is the IPv6 subnet in CIDR notation.
+                        type: string
+                      vlanId:
+                        description: VlanID is the VLAN ID for the network segment.
+                        maximum: 4094
+                        minimum: 0
+                        type: integer
+                    required:
+                    - ipv4CIDR
+                    type: object
+                  nam:
+                    description: |-
+                      NAM contains configuration specific to NAM-based provisioning.
+                      Reserved for future NAM-specific overrides.
+                    type: object
+                  provider:
+                    default: nam
+                    description: |-
+                      Provider identifies the system that provisions the network.
+                      "nam" uses the Network Administration Management backend (default).
+                      "manual" uses user-supplied configuration from the manual block.
+                      Other values are reserved for future IPAM integrations.
+                    enum:
+                    - nam
+                    - manual
+                    type: string
+                required:
+                - provider
+                type: object
+              supervisorIdentifier:
+                maxLength: 32
+                minLength: 2
+                pattern: ^[A-Za-z0-9_-]+$
+                type: string
+            required:
+            - datacenterIdentifier
+            - supervisorIdentifier
+            type: object
+          status:
+            description: NetworkNamespaceStatus defines the observed state of a NetworkNamespace.
+            properties:
+              associatedKubernetesClusterIds:
+                items:
+                  type: string
+                type: array
+              conditions:
+                items:
+                  description: Condition contains details for one aspect of the current
+                    state of this API Resource.
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        message is a human readable message indicating details about the transition.
+                        This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: |-
+                        observedGeneration represents the .metadata.generation that the condition was set based upon.
+                        For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                        with respect to the current state of the instance.
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: |-
+                        reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                        Producers of specific condition types may define expected values and meanings for this field,
+                        and whether the values are considered a guaranteed API.
+                        The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+              created:
+                format: date-time
+                type: string
+              datacenterIdentifier:
+                description: Network fields populated by the provisioning layer.
+                type: string
+              ipAllocationSummary:
+                description: |-
+                  IPAllocationSummary reports aggregate IP allocation state. This is a
+                  projection computed from IPAllocation resources, not the source of truth.
+                properties:
+                  allocatedCount:
+                    description: AllocatedCount is the number of IP addresses currently
+                      allocated.
+                    type: integer
+                  availableCount:
+                    description: AvailableCount is the number of IP addresses available
+                      for allocation.
+                    type: integer
+                  provider:
+                    description: Provider is the operator that performed the allocation.
+                    type: string
+                  totalCount:
+                    description: TotalCount is the total number of IP addresses in
+                      the pool.
+                    type: integer
+                  type:
+                    description: Type is the active IP allocation type.
+                    enum:
+                    - dhcp
+                    - static
+                    type: string
+                type: object
+              ipv4EgressIp:
+                type: string
+              ipv4Prefix:
+                type: string
+              ipv6EgressIp:
+                type: string
+              ipv6Prefix:
+                type: string
+              message:
+                type: string
+              namespaceId:
+                type: string
+              observedGeneration:
+                type: integer
+              phase:
+                type: string
+              provisioningPhase:
+                description: |-
+                  ProvisioningPhase indicates whether the network segment has been
+                  successfully provisioned. Downstream operators (kea, static-ip)
+                  must wait for "Ready" before acting.
+                enum:
+                - Pending
+                - Ready
+                - Error
+                type: string
               retryCount:
                 type: integer
               status:
