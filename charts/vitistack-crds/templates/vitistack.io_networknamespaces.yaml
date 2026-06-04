@@ -23,6 +23,10 @@ spec:
     - jsonPath: .spec.datacenterIdentifier
       name: DatacenterIdentifier
       type: string
+    - jsonPath: .status.vlanId
+      name: VLANID
+      priority: 10
+      type: integer
     - jsonPath: .status.phase
       name: Phase
       type: string
