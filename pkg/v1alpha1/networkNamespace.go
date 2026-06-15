@@ -13,6 +13,7 @@ import (
 // +kubebuilder:resource:path=networknamespaces,scope=Namespaced,shortName=nn
 // +kubebuilder:printcolumn:name="Name",type=string,JSONPath=`.spec.clusterIdentifier`
 // +kubebuilder:printcolumn:name="DatacenterIdentifier",type=string,JSONPath=`.spec.datacenterIdentifier`
+// +kubebuilder:printcolumn:name="VLANID",type=integer,JSONPath=`.status.vlanId`,priority=10
 // +kubebuilder:printcolumn:name="Phase",type=string,JSONPath=`.status.phase`
 // +kubebuilder:printcolumn:name="Status",type=string,JSONPath=`.status.status`
 // +kubebuilder:printcolumn:name="Created",type=string,JSONPath=`.status.created`,description="Creation Timestamp"

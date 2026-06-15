@@ -23,6 +23,10 @@ spec:
     - jsonPath: .spec.datacenterIdentifier
       name: DatacenterIdentifier
       type: string
+    - jsonPath: .status.vlanId
+      name: VLANID
+      priority: 10
+      type: integer
     - jsonPath: .status.phase
       name: Phase
       type: string
@@ -441,14 +445,10 @@ spec:
                     - ipv4Gateway
                     type: object
                   type:
-                    allOf:
-                    - enum:
-                      - dhcp
-                      - static
-                    - enum:
-                      - dhcp
-                      - static
                     description: Type specifies the IP allocation method.
+                    enum:
+                    - dhcp
+                    - static
                     type: string
                 required:
                 - type

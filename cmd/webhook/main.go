@@ -33,9 +33,8 @@ import (
 	"time"
 
 	"github.com/vitistack/common/pkg/conversion"
-
+	"github.com/vitistack/common/pkg/loggers/vlog"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
 
 func main() {
@@ -51,11 +50,13 @@ func main() {
 	flag.StringVar(&certName, "cert-name", "tls.crt", "TLS certificate file name")
 	flag.StringVar(&keyName, "key-name", "tls.key", "TLS key file name")
 
-	opts := zap.Options{Development: false}
-	opts.BindFlags(flag.CommandLine)
 	flag.Parse()
 
-	log.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
+	_ = vlog.Setup(vlog.Options{
+		Level: "info",
+		JSON:  true,
+	})
+	log.SetLogger(vlog.Logr())
 	logger := log.Log.WithName("conversion-webhook")
 
 	mux := http.NewServeMux()
