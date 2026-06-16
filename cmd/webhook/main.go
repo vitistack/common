@@ -26,6 +26,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io/fs"
 	"net/http"
 	"os"
 	"os/signal"
@@ -73,9 +74,28 @@ func main() {
 	certFile := fmt.Sprintf("%s/%s", certDir, certName)
 	keyFile := fmt.Sprintf("%s/%s", certDir, keyName)
 
+	// The serving certificate is provisioned by cert-manager into a mounted
+	// Secret. If the files are missing, the most likely cause is that
+	// cert-manager has not issued the Certificate yet (or is not installed),
+	// so call that out explicitly instead of failing with an opaque error.
+	for _, f := range []string{certFile, keyFile} {
+		if _, statErr := os.Stat(f); statErr != nil {
+			if errors.Is(statErr, fs.ErrNotExist) {
+				logger.Error(statErr, "TLS certificate not found: the serving cert is provisioned by cert-manager — "+
+					"verify cert-manager (and its cainjector) is installed and the Certificate has been issued into the mounted Secret",
+					"file", f, "certDir", certDir)
+			} else {
+				logger.Error(statErr, "unable to access TLS certificate file", "file", f)
+			}
+			os.Exit(1)
+		}
+	}
+
 	cert, err := tls.LoadX509KeyPair(certFile, keyFile)
 	if err != nil {
-		logger.Error(err, "unable to load TLS certificates", "certFile", certFile, "keyFile", keyFile)
+		logger.Error(err, "TLS certificate is present but invalid: check that the cert-manager Certificate is Ready "+
+			"and the mounted Secret contains a matching cert/key pair",
+			"certFile", certFile, "keyFile", keyFile)
 		os.Exit(1)
 	}
 

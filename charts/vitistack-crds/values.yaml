@@ -26,12 +26,16 @@ conversionWebhook:
   replicas: 2
   port: 9443
   resources:
+    # No CPU limit on purpose: the webhook is a synchronous dependency in the
+    # apiserver's critical path, so CPU throttling directly adds API latency.
+    # Keep the request to guarantee scheduling; drop the cap. Memory limit gives
+    # headroom for batched list conversions (apiserver may send all objects of a
+    # kind in one ConversionReview) — memory is non-compressible, so over = OOMKill.
     limits:
-      cpu: 100m
-      memory: 64Mi
+      memory: 128Mi
     requests:
       cpu: 10m
-      memory: 32Mi
+      memory: 48Mi
   # cert-manager is used to provision TLS certificates for the webhook.
   certManager:
     enabled: true
