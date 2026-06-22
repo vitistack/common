@@ -4685,11 +4685,6 @@ spec:
           spec:
             description: NetworkNamespaceSpec defines the desired state of a NetworkNamespace.
             properties:
-              datacenterIdentifier:
-                maxLength: 32
-                minLength: 2
-                pattern: ^[A-Za-z0-9_-]+$
-                type: string
               ipAllocation:
                 description: |-
                   IPAllocation defines how individual IP addresses are assigned within the
@@ -4819,14 +4814,6 @@ spec:
                 required:
                 - provider
                 type: object
-              supervisorIdentifier:
-                maxLength: 32
-                minLength: 2
-                pattern: ^[A-Za-z0-9_-]+$
-                type: string
-            required:
-            - datacenterIdentifier
-            - supervisorIdentifier
             type: object
           status:
             description: NetworkNamespaceStatus defines the observed state of a NetworkNamespace.
@@ -4952,8 +4939,6 @@ spec:
               retryCount:
                 type: integer
               status:
-                type: string
-              supervisorIdentifier:
                 type: string
               vlanId:
                 type: integer

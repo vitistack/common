@@ -15,11 +15,11 @@ func ConvertNetworkNamespaceFromV1alpha1(src *v1alpha1.NetworkNamespace) *Networ
 	dst.APIVersion = GroupVersion.String()
 
 	// --- Spec conversion ---
-	if dst.ObjectMeta.Annotations == nil {
-		dst.ObjectMeta.Annotations = map[string]string{}
+	if dst.Annotations == nil {
+		dst.Annotations = map[string]string{}
 	}
-	dst.ObjectMeta.Annotations["datacenterIdentifier"] = src.Spec.DatacenterIdentifier // Backfill from annotation for older resources
-	dst.ObjectMeta.Annotations["supervisorIdentifier"] = src.Spec.SupervisorIdentifier
+	dst.Annotations["datacenterIdentifier"] = src.Spec.DatacenterIdentifier // Backfill from annotation for older resources
+	dst.Annotations["supervisorIdentifier"] = src.Spec.SupervisorIdentifier
 
 	// Infer networkProvisioning from v1alpha1 ipAllocation
 	if src.Spec.IPAllocation != nil &&
@@ -125,8 +125,8 @@ func ConvertNetworkNamespaceToV1alpha1(src *NetworkNamespace) *v1alpha1.NetworkN
 	dst.APIVersion = v1alpha1.GroupVersion.String()
 
 	// --- Spec conversion ---
-	dst.Spec.DatacenterIdentifier = src.ObjectMeta.Annotations["datacenterIdentifier"]
-	dst.Spec.SupervisorIdentifier = src.ObjectMeta.Annotations["supervisorIdentifier"]
+	dst.Spec.DatacenterIdentifier = src.Annotations["datacenterIdentifier"]
+	dst.Spec.SupervisorIdentifier = src.Annotations["supervisorIdentifier"]
 
 	// Convert ipAllocation
 	if src.Spec.IPAllocation != nil {
@@ -179,7 +179,7 @@ func ConvertNetworkNamespaceToV1alpha1(src *NetworkNamespace) *v1alpha1.NetworkN
 	dst.Status.ObservedGeneration = src.Status.ObservedGeneration
 	dst.Status.RetryCount = src.Status.RetryCount
 	dst.Status.DataCenterIdentifier = src.Status.DataCenterIdentifier
-	dst.Status.SupervisorIdentifier = src.ObjectMeta.Annotations["supervisorIdentifier"]
+	dst.Status.SupervisorIdentifier = src.Annotations["supervisorIdentifier"]
 	dst.Status.NamespaceID = src.Status.NamespaceID
 	dst.Status.IPv4Prefix = src.Status.IPv4Prefix
 	dst.Status.IPv6Prefix = src.Status.IPv6Prefix
