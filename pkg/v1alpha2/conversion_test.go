@@ -56,6 +56,12 @@ func TestConvertFromV1alpha1_NoIPAllocation(t *testing.T) {
 	if dst.Spec.IPAllocation != nil {
 		t.Error("expected ipAllocation to be nil when no IPAllocation is set in v1alpha1")
 	}
+	if dst.Annotations["datacenterIdentifier"] != testDC {
+		t.Errorf("expected datacenterIdentifier annotation %q, got %q", testDC, dst.Annotations["datacenterIdentifier"])
+	}
+	if dst.Annotations["supervisorIdentifier"] != testSV {
+		t.Errorf("expected supervisorIdentifier annotation %q, got %q", testSV, dst.Annotations["supervisorIdentifier"])
+	}
 	if dst.Status.ProvisioningPhase != ProvisioningPhaseReady {
 		t.Errorf("expected provisioningPhase 'Ready', got %q", dst.Status.ProvisioningPhase)
 	}
@@ -199,6 +205,9 @@ func TestRoundTrip_NAM(t *testing.T) {
 	if roundtripped.Spec.DatacenterIdentifier != original.Spec.DatacenterIdentifier {
 		t.Errorf("datacenterIdentifier not preserved: %q vs %q", roundtripped.Spec.DatacenterIdentifier, original.Spec.DatacenterIdentifier)
 	}
+	if roundtripped.Spec.SupervisorIdentifier != original.Spec.SupervisorIdentifier {
+		t.Errorf("supervisorIdentifier not preserved: %q vs %q", roundtripped.Spec.SupervisorIdentifier, original.Spec.SupervisorIdentifier)
+	}
 	if roundtripped.Status.IPv4Prefix != original.Status.IPv4Prefix {
 		t.Errorf("ipv4Prefix not preserved: %q vs %q", roundtripped.Status.IPv4Prefix, original.Status.IPv4Prefix)
 	}
@@ -255,10 +264,15 @@ func TestRoundTrip_Static(t *testing.T) {
 func TestConvertToV1alpha1_ManualProvisioningOnly(t *testing.T) {
 	// Test the branch where v1alpha2 has manual provisioning but no explicit IPAllocation
 	src := &NetworkNamespace{
-		ObjectMeta: metav1.ObjectMeta{Name: "manual-only", Namespace: testNamespace},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "manual-only",
+			Namespace: testNamespace,
+			Annotations: map[string]string{
+				"datacenterIdentifier": testDC,
+				"supervisorIdentifier": testSV,
+			},
+		},
 		Spec: NetworkNamespaceSpec{
-			DatacenterIdentifier: testDC,
-			SupervisorIdentifier: testSV,
 			NetworkProvisioning: &NetworkProvisioning{
 				Provider: NetworkProvisioningManual,
 				Manual: &ManualProvisioningConfig{
@@ -275,6 +289,14 @@ func TestConvertToV1alpha1_ManualProvisioningOnly(t *testing.T) {
 	}
 
 	dst := ConvertNetworkNamespaceToV1alpha1(src)
+
+	// datacenter/supervisor identifiers should be read back from annotations
+	if dst.Spec.DatacenterIdentifier != testDC {
+		t.Errorf("expected datacenterIdentifier %q, got %q", testDC, dst.Spec.DatacenterIdentifier)
+	}
+	if dst.Spec.SupervisorIdentifier != testSV {
+		t.Errorf("expected supervisorIdentifier %q, got %q", testSV, dst.Spec.SupervisorIdentifier)
+	}
 
 	// Should reconstruct v1alpha1 static IPAllocation from manual provisioning
 	if dst.Spec.IPAllocation == nil {

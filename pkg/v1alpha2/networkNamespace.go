@@ -41,18 +41,6 @@ type NetworkNamespaceList struct {
 
 // NetworkNamespaceSpec defines the desired state of a NetworkNamespace.
 type NetworkNamespaceSpec struct {
-	// +kubebuilder:validation:Required
-	// +kubebuilder:validation:MinLength=2
-	// +kubebuilder:validation:MaxLength=32
-	// +kubebuilder:validation:Pattern=`^[A-Za-z0-9_-]+$`
-	DatacenterIdentifier string `json:"datacenterIdentifier,omitempty"`
-
-	// +kubebuilder:validation:Required
-	// +kubebuilder:validation:MinLength=2
-	// +kubebuilder:validation:MaxLength=32
-	// +kubebuilder:validation:Pattern=`^[A-Za-z0-9_-]+$`
-	SupervisorIdentifier string `json:"supervisorIdentifier,omitempty"`
-
 	// NetworkProvisioning defines how the network segment (IP prefix + VLAN) is
 	// acquired. When not set, defaults to provider "nam" for backward compatibility.
 	// +kubebuilder:validation:Optional
@@ -154,7 +142,6 @@ type NetworkNamespaceStatus struct {
 
 	// Network fields populated by the provisioning layer.
 	DataCenterIdentifier string `json:"datacenterIdentifier,omitempty"`
-	SupervisorIdentifier string `json:"supervisorIdentifier,omitempty"`
 	NamespaceID          string `json:"namespaceId,omitempty"`
 	IPv4Prefix           string `json:"ipv4Prefix,omitempty"`
 	IPv6Prefix           string `json:"ipv6Prefix,omitempty"`
