@@ -20,6 +20,7 @@ limitations under the License.
 package v1alpha2
 
 import (
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -42,5 +43,10 @@ func addKnownTypes(s *runtime.Scheme) error {
 		&IPAllocation{},
 		&IPAllocationList{},
 	)
+	// Register the metav1 meta types (ListOptions, GetOptions, DeleteOptions,
+	// WatchEvent, ...) for this group-version. Without this, client-go cannot
+	// build List/Watch requests and fails with:
+	//   no kind "ListOptions" is registered for version "vitistack.io/v1alpha2"
+	metav1.AddToGroupVersion(s, GroupVersion)
 	return nil
 }
