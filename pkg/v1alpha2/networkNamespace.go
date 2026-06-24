@@ -54,12 +54,15 @@ type NetworkNamespaceSpec struct {
 
 // NetworkProvisioning configures the source of the network segment.
 type NetworkProvisioning struct {
-	// Provider identifies the system that provisions the network.
-	// "nam" uses the Network Administration Management backend (default).
-	// "manual" uses user-supplied configuration from the manual block.
-	// Other values are reserved for future IPAM integrations.
+	// Provider identifies the system that provisions the network. Well-known
+	// values are "nam" (Network Administration Management backend, the default)
+	// and "manual" (user-supplied config from the manual block), but this is an
+	// open string so additional provisioners can be plugged in without a schema
+	// change — each operator claims the NetworkNamespaces whose provider it owns.
+	// Mirrors the open-string convention already used by ipAllocation.provider.
 	// +kubebuilder:validation:Required
-	// +kubebuilder:validation:Enum=nam;manual
+	// +kubebuilder:validation:MaxLength=32
+	// +kubebuilder:validation:Pattern=`^[A-Za-z0-9_-]+$`
 	// +kubebuilder:default=nam
 	Provider NetworkProvisioningType `json:"provider"`
 
