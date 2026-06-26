@@ -93,11 +93,9 @@ spec:
                 type: string
             required:
             - clusterIdentifier
-            - datacenterIdentifier
             - environment
             - networkNamespaceIdentifier
             - provider
-            - supervisorIdentifier
             type: object
           status:
             properties:
