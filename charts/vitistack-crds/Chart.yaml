@@ -1,9 +1,9 @@
 apiVersion: v2
 name: crds
-description: A Helm chart for Vitistack Custom Resource Definitions (CRDs)
+description: A Helm chart for Vitistack Custom Resource Definitions (CRDs) and conversion webhook
 type: application
-version: 0.1.0
-appVersion: "v1alpha1"
+version: 0.2.0
+appVersion: "v1alpha2"
 icon: https://vitistack.io/images/viti1.svg
 keywords:
   - vitistack

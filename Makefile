@@ -57,9 +57,11 @@ gen-manifests: controller-gen ## Generate manifests
 	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=crds
 	@hack/sanitize-crds.sh crds
 	@echo "Cleaning up charts/vitistack-crds/templates..."
-	@rm -f charts/vitistack-crds/templates/*.yaml
+	@rm -f charts/vitistack-crds/templates/vitistack.io_*.yaml
 	@echo "Copying CRDs to charts/vitistack-crds/templates..."
 	@cp crds/*.yaml charts/vitistack-crds/templates/
+	@echo "Wiring conversion webhook into CRD templates..."
+	@hack/inject-conversion.sh charts/vitistack-crds/templates
 	@echo "CRDs copied successfully!"
 	@$(MAKE) gen-crds-yaml
 
@@ -86,6 +88,22 @@ verify-crds: ## Verify CRDs are sanitized (no int32/int64 format lines present).
 .PHONY: gen-deepcopy
 gen-deepcopy: controller-gen ## Generate code
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
+
+
+##@ Local development
+DEV_CERT_DIR ?= .dev-certs
+.PHONY: dev-certs
+dev-certs: ## Generate self-signed TLS certs for running the conversion webhook locally.
+	@mkdir -p $(DEV_CERT_DIR)
+	@if [ -f "$(DEV_CERT_DIR)/tls.crt" ] && [ -f "$(DEV_CERT_DIR)/tls.key" ]; then \
+		echo "dev-certs: $(DEV_CERT_DIR)/tls.{crt,key} already exist, skipping (delete them to regenerate)"; \
+	else \
+		openssl req -x509 -newkey rsa:2048 -nodes \
+			-keyout "$(DEV_CERT_DIR)/tls.key" -out "$(DEV_CERT_DIR)/tls.crt" -days 365 \
+			-subj "/CN=localhost" \
+			-addext "subjectAltName=DNS:localhost,IP:127.0.0.1" >/dev/null 2>&1; \
+		echo "dev-certs: wrote $(DEV_CERT_DIR)/tls.crt and $(DEV_CERT_DIR)/tls.key"; \
+	fi
 
 
 ##@ Build

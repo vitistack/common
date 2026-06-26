@@ -1,0 +1,18 @@
+{{- if .Values.conversionWebhook.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "vitistack-crds.webhook.name" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "vitistack-crds.webhook.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "vitistack-crds.webhook.selectorLabels" . | nindent 4 }}
+  ports:
+    - name: https
+      port: 443
+      targetPort: {{ .Values.conversionWebhook.port }}
+      protocol: TCP
+{{- end }}

@@ -90,6 +90,14 @@ type NetworkNamespaceStatus struct {
 	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
 	RetryCount         int   `json:"retryCount,omitempty"`
 
+	// ProvisioningPhase indicates whether the network segment has been
+	// successfully provisioned. Downstream operators (kea, static-ip)
+	// should wait for "Ready" before acting.
+	// Added in preparation for v1alpha2 migration.
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:validation:Enum=Pending;Ready;Error
+	ProvisioningPhase string `json:"provisioningPhase,omitempty"`
+
 	DataCenterIdentifier string `json:"datacenterIdentifier,omitempty"`
 	SupervisorIdentifier string `json:"supervisorIdentifier,omitempty"`
 	NamespaceID          string `json:"namespaceId,omitempty"`

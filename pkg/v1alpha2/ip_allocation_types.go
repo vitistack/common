@@ -1,5 +1,5 @@
 /*
-Copyright 2025.
+Copyright 2026.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package v1alpha1
+package v1alpha2
 
 import "strings"
 
@@ -31,8 +31,9 @@ const (
 	IPAllocationTypeStatic IPAllocationType = "static"
 )
 
-// Well-known operator names used in NetworkConfiguration.spec.provider
-// to identify which operator handles the resource.
+// Well-known provider names used in spec.ipAllocation.provider and
+// NetworkConfiguration.spec.provider to identify which operator handles
+// the resource.
 const (
 	// ProviderNameKea identifies the kea-operator as the handler.
 	ProviderNameKea = "kea"
@@ -41,15 +42,45 @@ const (
 	ProviderNameStaticIP = "static-ip-operator"
 )
 
+// NetworkProvisioningType identifies the system that provisions network
+// segments (IP prefixes + VLANs) for a NetworkNamespace.
+type NetworkProvisioningType string
+
+const (
+	// NetworkProvisioningNAM provisions networks through NAM (Network Administration Management).
+	NetworkProvisioningNAM NetworkProvisioningType = "nam"
+
+	// NetworkProvisioningManual uses user-supplied network configuration.
+	NetworkProvisioningManual NetworkProvisioningType = "manual"
+)
+
+// ProvisioningPhase represents the lifecycle state of network provisioning.
+type ProvisioningPhase string
+
+const (
+	ProvisioningPhasePending ProvisioningPhase = "Pending"
+	ProvisioningPhaseReady   ProvisioningPhase = "Ready"
+	ProvisioningPhaseError   ProvisioningPhase = "Error"
+)
+
+// IPAllocationPhase represents the lifecycle of an individual IP allocation.
+type IPAllocationPhase string
+
+const (
+	IPAllocationPhasePending   IPAllocationPhase = "Pending"
+	IPAllocationPhaseAllocated IPAllocationPhase = "Allocated"
+	IPAllocationPhaseReleased  IPAllocationPhase = "Released"
+	IPAllocationPhaseError     IPAllocationPhase = "Error"
+)
+
 // NormalizeProvider returns the lowercase, trimmed value of a provider string.
-// If the value is empty, only whitespace, or effectively nil, it returns "".
 func NormalizeProvider(provider string) string {
 	return strings.ToLower(strings.TrimSpace(provider))
 }
 
 // MatchesProvider checks whether the given raw provider string matches the
 // expected operator name (case-insensitive, trimmed). Returns false if the
-// provider is empty/whitespace — callers should handle that as "unset".
+// provider is empty/whitespace.
 func MatchesProvider(raw, expected string) bool {
 	p := NormalizeProvider(raw)
 	if p == "" {
@@ -72,24 +103,6 @@ func (t IPAllocationType) IsValid() bool {
 	default:
 		return false
 	}
-}
-
-// ValidIPAllocationTypes returns all valid IP allocation types.
-func ValidIPAllocationTypes() []IPAllocationType {
-	return []IPAllocationType{
-		IPAllocationTypeDHCP,
-		IPAllocationTypeStatic,
-	}
-}
-
-// IPAllocationTypeValues returns the string representations of all valid types.
-func IPAllocationTypeValues() []string {
-	types := ValidIPAllocationTypes()
-	values := make([]string, len(types))
-	for i, t := range types {
-		values[i] = string(t)
-	}
-	return values
 }
 
 // String returns the string representation of the type.
@@ -116,14 +129,12 @@ type StaticIPAllocationConfig struct {
 	IPv4RangeStart string `json:"ipv4RangeStart,omitempty"`
 
 	// IPv4RangeEnd is the last allocatable IP address in the range.
-	// If not set, defaults to the last usable address in the CIDR (e.g. x.x.x.254 for a /24).
+	// If not set, defaults to the last usable address in the CIDR.
 	// +kubebuilder:validation:Optional
 	IPv4RangeEnd string `json:"ipv4RangeEnd,omitempty"`
 
 	// VlanID is the VLAN ID for the subnet. When set, the kubevirt-operator
-	// creates a NetworkAttachmentDefinition with this VLAN tag so VMs are
-	// placed on the correct network segment. When 0 or unset, VMs use the
-	// default pod network.
+	// creates a NetworkAttachmentDefinition with this VLAN tag.
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:validation:Minimum=0
 	// +kubebuilder:validation:Maximum=4094
@@ -142,7 +153,7 @@ type StaticIPAllocationConfig struct {
 }
 
 // DHCPAllocationConfig provides optional configuration overrides when using
-// DHCP-based IP allocation (e.g. Kea DHCP server).
+// DHCP-based IP allocation.
 type DHCPAllocationConfig struct {
 	// RequireClientClasses specifies Kea DHCP client classes that must be
 	// matched for lease allocation.
