@@ -35,7 +35,7 @@ type ControlPlaneVirtualSharedIPList struct {
 }
 
 type ControlPlaneVirtualSharedIPSpec struct {
-	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Optional
 	DatacenterIdentifier string `json:"datacenterIdentifier,omitempty"`
 
 	// +kubebuilder:validation:Required
@@ -47,7 +47,7 @@ type ControlPlaneVirtualSharedIPSpec struct {
 	// +kubebuilder:validation:Required
 	ClusterIdentifier string `json:"clusterIdentifier,omitempty"`
 
-	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Optional
 	SupervisorIdentifier string `json:"supervisorIdentifier,omitempty"`
 
 	// +kubebuilder:validation:Required

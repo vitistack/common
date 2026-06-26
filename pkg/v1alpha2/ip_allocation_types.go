@@ -122,7 +122,9 @@ type StaticIPAllocationConfig struct {
 	IPv4Gateway string `json:"ipv4Gateway"`
 
 	// IPv4RangeStart is the first allocatable IP address in the range.
-	// If not set, defaults to the second usable address in the CIDR.
+	// The first four addresses of the CIDR (network, gateway, and two reserved)
+	// are not allocatable. If not set, this defaults to the network address + 4
+	// (e.g. x.x.x.4 for a /24); an explicitly-set value below that floor is rejected.
 	// +kubebuilder:validation:Optional
 	IPv4RangeStart string `json:"ipv4RangeStart,omitempty"`
 
