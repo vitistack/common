@@ -1,5 +1,18 @@
 {{- if and .Values.conversionWebhook.enabled .Values.conversionWebhook.certManager.enabled }}
 {{- if not .Values.conversionWebhook.certManager.issuerRef }}
+{{/*
+  Bootstrap a private CA for the webhook.
+
+  The apiserver anchors trust for the conversion webhook on the CRD's
+  caBundle, which cert-manager's ca-injector fills from this Certificate's
+  ca.crt. Issuing the serving certificate straight from a SelfSigned issuer
+  makes ca.crt the self-signed LEAF, which is not a valid trust anchor
+  (CA:FALSE, no keyCertSign): verification then only succeeds while the
+  served certificate and the caBundle entry are byte-identical, so every
+  renewal breaks conversion until the webhook pods happen to restart.
+
+  Issuing from a real CA keeps the anchor stable across leaf renewals.
+*/}}
 apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
@@ -9,6 +22,41 @@ metadata:
     {{- include "vitistack-crds.webhook.labels" . | nindent 4 }}
 spec:
   selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "vitistack-crds.webhook.name" . }}-ca
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "vitistack-crds.webhook.labels" . | nindent 4 }}
+spec:
+  isCA: true
+  commonName: {{ include "vitistack-crds.webhook.name" . }}-ca
+  secretName: {{ include "vitistack-crds.webhook.name" . }}-ca
+  duration: {{ .Values.conversionWebhook.certManager.caDuration | default "87600h" }}
+  renewBefore: {{ .Values.conversionWebhook.certManager.caRenewBefore | default "720h" }}
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+    # Rotating the CA key would mint a new CA certificate — a new trust
+    # anchor — which is the churn this bootstrap exists to avoid.
+    rotationPolicy: Never
+  issuerRef:
+    name: {{ include "vitistack-crds.webhook.name" . }}-selfsigned
+    kind: Issuer
+    group: cert-manager.io
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: {{ include "vitistack-crds.webhook.name" . }}-ca
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "vitistack-crds.webhook.labels" . | nindent 4 }}
+spec:
+  ca:
+    secretName: {{ include "vitistack-crds.webhook.name" . }}-ca
 ---
 {{- end }}
 apiVersion: cert-manager.io/v1
@@ -27,7 +75,7 @@ spec:
     {{- if .Values.conversionWebhook.certManager.issuerRef }}
     {{- toYaml .Values.conversionWebhook.certManager.issuerRef | nindent 4 }}
     {{- else }}
-    name: {{ include "vitistack-crds.webhook.name" . }}-selfsigned
+    name: {{ include "vitistack-crds.webhook.name" . }}-ca
     kind: Issuer
     {{- end }}
 {{- end }}
