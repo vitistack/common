@@ -4,43 +4,34 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.22.0
-  name: controlplanevirtualsharedips.vitistack.io
+  name: machineadoptions.vitistack.io
 spec:
   group: vitistack.io
   names:
-    kind: ControlPlaneVirtualSharedIP
-    listKind: ControlPlaneVirtualSharedIPList
-    plural: controlplanevirtualsharedips
+    kind: MachineAdoption
+    listKind: MachineAdoptionList
+    plural: machineadoptions
     shortNames:
-    - lb
-    singular: controlplanevirtualsharedip
+    - madopt
+    singular: machineadoption
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
-    - jsonPath: .spec.datacenterIdentifier
-      name: DatacenterIdentifier
-      type: string
-    - jsonPath: .spec.clusterIdentifier
-      name: ClusterIdentifier
-      type: string
-    - jsonPath: .spec.provider
+    - jsonPath: .spec.providerName
       name: Provider
       type: string
     - jsonPath: .status.phase
       name: Phase
       type: string
-    - jsonPath: .status.status
-      name: Status
+    - jsonPath: .status.machineName
+      name: Machine
       type: string
-    - description: Creation Timestamp
-      jsonPath: .status.created
-      name: Created
-      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: ControlPlaneVirtualSharedIP is the Schema for the ControlPlaneVirtualSharedIP
-          API
         properties:
           apiVersion:
             description: |-
@@ -61,49 +52,30 @@ spec:
             type: object
           spec:
             properties:
-              clusterIdentifier:
+              machineName:
+                description: |-
+                  Optional name for the generated Machine resource.
+                  The provider derives it from the existing machine when omitted.
                 type: string
-              datacenterIdentifier:
-                type: string
-              environment:
-                maxLength: 128
+              providerMachineID:
+                description: |-
+                  Stable provider-specific identifier.
+                  For vSphere, this is the VM instance UUID.
                 minLength: 1
-                pattern: ^[A-Za-z0-9._-]+$
                 type: string
-              method:
-                default: first-alive
-                description: round-robin, least-session, first-alive
-                enum:
-                - round-robin
-                - least-session
-                - first-alive
-                type: string
-              networkNamespaceIdentifier:
-                maxLength: 32
-                minLength: 3
-                pattern: ^[A-Za-z0-9_-]+$
-                type: string
-              poolMembers:
-                items:
-                  type: string
-                type: array
-              provider:
-                type: string
-              supervisorIdentifier:
+              providerName:
+                description: MachineProvider used to locate and manage the existing
+                  machine.
+                minLength: 1
                 type: string
             required:
-            - clusterIdentifier
-            - datacenterIdentifier
-            - environment
-            - networkNamespaceIdentifier
-            - provider
-            - supervisorIdentifier
+            - providerMachineID
+            - providerName
             type: object
           status:
             properties:
-              clusterIdentifier:
-                type: string
               conditions:
+                description: Conditions represent the latest adoption state.
                 items:
                   description: Condition contains details for one aspect of the current
                     state of this API Resource.
@@ -158,36 +130,25 @@ spec:
                   - type
                   type: object
                 type: array
-              created:
-                format: date-time
+                x-kubernetes-list-map-keys:
+                - type
+                x-kubernetes-list-type: map
+              machineName:
+                description: Name of the generated Machine resource.
                 type: string
-              datacenterIdentifier:
+              machineNamespace:
+                description: Namespace of the generated Machine resource.
                 type: string
-              environment:
-                type: string
-              loadBalancerIps:
-                items:
-                  type: string
-                type: array
               message:
-                type: string
-              method:
-                type: string
-              networkNamespaceIdentifier:
                 type: string
               observedGeneration:
                 type: integer
               phase:
-                type: string
-              poolMembers:
-                items:
-                  type: string
-                type: array
-              retryCount:
-                type: integer
-              status:
-                type: string
-              supervisorIdentifier:
+                enum:
+                - Pending
+                - Processing
+                - Completed
+                - Failed
                 type: string
             type: object
         type: object
