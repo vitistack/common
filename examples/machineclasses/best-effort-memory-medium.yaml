@@ -1,0 +1,18 @@
+---
+apiVersion: vitistack.io/v1alpha1
+kind: MachineClass
+metadata:
+  name: best-effort-memory-medium
+spec:
+  displayName: Best Effort Memory Medium
+  description: Best-effort instance with 2 cores and 16Gi memory (Tanzu best-effort-memory-medium)
+  enabled: true
+  default: false
+  category: Memory
+  cpu:
+    cores: 2
+    sockets: 1
+    threads: 1
+  memory:
+    quantity: 16Gi
+  machineProviders: []
