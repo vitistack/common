@@ -3,7 +3,7 @@ module github.com/vitistack/common
 go 1.26.4
 
 require (
-	github.com/go-logr/logr v1.4.3
+	github.com/go-logr/logr v1.4.4
 	github.com/joho/godotenv v1.5.1
 	github.com/minio/minio-go/v7 v7.2.0
 	gopkg.in/yaml.v3 v3.0.1
