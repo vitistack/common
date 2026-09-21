@@ -66,8 +66,14 @@ type MachineSpec struct {
 	// User data script to run on first boot
 	UserData string `json:"userData,omitempty"`
 
-	// Tags/labels to apply to the machine
+	// Tags is the legacy flat tag representation.
 	Tags map[string]string `json:"tags,omitempty"`
+
+	// TagAssignments contains structured provider tag assignments.
+	// +listType=map
+	// +listMapKey=category
+	// +listMapKey=name
+	TagAssignments []MachineTag `json:"tagAssignments,omitempty"`
 
 	// Security groups or firewall rules
 	SecurityGroups []string `json:"securityGroups,omitempty"`
@@ -200,6 +206,19 @@ type MachineBackup struct {
 	Schedule string `json:"schedule,omitempty"`
 	// Retention period in days
 	RetentionDays int `json:"retentionDays,omitempty"`
+}
+
+type MachineTag struct {
+	// vSphere-style tag category.
+	// +kubebuilder:validation:MinLength=1
+	Category string `json:"category"`
+
+	// Tag name within the category.
+	// +kubebuilder:validation:MinLength=1
+	Name string `json:"name"`
+
+	// Description used if the provider must create the tag.
+	Description string `json:"description,omitempty"`
 }
 
 // CloudInitConfig defines the cloud-init configuration for a VM

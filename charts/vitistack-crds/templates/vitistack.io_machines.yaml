@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.21.0
+    controller-gen.kubebuilder.io/version: v0.22.0
   name: machines.vitistack.io
 spec:
   group: vitistack.io
@@ -365,10 +365,35 @@ spec:
                 items:
                   type: string
                 type: array
+              tagAssignments:
+                description: TagAssignments contains structured provider tag assignments.
+                items:
+                  properties:
+                    category:
+                      description: vSphere-style tag category.
+                      minLength: 1
+                      type: string
+                    description:
+                      description: Description used if the provider must create the
+                        tag.
+                      type: string
+                    name:
+                      description: Tag name within the category.
+                      minLength: 1
+                      type: string
+                  required:
+                  - category
+                  - name
+                  type: object
+                type: array
+                x-kubernetes-list-map-keys:
+                - category
+                - name
+                x-kubernetes-list-type: map
               tags:
                 additionalProperties:
                   type: string
-                description: Tags/labels to apply to the machine
+                description: Tags is the legacy flat tag representation.
                 type: object
               userData:
                 description: User data script to run on first boot
