@@ -1,0 +1,18 @@
+---
+apiVersion: vitistack.io/v1alpha1
+kind: MachineClass
+metadata:
+  name: best-effort-small
+spec:
+  displayName: Best Effort Small
+  description: Best-effort instance with 2 cores and 4Gi memory (Tanzu best-effort-small)
+  enabled: true
+  default: false
+  category: Standard
+  cpu:
+    cores: 2
+    sockets: 1
+    threads: 1
+  memory:
+    quantity: 4Gi
+  machineProviders: []
