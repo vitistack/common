@@ -10,6 +10,7 @@ import (
 )
 
 // Requeue returns a ctrl.Result that requeues immediately with the given error (can be nil).
+//nolint:staticcheck
 func Requeue(err error) (ctrl.Result, error) {
 	return ctrl.Result{Requeue: true}, err
 }

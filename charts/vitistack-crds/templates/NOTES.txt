@@ -4,20 +4,46 @@ Your release is named {{ .Release.Name }}.
 
 The following Vitistack CRDs have been installed:
 
-- vitistacks.vitistack.io
+- clusterstorageclasses.vitistack.io
+- clusterstorages.vitistack.io
+- controlplanevirtualsharedips.vitistack.io
+- etcdbackups.vitistack.io
+- ipallocations.vitistack.io
 - kubernetesclusters.vitistack.io
 - kubernetesproviders.vitistack.io
 - kubevirtconfigs.vitistack.io
-- loadbalancers.vitistack.io
+- machineclasses.vitistack.io
 - machineproviders.vitistack.io
 - machines.vitistack.io
 - networkconfigurations.vitistack.io
 - networknamespaces.vitistack.io
 - proxmoxconfigs.vitistack.io
+- vitistacks.vitistack.io
 
-To verify the installation:
+To verify the CRDs:
 
   kubectl get crds | grep vitistack.io
+
+{{- if .Values.conversionWebhook.enabled }}
+
+The NetworkNamespace conversion webhook (v1alpha1 <-> v1alpha2) has been deployed:
+
+  kubectl -n {{ .Release.Namespace }} rollout status deploy/{{ include "vitistack-crds.webhook.name" . }}
+
+NOTE: The webhook requires cert-manager (with cainjector) in the cluster. Until
+the webhook pods are Ready and the CA bundle has been injected, NetworkNamespace
+operations will fail. Check readiness with:
+
+  kubectl -n {{ .Release.Namespace }} get pods -l app.kubernetes.io/component=conversion-webhook
+
+If you do not run cert-manager, reinstall with the webhook disabled to get CRDs only:
+
+  --set conversionWebhook.enabled=false
+{{- else }}
+
+The conversion webhook is DISABLED. The NetworkNamespace CRD is installed without
+webhook conversion; mixing v1alpha1 and v1alpha2 clients is not converted.
+{{- end }}
 
 To create custom resources, refer to the examples in the repository:
 

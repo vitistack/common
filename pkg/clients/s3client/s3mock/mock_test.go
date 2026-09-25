@@ -11,9 +11,6 @@ import (
 
 func TestNewMockS3Client(t *testing.T) {
 	mock := NewMockS3Client()
-	if mock == nil {
-		t.Fatal("NewMockS3Client returned nil")
-	}
 	if mock.objects == nil {
 		t.Fatal("objects map not initialized")
 	}

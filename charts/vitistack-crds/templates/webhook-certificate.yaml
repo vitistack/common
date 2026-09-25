@@ -1,0 +1,33 @@
+{{- if and .Values.conversionWebhook.enabled .Values.conversionWebhook.certManager.enabled }}
+{{- if not .Values.conversionWebhook.certManager.issuerRef }}
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: {{ include "vitistack-crds.webhook.name" . }}-selfsigned
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "vitistack-crds.webhook.labels" . | nindent 4 }}
+spec:
+  selfSigned: {}
+---
+{{- end }}
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "vitistack-crds.webhook.name" . }}-cert
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "vitistack-crds.webhook.labels" . | nindent 4 }}
+spec:
+  secretName: {{ include "vitistack-crds.webhook.name" . }}-tls
+  dnsNames:
+    - {{ include "vitistack-crds.webhook.name" . }}.{{ .Release.Namespace }}.svc
+    - {{ include "vitistack-crds.webhook.name" . }}.{{ .Release.Namespace }}.svc.cluster.local
+  issuerRef:
+    {{- if .Values.conversionWebhook.certManager.issuerRef }}
+    {{- toYaml .Values.conversionWebhook.certManager.issuerRef | nindent 4 }}
+    {{- else }}
+    name: {{ include "vitistack-crds.webhook.name" . }}-selfsigned
+    kind: Issuer
+    {{- end }}
+{{- end }}

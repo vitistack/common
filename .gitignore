@@ -35,3 +35,6 @@ go.work.sum
 
 bin/
 __debug_bin*
+
+# Local dev TLS certs for the conversion webhook (make dev-certs)
+.dev-certs/
