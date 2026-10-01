@@ -1,0 +1,18 @@
+---
+apiVersion: vitistack.io/v1alpha1
+kind: MachineClass
+metadata:
+  name: best-effort-sql-xl
+spec:
+  displayName: Best Effort XL SQL
+  description: Best-effort instance with 16 cores and 128Gi memory
+  enabled: true
+  default: false
+  category: SQL
+  cpu:
+    cores: 16
+    sockets: 1
+    threads: 1
+  memory:
+    quantity: 128Gi
+  machineProviders: []
