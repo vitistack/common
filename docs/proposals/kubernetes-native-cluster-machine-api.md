@@ -6,6 +6,7 @@
 | **Affects** | `common` (CRDs), all cluster, machine and OS providers |
 | **Date** | 2026-10-05 |
 | **Migration** | [migration-talos.md](migration-talos.md): current situation and steps from today's implementation |
+| **Code mapping** | [code-mapping.md](code-mapping.md): proposal vs. current code, hard-to-migrate parts and gaps |
 | **Future** | [physical-machines.md](physical-machines.md): how physical machines fit this model (not in initial scope) |
 
 ## 1. Summary
