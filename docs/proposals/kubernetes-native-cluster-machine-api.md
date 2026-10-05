@@ -43,6 +43,8 @@ flowchart TD
   KC -. owns control-plane Machines .-> M
   NP -->|owns| M[Machine<br/>mostly immutable]
   M -->|className| MC
+  MC -->|machineProviderRef| MP[MachineProvider<br/>registration, cluster-scoped]
+  KCC -->|kubernetesProviderRef| KP[KubernetesProvider<br/>registration, cluster-scoped]
   M -->|bootstrap.configRef| OSC[OS config<br/>e.g. TalosMachineConfig]
   KCC -->|parametersRef| TCC[Provider parameters<br/>e.g. TalosClusterConfig]
   KCC -. default .-> OST[OS config template<br/>e.g. TalosMachineConfigTemplate]
@@ -60,12 +62,30 @@ flowchart TD
 | Control-plane Machines | Namespace | Yes | Cluster provider | Owned by the cluster |
 | `NodePool` | Namespace | Yes | **Generic** node-pool controller | — |
 | `MachineClass` | Cluster | Yes | — (admin config) | — |
+| `KubernetesProvider` / `MachineProvider` | Cluster | Yes | Registered by the provider operator | Referenced by classes (§3.1) |
 | `Machine` | Namespace | Yes | Machine provider | `class.controllerName` |
 | OS config template (`TalosMachineConfigTemplate`, …) | Namespace | No | — (read when creating Machines) | Class default, overridable (§6.1) |
 | OS config (`TalosMachineConfig`, …) | Namespace | No | OS provider | Its kind |
 | Provider parameters (`TalosClusterConfig`, …) | Either | No | Read by the provider | `parametersRef` |
 
 **Why the control plane stays with the cluster provider:** its ordering is provider-specific (etcd quorum, bootstrapping the first node). Worker pools need no provider-specific logic to scale, so one generic controller manages them.
+
+### 3.1 Provider registrations
+
+`KubernetesProvider` and `MachineProvider` are kept. They are **metadata registrations**: each provider operator creates and updates them to describe what it offers in this datacenter (type, region, zones, capabilities, backend), and they are sent upstream to the management system to visualise available capabilities.
+
+| | Registration (`KubernetesProvider`, `MachineProvider`) | Class (`KubernetesClusterClass`, `MachineClass`) |
+|---|---|---|
+| Written by | Provider operator | Platform admin |
+| Describes | What *exists* (capabilities, backend) | What users can *request* (defaults, sizes, parameters) |
+| Used for | Upstream visualisation, linking | Selecting implementation and defaults |
+
+Rules:
+
+- Each class references exactly one registration (`kubernetesProviderRef`, `machineProviderRef`).
+- The registration's `providerType` must match the implementation behind the class's `controllerName`; otherwise the class reports `Accepted=False, reason=ProviderMismatch`.
+- A missing or disabled registration makes the class `Accepted=False, reason=ProviderNotAvailable`; objects using the class wait.
+- Registrations are never written by users and carry no desired state for clusters or machines.
 
 ## 4. Cluster resources
 
@@ -79,6 +99,7 @@ kind: KubernetesClusterClass
 metadata: { name: talos-standard }
 spec:
   controllerName: talos.vitistack.io/cluster-controller
+  kubernetesProviderRef: { name: talos-operator }       # registration (§3.1)
   parametersRef: { group: talos.vitistack.io, kind: TalosClusterConfig, name: standard, namespace: platform }
   machineConfig:
     allowedKinds:                           # OS config kinds this cluster provider supports
@@ -281,9 +302,12 @@ kind: MachineClass
 metadata: { name: gpu-xlarge }
 spec:
   controllerName: kubevirt.vitistack.io/machine-controller
+  machineProviderRef: { name: kubevirt-prod-1 }         # registration (§3.1): which backend
   resources: { cpu: 16, memory: 64Gi }
   parametersRef: { kind: KubevirtMachineParameters, name: gpu }
 ```
+
+The class combines **what** (size, parameters) with **where** (`machineProviderRef`: the registered backend, e.g. one KubeVirt cluster). The same size on another backend is another class.
 
 ### 5.2 `Machine`
 
