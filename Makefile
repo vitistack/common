@@ -62,6 +62,7 @@ gen-manifests: controller-gen ## Generate manifests
 	@cp crds/*.yaml charts/vitistack-crds/templates/
 	@echo "Wiring conversion webhook into CRD templates..."
 	@hack/inject-conversion.sh charts/vitistack-crds/templates
+	@hack/inject-annotations.sh charts/vitistack-crds/templates
 	@echo "CRDs copied successfully!"
 	@$(MAKE) gen-crds-yaml
 

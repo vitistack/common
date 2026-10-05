@@ -4,6 +4,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.21.0
+    {{- with (include "vitistack-crds.annotations" . | trim) }}{{ . | nindent 4 }}{{- end }}
   name: controlplanevirtualsharedips.vitistack.io
 spec:
   group: vitistack.io
