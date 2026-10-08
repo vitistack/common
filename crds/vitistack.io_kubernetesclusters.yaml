@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.21.0
+    controller-gen.kubebuilder.io/version: v0.22.0
   name: kubernetesclusters.vitistack.io
 spec:
   group: vitistack.io
@@ -109,7 +109,6 @@ spec:
                 - project
                 - provider
                 - region
-                - workorder
                 - workspace
                 - zone
                 type: object
@@ -175,11 +174,9 @@ spec:
                         type: string
                     required:
                     - machineClass
-                    - metadata
                     - provider
                     - replicas
                     - storage
-                    - version
                     type: object
                   version:
                     type: string
@@ -238,6 +235,10 @@ spec:
                             provider:
                               type: string
                             replicas:
+                              default: 1
+                              description: |-
+                                Replicas is the number of nodes in this pool.
+                                Defaults to 1 if not specified.
                               type: integer
                             storage:
                               items:
@@ -272,15 +273,10 @@ spec:
                             version:
                               type: string
                           required:
-                          - autoscaling
                           - machineClass
-                          - metadata
                           - name
                           - provider
-                          - replicas
                           - storage
-                          - taint
-                          - version
                           type: object
                         type: array
                     required:
@@ -288,7 +284,6 @@ spec:
                     type: object
                 required:
                 - controlplane
-                - version
                 - workers
                 type: object
             required:
@@ -425,11 +420,6 @@ spec:
                                 - percentage
                                 - used
                                 type: object
-                            required:
-                            - cpu
-                            - disk
-                            - gpu
-                            - memory
                             type: object
                           scale:
                             type: integer
@@ -557,11 +547,6 @@ spec:
                                   - percentage
                                   - used
                                   type: object
-                              required:
-                              - cpu
-                              - disk
-                              - gpu
-                              - memory
                               type: object
                             scale:
                               type: integer
@@ -674,11 +659,6 @@ spec:
                             - percentage
                             - used
                             type: object
-                        required:
-                        - cpu
-                        - disk
-                        - gpu
-                        - memory
                         type: object
                     required:
                     - controlplane
