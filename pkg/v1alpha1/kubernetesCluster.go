@@ -64,7 +64,9 @@ type KubernetesClusterSpecData struct {
 	Zone      string `json:"zone"`
 	Project   string `json:"project"`
 	Workspace string `json:"workspace"`
-	Workorder string `json:"workorder"`
+
+	// +kubebuilder:validation:Optional
+	Workorder string `json:"workorder,omitempty"`
 
 	// +kubebuilder:validation:Required
 	Environment string `json:"environment"`
@@ -79,12 +81,13 @@ type KubernetesClusterSpecData struct {
 }
 
 type KubernetesClusterSpecTopology struct {
-	Version string `json:"version"` // Kubernetes version, e.g., "1.23.0"
-
 	// +kubebuilder:validation:Required
 	ControlPlane KubernetesClusterSpecControlPlane `json:"controlplane"` // ControlPlane contains the control plane configuration.
 
 	Workers KubernetesClusterWorkers `json:"workers"` // Workers contains the worker nodes configuration.
+
+	// +kubebuilder:validation:Optional
+	Version string `json:"version"` // Kubernetes version
 }
 
 type KubernetesClusterSpecControlPlane struct {
@@ -93,15 +96,20 @@ type KubernetesClusterSpecControlPlane struct {
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:Minimum=1
 	// +kubebuilder:validation:XValidation:rule="self % 2 == 1",message="controlplane replicas must be an odd number (1, 3, 5, etc.) to maintain etcd quorum"
-	Replicas int    `json:"replicas"`
-	Version  string `json:"version"` // Kubernetes version, e.g., "1.23.0"
+	Replicas int `json:"replicas"`
 
 	// +kubebuilder:validation:Required
 	Provider KubernetesProviderType `json:"provider"`
 
-	MachineClass string                               `json:"machineClass"`
-	Metadata     KubernetesClusterSpecMetadataDetails `json:"metadata"`
-	Storage      []KubernetesClusterStorage           `json:"storage"`
+	MachineClass string `json:"machineClass"`
+
+	// +kubebuilder:validation:Optional
+	Metadata KubernetesClusterSpecMetadataDetails `json:"metadata,omitempty"`
+
+	// +kubebuilder:validation:Optional
+	Version string `json:"version,omitempty"` // Kubernetes version
+
+	Storage []KubernetesClusterStorage `json:"storage"`
 
 	// Architecture is the CPU architecture for the control plane nodes.
 	// Supported values: "amd64", "arm64", "x86_64" (treated as amd64).
@@ -128,15 +136,30 @@ type KubernetesClusterWorkers struct {
 }
 
 type KubernetesClusterNodePool struct {
-	MachineClass string                               `json:"machineClass"`
-	Provider     KubernetesProviderType               `json:"provider"`
-	Version      string                               `json:"version"` // Kubernetes version, e.g., "1.23.0"
-	Name         string                               `json:"name"`
-	Replicas     int                                  `json:"replicas"`
-	Autoscaling  KubernetesClusterAutoscalingSpec     `json:"autoscaling"`
-	Metadata     KubernetesClusterSpecMetadataDetails `json:"metadata"`
-	Taint        []KubernetesClusterTaint             `json:"taint"`
-	Storage      []KubernetesClusterStorage           `json:"storage"`
+	MachineClass string                 `json:"machineClass"`
+	Provider     KubernetesProviderType `json:"provider"`
+
+	Name string `json:"name"`
+
+	Storage []KubernetesClusterStorage `json:"storage"`
+
+	// Replicas is the number of nodes in this pool.
+	// Defaults to 1 if not specified.
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:default=1
+	Replicas int `json:"replicas,omitempty"`
+
+	// +kubebuilder:validation:Optional
+	Version string `json:"version,omitempty"` // Kubernetes version
+
+	// +kubebuilder:validation:Optional
+	Taint []KubernetesClusterTaint `json:"taint"`
+
+	// +kubebuilder:validation:Optional
+	Metadata KubernetesClusterSpecMetadataDetails `json:"metadata"`
+
+	// +kubebuilder:validation:Optional
+	Autoscaling KubernetesClusterAutoscalingSpec `json:"autoscaling,omitempty"`
 
 	// Architecture is the CPU architecture for the nodes in this pool.
 	// Supported values: "amd64", "arm64", "x86_64" (treated as amd64).

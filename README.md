@@ -198,12 +198,47 @@ make test
 # Generate CRDs
 make generate
 
+# Validate example manifests against the CRDs
+make validate
+
 # Build
 make build
 
 # Lint code
 make lint
 ```
+
+### Validate Manifests
+
+Validate custom resource YAML against the CRDs in `crds/` — no Kubernetes cluster
+required. `kubectl-validate` is installed into `bin/` on first run.
+
+```bash
+# Validate a single file
+make validate FILE=examples/machineclasses/medium.yaml
+
+# Validate a directory (recurses into subdirectories)
+make validate FILE=../talos-operator/examples/static
+
+# Without FILE, validates everything under examples/
+make validate
+```
+
+This checks the full structural schema, including enums and CEL rules:
+
+```console
+$ make validate FILE=bad-cluster.yaml
+
+bad-cluster.yaml...ERROR
+KubernetesCluster.vitistack.io "my-cluster" is invalid: spec.topology.controlplane.replicas: Invalid value: "integer": controlplane replicas must be an odd number (1, 3, 5, etc.) to maintain etcd quorum
+Error: validation failed
+```
+
+It exits non-zero when validation fails, so it can be used directly in CI.
+
+> **Note:** `make validate` checks against the committed CRDs in `crds/`, not against the
+> Go types in `pkg/v1alpha1/`. After changing a kubebuilder marker, run
+> `make manifests validate` so you are not validating against a stale schema.
 
 ## Contributing
 

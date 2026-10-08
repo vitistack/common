@@ -30,6 +30,7 @@ CONTROLLER_GEN = $(LOCALBIN)/controller-gen
 GOLANGCI_LINT = $(LOCALBIN)/golangci-lint
 GOSEC ?= $(LOCALBIN)/gosec
 GOVULNCHECK ?= $(LOCALBIN)/govulncheck
+KUBECTL_VALIDATE = $(LOCALBIN)/kubectl-validate
 
 # Use the Go toolchain version declared in go.mod when building tools
 GO_VERSION := $(shell awk '/^go /{print $$2}' go.mod)
@@ -38,6 +39,7 @@ GOSEC_VERSION ?= latest
 GOVULNCHECK_VERSION ?= latest
 GOLANGCI_LINT_VERSION ?= latest
 CONTROLLER_TOOLS_VERSION ?= latest
+KUBECTL_VALIDATE_VERSION ?= latest
 
 ##@ Help
 .PHONY: help
@@ -178,12 +180,23 @@ install-crds: manifests ## Install CRDs into a Kubernetes cluster.
 uninstall-crds: ## Uninstall CRDs from a Kubernetes cluster.
 	kubectl delete -f crds
 
+##@ Validate
+
+.PHONY: validate
+validate: kubectl-validate ## Validate manifests against local CRDs (no cluster). Usage: make validate FILE=path/to.yaml
+	@$(KUBECTL_VALIDATE) $(or $(FILE),examples) --local-crds crds
+
 ##@ Tools
 
 .PHONY: controller-gen
 controller-gen: $(CONTROLLER_GEN) ## Download controller-gen locally if necessary.
 $(CONTROLLER_GEN): $(LOCALBIN)
 	$(call go-install-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen,$(CONTROLLER_TOOLS_VERSION))
+
+.PHONY: kubectl-validate
+kubectl-validate: $(KUBECTL_VALIDATE) ## Download kubectl-validate locally if necessary.
+$(KUBECTL_VALIDATE): $(LOCALBIN)
+	$(call go-install-tool,$(KUBECTL_VALIDATE),sigs.k8s.io/kubectl-validate,$(KUBECTL_VALIDATE_VERSION))
 
 .PHONY: golangci-lint
 golangci-lint: $(LOCALBIN) ## Download golangci-lint locally if necessary.
