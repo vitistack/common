@@ -425,19 +425,44 @@ metadata:
 spec:
   template:
     spec:                                    # copied into each TalosMachineConfig.spec
-      talosVersion: v1.10.6
+      talosVersion: v1.13.10
+      image:
+        factory: factory.talos.dev
+        platform: nocloud                    # must match a dataFormat the machine provider can deliver
+        addons:                              # Talos system extensions, baked into the image schematic
+          - siderolabs/qemu-guest-agent
+          - siderolabs/iscsi-tools
+          - siderolabs/util-linux-tools
+          - siderolabs/nonfree-kmod-nvidia-production
+          - siderolabs/nvidia-container-toolkit-production
+        extraKernelArgs: [net.ifnames=1]
       install:
-        image: factory.talos.dev/installer/<schematic-id>:v1.10.6
-        diskSelector: { size: ">= 100GB" }
-      configPatches:
+        diskSelector: { size: ">= 100GB", type: ssd }
+        wipe: false
+      kernel:
+        modules: [{ name: nvidia }, { name: nvidia_uvm }, { name: nvidia_drm }, { name: nvidia_modeset }]
+        sysctls: { net.core.bpf_jit_harden: "1" }
+      kubelet:
+        extraArgs: { max-pods: "110", rotate-server-certificates: "true" }
+        extraConfig: { serializeImagePulls: false }
+        nodeLabels: { nvidia.com/gpu.present: "true" }
+        extraMounts:
+          - { source: /var/lib/nvidia, destination: /var/lib/nvidia, type: bind, options: [bind, rshared, rw] }
+      registries:
+        mirrors: { docker.io: { endpoints: ["https://registry.internal/v2/docker.io"] } }
+      time:
+        servers: [ntp1.internal, ntp2.internal]
+      configPatches:                         # escape hatch: raw Talos patches, applied last
         - |
           machine:
-            nodeLabels: { nvidia.com/gpu.present: "true" }
-            kernel:
-              modules: [{ name: nvidia }, { name: nvidia_uvm }]
+            features:
+              hostDNS: { enabled: true, forwardKubeDNSToHost: true }
 ```
 
 - No `status` and no controller: it is only read when a Machine is created.
+- `addons` are Talos system extensions. Talos can't install them at runtime, so the OS provider turns `talosVersion`, `platform`, `addons` and `extraKernelArgs` into an Image Factory schematic and uses the resulting image. Extensions the cluster requires (`TalosClusterConfig`) are added by the OS provider.
+- Typed fields (`kernel`, `kubelet`, `registries`, `time`) cover common needs and are validated by the CRD; `configPatches` covers everything else.
+- Cluster-level add-ons (CNI, CSI, manifests) belong in `TalosClusterConfig`, not here.
 - Per-machine fields (`clusterName`, `machineName`, `role`, `version`, `secretsRef`) are not in the template; the creator of the Machine fills them in.
 
 Example: the `TalosMachineConfig` created from it for the Machine in §5.2:
@@ -455,25 +480,26 @@ spec:                                        # written by the Machine's owner (N
   machineName: prod-a-gpu-7f9c-x2k4
   role: worker                               # controlplane | worker
   version: v1.33.2                           # Kubernetes version; changing it = in-place upgrade
-  talosVersion: v1.10.6
   templateRef:                               # resolved template (§6.1) this object was created from
     { group: talos.vitistack.io, kind: TalosMachineConfigTemplate, name: gpu, namespace: tenant-a }
   secretsRef: { name: prod-a-talos-secrets } # cluster secrets bundle (§7); read only by the OS provider
-  install:
-    image: factory.talos.dev/installer/<schematic-id>:v1.10.6
-    diskSelector: { size: ">= 100GB" }       # matched against Machine.status.hardware.disks
-  configPatches:                             # copied from the template; per-machine values are added at render time
-    - |
-      machine:
-        nodeLabels: { nvidia.com/gpu.present: "true" }
-        kernel:
-          modules: [{ name: nvidia }, { name: nvidia_uvm }]
+  # copied from the template; changing talosVersion or image.addons = in-place Talos upgrade
+  talosVersion: v1.13.10
+  image: { factory: factory.talos.dev, platform: nocloud, addons: [ … ], extraKernelArgs: [net.ifnames=1] }
+  install: { diskSelector: { size: ">= 100GB", type: ssd }, wipe: false }   # matched against Machine.status.hardware.disks
+  kernel: { … }
+  kubelet: { … }
+  registries: { … }
+  time: { … }
+  configPatches: [ … ]
 status:
   observedGeneration: 1
   ready: true
   dataSecretName: prod-a-gpu-7f9c-x2k4-bootstrap
   dataFormat: nocloud
-  image: factory.talos.dev/nocloud-installer/<schematic-id>:v1.10.6
+  schematicID: 9a3c…                         # Image Factory schematic for addons + extraKernelArgs
+  image: factory.talos.dev/nocloud-installer/9a3c…:v1.13.10
+  addons: [siderolabs/qemu-guest-agent, …]   # extensions the node reports as installed
   lifecycle: { initial: preBoot, updates: inPlace }
   renderedHash: sha256:3f1c…
   appliedHash: sha256:3f1c…                  # reported by the node over the Talos API
