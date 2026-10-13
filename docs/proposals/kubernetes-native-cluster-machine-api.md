@@ -413,6 +413,53 @@ Generic readers (the machine provider, tooling) read these fields without knowin
 
 The OS provider also sets `BootstrapReady` and `OSConfigured` on the Machine.
 
+Example: the `TalosMachineConfig` created for the Machine in §5.2:
+
+```yaml
+apiVersion: talos.vitistack.io/v1alpha1
+kind: TalosMachineConfig
+metadata:
+  name: prod-a-gpu-7f9c-x2k4                 # same name as the Machine
+  namespace: tenant-a
+  labels: { vitistack.io/cluster: prod-a, vitistack.io/nodepool: prod-a-gpu, vitistack.io/role: worker }
+  ownerReferences: [{ kind: Machine, name: prod-a-gpu-7f9c-x2k4, controller: true }]
+spec:                                        # written by the Machine's owner (NodePool controller)
+  clusterName: prod-a
+  machineName: prod-a-gpu-7f9c-x2k4
+  role: worker                               # controlplane | worker
+  version: v1.33.2                           # Kubernetes version; changing it = in-place upgrade
+  talosVersion: v1.10.6
+  templateRef:                               # resolved template (§6.1) this object was created from
+    { group: talos.vitistack.io, kind: TalosMachineConfigTemplate, name: gpu, namespace: tenant-a }
+  secretsRef: { name: prod-a-talos-secrets } # cluster secrets bundle (§7); read only by the OS provider
+  install:
+    image: factory.talos.dev/installer/<schematic-id>:v1.10.6
+    diskSelector: { size: ">= 100GB" }       # matched against Machine.status.hardware.disks
+  configPatches:                             # copied from the template; per-machine values are added at render time
+    - |
+      machine:
+        nodeLabels: { nvidia.com/gpu.present: "true" }
+        kernel:
+          modules: [{ name: nvidia }, { name: nvidia_uvm }]
+status:
+  observedGeneration: 1
+  ready: true
+  dataSecretName: prod-a-gpu-7f9c-x2k4-bootstrap
+  dataFormat: nocloud
+  image: factory.talos.dev/nocloud-installer/<schematic-id>:v1.10.6
+  lifecycle: { initial: preBoot, updates: inPlace }
+  renderedHash: sha256:3f1c…
+  appliedHash: sha256:3f1c…                  # reported by the node over the Talos API
+  conditions:
+    - { type: Rendered,            status: "True" }
+    - { type: Applied,             status: "True" }
+    - { type: RequiresReplacement, status: "False" }
+```
+
+- The Talos-specific `spec` is free-form for the OS provider; only the `status` fields above are part of the generic contract.
+- `renderedHash` covers the template `generation`, `spec` and the per-machine facts used (addresses, install disk), so any change is detected as drift between `renderedHash` and `appliedHash`.
+- Deleting the Machine garbage-collects the `TalosMachineConfig` and its bootstrap Secret through `ownerReferences`.
+
 ### 6.3 Rules
 
 - The machine provider boots only after `BootstrapReady=True`, using `status.image`, and `status.dataSecretName` in `status.dataFormat` when set. Ready with an empty `dataSecretName` means *boot without data* (configuration happens after boot).
