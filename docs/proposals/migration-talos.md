@@ -45,7 +45,7 @@ Every operating system needs per-machine configuration that depends on the clust
 | `spec.topology.workers.nodePools` | `spec.workers.pools` generating `NodePool` objects, or standalone NodePools |
 | Secret flags (`bootstrapped`, `worker_applied`, ...) | `KubernetesCluster.status.conditions` |
 | `configured_nodes` set in the Secret | `TalosMachineConfig.status` per Machine (`appliedHash`, conditions) |
-| Upgrade annotations | `spec.version` (Kubernetes); Talos version in `TalosClusterConfig` / machine config templates |
+| Upgrade annotations | `spec.version` (Kubernetes) and `spec.osVersion` (Talos), pinnable per pool |
 | Push config in maintenance mode | Pre-boot nocloud data from `TalosMachineConfig`; push only as fallback |
 | `vitistack.io/os-installed` annotation | `OSConfigured` condition on `Machine` |
 | Scale-down code path before Machine deletion | Cluster provider's finalizer on each `Machine` |

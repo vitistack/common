@@ -79,7 +79,7 @@ kind: MachineClass
 metadata: { name: bm-gpu }
 spec:
   controllerName: baremetal.vitistack.io/machine-controller
-  parametersRef: { kind: BareMetalMachineParameters, name: gpu }
+  parametersRef: { group: baremetal.vitistack.io, kind: BareMetalMachineParameters, name: gpu }
 ---
 apiVersion: baremetal.vitistack.io/v1alpha1
 kind: BareMetalMachineParameters

@@ -7,6 +7,7 @@
 | **Date** | 2026-10-05 |
 | **Migration** | [migration-talos.md](migration-talos.md): current situation and steps from today's implementation |
 | **Code mapping** | [code-mapping.md](code-mapping.md): proposal vs. current code, hard-to-migrate parts and gaps |
+| **CRD overview** | [crd-overview.md](crd-overview.md): every CRD, who writes spec and status, references and ownership |
 | **Future** | [physical-machines.md](physical-machines.md): how physical machines fit this model (not in initial scope) |
 
 ## 1. Summary
@@ -39,7 +40,7 @@ flowchart TD
   MC[MachineClass<br/>cluster-scoped]
   KC[KubernetesCluster] -->|className| KCC
   NP[NodePool<br/>/scale] -->|clusterName| KC
-  KC -. generates from spec.workers.pools .-> NP
+  KC -. "generates from spec.workers.pools" .-> NP
   KC -. owns control-plane Machines .-> M
   NP -->|owns| M[Machine<br/>mostly immutable]
   M -->|className| MC
@@ -101,6 +102,8 @@ spec:
   controllerName: talos.vitistack.io/cluster-controller
   kubernetesProviderRef: { name: talos-operator }       # registration (§3.1)
   parametersRef: { group: talos.vitistack.io, kind: TalosClusterConfig, name: standard, namespace: platform }
+  defaults:
+    osVersion: v1.13.10                     # applied only when a cluster is created without one (§10.1)
   machineConfig:
     allowedKinds:                           # OS config kinds this cluster provider supports
       - { group: talos.vitistack.io, kind: TalosMachineConfigTemplate }
@@ -112,6 +115,8 @@ status:
   conditions: [{ type: Accepted, status: "True" }]
 ```
 
+`status` is written by the cluster provider whose `controllerName` matches, as a Gateway controller does for its `GatewayClass`. Classes no controller claims have no status.
+
 ### 4.2 `KubernetesCluster`
 
 What users write. Contains nothing provider-specific.
@@ -121,8 +126,9 @@ apiVersion: vitistack.io/v1alpha1
 kind: KubernetesCluster
 metadata: { name: prod-a, namespace: tenant-a }
 spec:
-  className: talos-standard                 # immutable
-  version: v1.33.2                          # changing it = upgrade
+  className: talos-standard                 # immutable; the class holds no versions
+  version: v1.33.2                          # Kubernetes version; changing it = upgrade (§10)
+  osVersion: v1.13.10                       # OS version, interpreted by the OS provider; changing it = upgrade (§10)
   paused: false
   controlPlane:
     replicas: 3                             # odd, 1..7
@@ -142,16 +148,19 @@ spec:
         machineConfig:
           templateRef: { group: talos.vitistack.io, kind: TalosMachineConfigTemplate, name: gpu }
         taints: [{ key: gpu, effect: NoSchedule }]
+        # version / osVersion: optional pins; unset follows the cluster (§10.4)
   network:
     networkNamespaceName: tenant-a-net
     pods: 10.244.0.0/16
     services: 10.96.0.0/12
   parametersRef:                            # optional per-cluster override
+    group: talos.vitistack.io
     kind: TalosClusterConfig
     name: prod-a
 status:
   observedGeneration: 12
-  version: v1.33.2                          # lowest version on the control plane
+  version: v1.33.2                          # lowest Kubernetes version on the control plane
+  osVersion: v1.13.10                       # lowest OS version on the control plane
   endpoint: { host: 10.0.0.10, port: 6443 }
   kubeconfigSecretRef: { name: prod-a-kubeconfig }
   controlPlane:
@@ -189,6 +198,7 @@ kind: NodePool
 metadata: { name: prod-a-gpu, namespace: tenant-a }
 spec:
   clusterName: prod-a
+  paused: false                             # true stops the rollout of this pool (§10.4)
   replicas: 4                               # owner depends on mode (§4.4.2)
   autoscaling: { minReplicas: 1, maxReplicas: 10 }   # optional; bounds for the autoscaler
   selector: { matchLabels: { vitistack.io/nodepool: prod-a-gpu } }
@@ -196,7 +206,8 @@ spec:
     metadata: { labels: { vitistack.io/nodepool: prod-a-gpu } }
     spec:
       className: gpu-xlarge
-      version: v1.33.2                      # defaults from the cluster
+      version: v1.33.2                      # optional; unset follows the cluster, set pins the pool (§10)
+      osVersion: v1.13.10                   # same rule as version
       machineConfig:                        # optional: overrides cluster and class defaults
         templateRef: { group: talos.vitistack.io, kind: TalosMachineConfigTemplate, name: gpu }
       taints: [{ key: gpu, effect: NoSchedule }]
@@ -238,7 +249,7 @@ The model is Deployment → ReplicaSet: the parent generates and owns the child,
 | Ownership | `ownerReferences` → `KubernetesCluster`; removing a pool from the spec deletes the NodePool, and its Machines are drained through the normal finalizers |
 | Labels | `vitistack.io/managed-by: cluster`, `vitistack.io/replicas-owner: cluster \| nodepool` |
 | Writes | Server-side apply with field manager `vitistack-topology` |
-| Fields owned by the cluster | Everything copied from the pool entry: machine class, version, `machineConfig`, taints, labels, strategy, `autoscaling` bounds, and `replicas` when set (§4.4.2) |
+| Fields owned by the cluster | Everything copied from the pool entry: machine class, `version` and `osVersion` pins, `machineConfig`, taints, labels, strategy, `autoscaling` bounds, and `replicas` when set (§4.4.2) |
 | Direct edits | Edits to cluster-owned fields of a generated NodePool are rejected by admission policy ("edit the KubernetesCluster instead") |
 
 #### 4.4.2 Replicas and autoscaling
@@ -304,7 +315,9 @@ spec:
   controllerName: kubevirt.vitistack.io/machine-controller
   machineProviderRef: { name: kubevirt-prod-1 }         # registration (§3.1): which backend
   resources: { cpu: 16, memory: 64Gi }
-  parametersRef: { kind: KubevirtMachineParameters, name: gpu }
+  parametersRef: { group: kubevirt.vitistack.io, kind: KubevirtMachineParameters, name: gpu }
+status:
+  conditions: [{ type: Accepted, status: "True" }]   # written by the machine provider matching controllerName
 ```
 
 The class combines **what** (size, parameters) with **where** (`machineProviderRef`: the registered backend, e.g. one KubeVirt cluster). The same size on another backend is another class.
@@ -326,9 +339,8 @@ metadata:
 spec:                                        # immutable except providerID
   clusterName: prod-a                        # optional
   className: gpu-xlarge
-  version: v1.33.2
-  bootstrap:
-    configRef: { kind: TalosMachineConfig, name: prod-a-gpu-7f9c-x2k4 }
+  bootstrap:                                 # desired versions live in the OS config object (§10.1)
+    configRef: { group: talos.vitistack.io, kind: TalosMachineConfig, name: prod-a-gpu-7f9c-x2k4 }   # same namespace
   providerID: ""                             # set once by the machine provider
 status:
   observedGeneration: 1
@@ -336,6 +348,7 @@ status:
     - { type: InternalIP, address: 10.0.0.31 }
     - { type: Hostname,   address: prod-a-gpu-7f9c-x2k4 }
   nodeRef: { name: prod-a-gpu-7f9c-x2k4 }
+  versions: { kubernetes: v1.33.2, os: v1.13.10 }   # running versions, reported by the OS provider
   hardware:
     interfaces: [{ name: eth0, mac: 52:54:00:12:34:56 }]
     disks: [{ path: /dev/vda, serial: abc123, sizeBytes: 107374182400 }]
@@ -354,7 +367,7 @@ Allowed, under one rule: **each writer uses server-side apply with its own field
 | Writer | Owns |
 |---|---|
 | Machine provider | `addresses`, `hardware`, `providerID`, `InfrastructureReady`, `Ready` |
-| OS provider | `BootstrapReady`, `OSConfigured` |
+| OS provider | `versions`, `BootstrapReady`, `OSConfigured` |
 | Cluster provider | `nodeRef`, `NodeHealthy` |
 
 #### Deletion order via finalizers
@@ -394,7 +407,7 @@ Rules:
 3. **Namespaces.** Class references may point to any namespace (the class is cluster-scoped and admin-owned). Cluster and node-pool references are resolved in their **own namespace** only.
 4. **No resolved template is an error.** If no level provides a reference, the owner sets `Accepted=False, reason=NoMachineConfigTemplate`.
 5. **Visible result.** The resolved reference is written to status (`KubernetesCluster.status.controlPlane.machineConfigTemplateRef`, `NodePool.status.machineConfigTemplateRef`).
-6. **Changes roll out.** A change at any level that alters the resolved reference, or a change to the referenced template's `generation`, changes the template hash and rolls Machines according to the pool's `strategy` (control plane: the cluster provider's rollout). Controllers watch class, cluster and template objects so this is event-driven.
+6. **Changes roll out.** A change at any level that alters the resolved reference, a change to the referenced template's `generation`, or a change to the resolved `version` or `osVersion` (§10) changes the template hash and rolls Machines according to the pool's `strategy` (control plane: the cluster provider's rollout). Controllers watch class, cluster and template objects so this is event-driven.
 
 ### 6.2 Status fields every OS config object must expose
 
@@ -413,6 +426,15 @@ Generic readers (the machine provider, tooling) read these fields without knowin
 
 The OS provider also sets `BootstrapReady` and `OSConfigured` on the Machine.
 
+The owner of the Machine creates the OS config object by copying the template's `spec.template.spec` and adding these spec fields, which every OS config kind must accept:
+
+| Field | Source |
+|---|---|
+| `spec.clusterName`, `spec.machineName`, `spec.role` | The Machine |
+| `spec.version` | Kubernetes version: pool pin, else `KubernetesCluster.spec.version` |
+| `spec.osVersion` | OS version: pool pin, else `KubernetesCluster.spec.osVersion` |
+| `spec.templateRef` | The resolved template (§6.1) |
+
 Example: the `TalosMachineConfigTemplate` referenced by the `gpu` pool in §4.2:
 
 ```yaml
@@ -424,8 +446,7 @@ metadata:
   generation: 4                              # part of the template hash; bumping it rolls the pool (§6.1)
 spec:
   template:
-    spec:                                    # copied into each TalosMachineConfig.spec
-      talosVersion: v1.13.10
+    spec:                                    # copied into each TalosMachineConfig.spec; holds no versions
       image:
         factory: factory.talos.dev
         platform: nocloud                    # must match a dataFormat the machine provider can deliver
@@ -460,10 +481,11 @@ spec:
 ```
 
 - No `status` and no controller: it is only read when a Machine is created.
-- `addons` are Talos system extensions. Talos can't install them at runtime, so the OS provider turns `talosVersion`, `platform`, `addons` and `extraKernelArgs` into an Image Factory schematic and uses the resulting image. Extensions the cluster requires (`TalosClusterConfig`) are added by the OS provider.
+- No version. The Talos version comes from `osVersion` on the cluster or pool (§10.1), so upgrades never edit templates and one template serves every version.
+- `addons` are Talos system extensions. Talos can't install them at runtime, so the OS provider turns `osVersion`, `platform`, `addons` and `extraKernelArgs` into an Image Factory schematic and uses the resulting image. Extensions the cluster requires (`TalosClusterConfig`) are added by the OS provider.
 - Typed fields (`kernel`, `kubelet`, `registries`, `time`) cover common needs and are validated by the CRD; `configPatches` covers everything else.
 - Cluster-level add-ons (CNI, CSI, manifests) belong in `TalosClusterConfig`, not here.
-- Per-machine fields (`clusterName`, `machineName`, `role`, `version`, `secretsRef`) are not in the template; the creator of the Machine fills them in.
+- Per-machine fields (`clusterName`, `machineName`, `role`, `version`, `osVersion`, `secretsRef`) are not in the template; the creator of the Machine fills them in.
 
 Example: the `TalosMachineConfig` created from it for the Machine in §5.2:
 
@@ -480,11 +502,11 @@ spec:                                        # written by the Machine's owner (N
   machineName: prod-a-gpu-7f9c-x2k4
   role: worker                               # controlplane | worker
   version: v1.33.2                           # Kubernetes version; changing it = in-place upgrade
+  osVersion: v1.13.10                        # Talos version; changing it = in-place Talos upgrade
   templateRef:                               # resolved template (§6.1) this object was created from
     { group: talos.vitistack.io, kind: TalosMachineConfigTemplate, name: gpu, namespace: tenant-a }
   secretsRef: { name: prod-a-talos-secrets } # cluster secrets bundle (§7); read only by the OS provider
-  # copied from the template; changing talosVersion or image.addons = in-place Talos upgrade
-  talosVersion: v1.13.10
+  # copied from the template; changing image.addons = in-place Talos upgrade to a new schematic
   image: { factory: factory.talos.dev, platform: nocloud, addons: [ … ], extraKernelArgs: [net.ifnames=1] }
   install: { diskSelector: { size: ">= 100GB", type: ssd }, wipe: false }   # matched against Machine.status.hardware.disks
   kernel: { … }
@@ -596,14 +618,14 @@ The contract is the same either way: the OS provider sets `renderedHash`, the no
 
 ## 7. Secrets
 
-Standard names, each with `ownerReference` → `KubernetesCluster`:
+Standard names. Owners are set with `ownerReferences`:
 
-| Secret | Content |
-|---|---|
-| `<cluster>-kubeconfig` | Admin kubeconfig |
-| `<cluster>-ca` | Cluster CA |
-| `<cluster>-<provider>-secrets` | Provider secrets (e.g. Talos secrets bundle, talosconfig) |
-| `<machine>-bootstrap` | Per-machine bootstrap data (from the OS provider) |
+| Secret | Content | Owner |
+|---|---|---|
+| `<cluster>-kubeconfig` | Admin kubeconfig | `KubernetesCluster` |
+| `<cluster>-ca` | Cluster CA | `KubernetesCluster` |
+| `<cluster>-<provider>-secrets` | Provider secrets (e.g. Talos secrets bundle, talosconfig) | `KubernetesCluster` |
+| `<machine>-bootstrap` | Per-machine bootstrap data (from the OS provider) | The OS config object (e.g. `TalosMachineConfig`), so it is deleted with the Machine |
 
 No progress flags, timestamps or state. Those belong in status.
 
@@ -638,7 +660,23 @@ They are auditable, RBAC-controlled and leave a record. To roll *every* machine 
 | Events | Kubernetes Events on condition transitions |
 | Pause | `spec.paused` on the cluster, honoured by all child controllers |
 
-## 10. Example: version upgrade
+## 10. Upgrades and testing new versions
+
+Both the Kubernetes version and the OS version can be upgraded, and both can be tried on part of the fleet before rolling out everywhere.
+
+### 10.1 Where versions live
+
+| Version | Desired (spec) | Observed (status) |
+|---|---|---|
+| Kubernetes | `KubernetesCluster.spec.version`; optionally pinned per pool in `NodePool.spec.template.spec.version` | `Machine.status.versions.kubernetes`; `KubernetesCluster.status.version` (lowest on the control plane) |
+| OS | `KubernetesCluster.spec.osVersion`; optionally pinned per pool in `NodePool.spec.template.spec.osVersion` | `Machine.status.versions.os`; `KubernetesCluster.status.osVersion` (lowest on the control plane) |
+
+- **All versions live on the cluster and its pools.** Classes and OS config templates hold configuration only, so a running cluster is upgraded by editing its own spec, never by recreating it or changing its class.
+- **`osVersion` is an opaque string to generic controllers.** The OS provider interprets and validates it (a Talos version for Talos, a release for Flatcar).
+- **Class default.** When a cluster is created without `osVersion`, admission defaults it from `KubernetesClusterClass.spec.defaults.osVersion`. After that it changes only on the cluster, so changing the class default never upgrades existing clusters.
+- The owner of a Machine copies both into the Machine's OS config object (`spec.version`, `spec.osVersion`, §6.2). `Machine.spec` holds no version and stays immutable.
+
+### 10.2 Kubernetes upgrade
 
 ```mermaid
 sequenceDiagram
@@ -658,7 +696,40 @@ sequenceDiagram
   NP->>NP: roll Machines (maxSurge / maxUnavailable)
 ```
 
-Worker pools are never upgraded past the control-plane version, enforced by a CEL rule or a blocking condition.
+Pools with a pinned `version` are not touched; they move when the pin is changed or removed.
+
+### 10.3 OS upgrade
+
+Change `KubernetesCluster.spec.osVersion`. The control plane is upgraded first, then every pool without an `osVersion` pin. Pinned pools move when their pin changes or is removed. Changing a template (e.g. `addons`) rolls out the same way, but is a config change, not a version change.
+
+The template hash changes and the owner rolls Machines:
+
+| Owner | Order | How each Machine is updated |
+|---|---|---|
+| Cluster provider (control plane) | One Machine at a time, waiting for `NodeHealthy=True` and etcd quorum | In place (Talos `upgrade` to the new installer image) |
+| NodePool controller (workers) | Pool `strategy` (`maxSurge` / `maxUnavailable`) | `InPlace`: OS config object updated, Talos upgrades the node. `RollingUpdate`: new Machine booted from the new image, old one drained and deleted |
+
+### 10.4 Testing a new version
+
+| Goal | How |
+|---|---|
+| Try a version without touching production | A separate test cluster with the same class; set `spec.version` and `spec.osVersion` there |
+| Canary a new OS version in a running cluster | Set `osVersion` on one pool, or on a small standalone NodePool. Other pools and the control plane keep the cluster's version |
+| Roll the new OS version out to the rest | Set `KubernetesCluster.spec.osVersion` (control plane first, one node at a time), then remove the canary pin |
+| Canary a new Kubernetes version on workers | Pin all pools to the current version, upgrade `KubernetesCluster.spec.version` (control plane only), then unpin one pool at a time |
+| Stop a rollout that looks wrong | `NodePool.spec.paused: true` (one pool) or `KubernetesCluster.spec.paused: true` (everything). Machines already updated stay; nothing new starts |
+| Go back to the previous OS version | Set the old `osVersion` (or remove the pin); it rolls out like any other change |
+
+Progress is visible without extra tooling: `updatedReplicas` on the NodePool and cluster status, and `Machine.status.versions` per node (printer columns on `Machine`).
+
+### 10.5 Rules
+
+| Rule | Enforcement |
+|---|---|
+| Workers are never newer than the control plane, and at most three minor versions older (Kubernetes skew policy) | CEL on NodePool where possible; otherwise `Accepted=False, reason=VersionSkew` on the pool and no rollout |
+| `KubernetesCluster.spec.version` is never lowered (control plane downgrades are unsupported) | CEL transition rule |
+| The OS version must exist, support the Kubernetes version (e.g. the Talos support matrix) and be a supported upgrade or downgrade path | OS provider sets `Accepted=False, reason=UnsupportedVersion` on the OS config object; the owner stops rolling and reports it |
+| One change at a time per Machine | When both versions change, the owner applies the OS upgrade first, then Kubernetes; each step waits for `NodeHealthy=True` |
 
 ## 11. Trade-offs
 
@@ -672,6 +743,7 @@ Worker pools are never upgraded past the control-plane version, enforced by a CE
 | Several condition writers on `Machine` | A core Machine controller that mirrors conditions | You want a single writer and accept running a core controller |
 | Class + `controllerName` | `spec.provider` string | Simplicity matters more than admin defaults and parameters |
 | OS config template on class, overridable by cluster and pool (replace semantics) | Merge settings across levels | Layered settings are needed; merge rules are OS-specific, so they belong in the OS provider |
+| `version` and `osVersion` on the cluster, pinnable per pool; classes and templates hold no versions | OS version inside the OS config template | Every cluster has its own templates anyway, so editing a template is no wider than editing the cluster |
 
 ## 12. Relation to Cluster API
 
@@ -705,3 +777,4 @@ This model is close to Cluster API's, plus a class layer in the style of Gateway
 | 9 | Is an immutable `autoscaling.initialReplicas` needed? |
 | 10 | Are facts discovered inside the guest needed, beyond what machine providers report (including physical-host inspection)? |
 | 11 | Pull-based configuration for non-Talos OSes: build an agent, or reuse an existing one (e.g. an Ansible/Salt runner)? |
+| 12 | ~~Should the OS version be a generic field?~~ Decided: `osVersion` on the cluster, pinnable per pool (§10.1) |
