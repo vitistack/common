@@ -413,7 +413,34 @@ Generic readers (the machine provider, tooling) read these fields without knowin
 
 The OS provider also sets `BootstrapReady` and `OSConfigured` on the Machine.
 
-Example: the `TalosMachineConfig` created for the Machine in §5.2:
+Example: the `TalosMachineConfigTemplate` referenced by the `gpu` pool in §4.2:
+
+```yaml
+apiVersion: talos.vitistack.io/v1alpha1
+kind: TalosMachineConfigTemplate
+metadata:
+  name: gpu
+  namespace: tenant-a
+  generation: 4                              # part of the template hash; bumping it rolls the pool (§6.1)
+spec:
+  template:
+    spec:                                    # copied into each TalosMachineConfig.spec
+      talosVersion: v1.10.6
+      install:
+        image: factory.talos.dev/installer/<schematic-id>:v1.10.6
+        diskSelector: { size: ">= 100GB" }
+      configPatches:
+        - |
+          machine:
+            nodeLabels: { nvidia.com/gpu.present: "true" }
+            kernel:
+              modules: [{ name: nvidia }, { name: nvidia_uvm }]
+```
+
+- No `status` and no controller: it is only read when a Machine is created.
+- Per-machine fields (`clusterName`, `machineName`, `role`, `version`, `secretsRef`) are not in the template; the creator of the Machine fills them in.
+
+Example: the `TalosMachineConfig` created from it for the Machine in §5.2:
 
 ```yaml
 apiVersion: talos.vitistack.io/v1alpha1
