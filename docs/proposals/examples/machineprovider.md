@@ -1,0 +1,75 @@
+# `MachineProvider`
+
+| | |
+|---|---|
+| **API** | `vitistack.io/v1alpha3` |
+| **Scope** | Cluster |
+| **Spec written by** | The provider operator (kubevirt-operator); never users |
+| **Status written by** | The provider operator |
+| **Referenced by** | `MachineClass.spec.machineProviderRef` |
+| **Proposal** | [Main proposal](../kubernetes-native-cluster-machine-api.md) §3.1 |
+
+Metadata registration of one machine backend (e.g. one KubeVirt cluster); sent upstream for visualisation. Carries no desired state for machines.
+
+The fields below are the subset of today's type (`common/pkg/v1alpha1/machine_provider.go`) that fits a registration.
+
+## Full specification
+
+```yaml
+apiVersion: vitistack.io/v1alpha3
+kind: MachineProvider
+metadata:
+  name: kubevirt-prod-1
+spec:
+  # Required. kubevirt | proxmox | … Must match the controllerName of classes that reference it.
+  providerType: kubevirt
+  # Required. Human-readable name.
+  displayName: KubeVirt prod 1 (Oslo A)
+  # Required. Region this backend runs in.
+  region: oslo
+  # Optional. Zones this backend covers.
+  zones: [oslo-a]
+  # Required. How the operator authenticates to the backend.
+  authentication:
+    # credentials | serviceAccount | instanceProfile | managedIdentity | certificate | token
+    type: credentials
+    credentialsRef: { name: kubevirt-prod-1-kubeconfig, namespace: kubevirt-system }
+  # Optional. What the backend can do, shown upstream.
+  capabilities:
+    maxMachines: 500
+    networkFeatures: [multus, sriov]
+    persistentVolumes: true
+  # Optional. Compute limits of the backend.
+  compute:
+    maxCPUs: 64
+    maxMemoryGB: 512
+    gpuSupport: true
+    gpuTypes: [nvidia-a100]
+  # Optional. Free-form provider metadata.
+  config:
+    storageClass: ceph-rbd
+status:
+  # Pending | Ready | Failed | Offline.
+  phase: Ready
+  message: ""
+  # Machines currently running on this backend.
+  activeMachines: 118
+  conditions:
+    - { type: Ready, status: "True", reason: BackendReachable }
+```
+
+## Minimal
+
+```yaml
+apiVersion: vitistack.io/v1alpha3
+kind: MachineProvider
+metadata:
+  name: kubevirt-prod-1
+spec:
+  providerType: kubevirt
+  displayName: KubeVirt prod 1
+  region: oslo
+  authentication:
+    type: credentials
+    credentialsRef: { name: kubevirt-prod-1-kubeconfig, namespace: kubevirt-system }
+```

@@ -1,0 +1,54 @@
+# `KubevirtMachineParameters`
+
+| | |
+|---|---|
+| **API** | `kubevirt.vitistack.io/v1alpha3` |
+| **Scope** | Cluster (referenced from cluster-scoped MachineClasses) |
+| **Spec written by** | Platform admin |
+| **Status written by** | — (no status) |
+| **Read by** | kubevirt-operator, when it creates the VM |
+| **Proposal** | [Main proposal](../kubernetes-native-cluster-machine-api.md) §5.1 |
+
+KubeVirt-specific settings behind a `MachineClass`.
+
+## Full specification
+
+```yaml
+apiVersion: kubevirt.vitistack.io/v1alpha3
+kind: KubevirtMachineParameters
+metadata:
+  name: gpu
+spec:
+  # Storage class for the VM's disks on the backend cluster.
+  storageClassName: ceph-rbd
+  # CPU model exposed to the guest: host-passthrough | host-model | a named model.
+  cpuModel: host-passthrough
+  # Dedicated (pinned) CPUs. Default false.
+  dedicatedCPUs: true
+  # Huge pages size, if any.
+  hugepages: 1Gi
+  # Firmware: bios | efi. Secure boot only with efi.
+  firmware: { type: efi, secureBoot: false }
+  # PCI devices passed through to the guest, by KubeVirt device name.
+  hostDevices:
+    - { name: gpu0, deviceName: nvidia.com/A100 }
+  # Placement on the backend cluster.
+  nodeSelector: { node-role.kubernetes.io/gpu: "" }
+  tolerations:
+    - { key: gpu, operator: Exists, effect: NoSchedule }
+  # Bootstrap data formats this provider can deliver; checked against TalosMachineConfig.status.dataFormat.
+  supportedBootstrapFormats: [nocloud, configDrive]
+  # VM eviction strategy on backend node maintenance: LiveMigrate | External | None.
+  evictionStrategy: LiveMigrate
+```
+
+## Minimal
+
+```yaml
+apiVersion: kubevirt.vitistack.io/v1alpha3
+kind: KubevirtMachineParameters
+metadata:
+  name: standard
+spec:
+  storageClassName: ceph-rbd
+```

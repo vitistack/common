@@ -8,6 +8,8 @@
 
 Every custom resource mentioned in the proposals, who writes it and how it relates to the others. Section numbers (§) refer to the main proposal unless stated otherwise.
 
+Each CRD has an example in [examples/](examples/) (`<kind>.md`, lower case): a fully documented specification followed by a minimal config. `NetworkNamespace` is unchanged and has none.
+
 ## 1. Actors
 
 | Actor | Implemented by (today's operators) | Role |

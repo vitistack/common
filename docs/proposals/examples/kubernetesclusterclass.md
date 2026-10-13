@@ -1,0 +1,87 @@
+# `KubernetesClusterClass`
+
+| | |
+|---|---|
+| **API** | `vitistack.io/v1alpha3` |
+| **Scope** | Cluster |
+| **Spec written by** | Platform admin |
+| **Status written by** | The cluster provider matching `spec.controllerName` |
+| **Proposal** | [Main proposal](../kubernetes-native-cluster-machine-api.md) §4.1 |
+
+Selects which controller implements a `KubernetesCluster` and the defaults it gets. Holds no versions of running clusters (§10.1).
+
+## Full specification
+
+```yaml
+apiVersion: vitistack.io/v1alpha3
+kind: KubernetesClusterClass
+metadata:
+  name: talos-standard
+spec:
+  # Required. Controller that implements clusters of this class. Immutable.
+  controllerName: talos.vitistack.io/cluster-controller
+  # Required. Provider registration (§3.1); its providerType must match controllerName.
+  kubernetesProviderRef:
+    name: talos-operator
+  # Optional. Provider parameters; any namespace. A cluster's spec.parametersRef replaces it.
+  parametersRef:
+    group: talos.vitistack.io
+    kind: TalosClusterConfig
+    name: standard
+    namespace: platform
+  # Optional. Values applied by admission only when a cluster is created without them.
+  defaults:
+    # OS version written into KubernetesCluster.spec.osVersion at creation; never changes existing clusters.
+    osVersion: v1.13.10
+  # Optional. Default OS config templates (§6.1).
+  machineConfig:
+    # Template kinds clusters of this class may reference; anything else gives Accepted=False.
+    allowedKinds:
+      - group: talos.vitistack.io
+        kind: TalosMachineConfigTemplate
+    controlPlane:
+      # Default template for control-plane Machines; any namespace.
+      templateRef:
+        group: talos.vitistack.io
+        kind: TalosMachineConfigTemplate
+        name: standard-cp
+        namespace: platform
+    workers:
+      # Default template for worker Machines in every pool; any namespace.
+      templateRef:
+        group: talos.vitistack.io
+        kind: TalosMachineConfigTemplate
+        name: standard-worker
+        namespace: platform
+status:
+  # Generation of spec this status describes.
+  observedGeneration: 2
+  conditions:
+    # Accepted=False reasons: ProviderMismatch, ProviderNotAvailable, UnsupportedMachineConfigKind.
+    - type: Accepted
+      status: "True"
+      reason: Accepted
+      message: ""
+      observedGeneration: 2
+      lastTransitionTime: "2026-10-01T08:00:00Z"
+```
+
+## Minimal
+
+```yaml
+apiVersion: vitistack.io/v1alpha3
+kind: KubernetesClusterClass
+metadata:
+  name: talos-standard
+spec:
+  controllerName: talos.vitistack.io/cluster-controller
+  kubernetesProviderRef:
+    name: talos-operator
+  machineConfig:
+    allowedKinds:
+      - { group: talos.vitistack.io, kind: TalosMachineConfigTemplate }
+    controlPlane:
+      templateRef: { group: talos.vitistack.io, kind: TalosMachineConfigTemplate, name: standard-cp, namespace: platform }
+    workers:
+      templateRef: { group: talos.vitistack.io, kind: TalosMachineConfigTemplate, name: standard-worker, namespace: platform }
+```

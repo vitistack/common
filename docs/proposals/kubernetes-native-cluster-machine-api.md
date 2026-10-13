@@ -95,7 +95,7 @@ Rules:
 Set up by platform admins. Decides which controller implements a cluster, which default parameters apply, and which OS config templates machines get by default.
 
 ```yaml
-apiVersion: vitistack.io/v1alpha1
+apiVersion: vitistack.io/v1alpha3
 kind: KubernetesClusterClass
 metadata: { name: talos-standard }
 spec:
@@ -122,7 +122,7 @@ status:
 What users write. Contains nothing provider-specific.
 
 ```yaml
-apiVersion: vitistack.io/v1alpha1
+apiVersion: vitistack.io/v1alpha3
 kind: KubernetesCluster
 metadata: { name: prod-a, namespace: tenant-a }
 spec:
@@ -193,7 +193,7 @@ Notes:
 Works like a Deployment for Machines. A NodePool is either **standalone** (created by a user) or **generated** from `KubernetesCluster.spec.workers.pools` (§4.4). Both are reconciled by the same controller.
 
 ```yaml
-apiVersion: vitistack.io/v1alpha1
+apiVersion: vitistack.io/v1alpha3
 kind: NodePool
 metadata: { name: prod-a-gpu, namespace: tenant-a }
 spec:
@@ -308,7 +308,7 @@ Each pool entry sets **exactly one** of `replicas` or `autoscaling`:
 ### 5.1 `MachineClass`
 
 ```yaml
-apiVersion: vitistack.io/v1alpha1
+apiVersion: vitistack.io/v1alpha3
 kind: MachineClass
 metadata: { name: gpu-xlarge }
 spec:
@@ -327,7 +327,7 @@ The class combines **what** (size, parameters) with **where** (`machineProviderR
 Treated like a Pod: mostly immutable, replaced rather than edited.
 
 ```yaml
-apiVersion: vitistack.io/v1alpha1
+apiVersion: vitistack.io/v1alpha3
 kind: Machine
 metadata:
   name: prod-a-gpu-7f9c-x2k4
@@ -438,7 +438,7 @@ The owner of the Machine creates the OS config object by copying the template's 
 Example: the `TalosMachineConfigTemplate` referenced by the `gpu` pool in §4.2:
 
 ```yaml
-apiVersion: talos.vitistack.io/v1alpha1
+apiVersion: talos.vitistack.io/v1alpha3
 kind: TalosMachineConfigTemplate
 metadata:
   name: gpu
@@ -490,7 +490,7 @@ spec:
 Example: the `TalosMachineConfig` created from it for the Machine in §5.2:
 
 ```yaml
-apiVersion: talos.vitistack.io/v1alpha1
+apiVersion: talos.vitistack.io/v1alpha3
 kind: TalosMachineConfig
 metadata:
   name: prod-a-gpu-7f9c-x2k4                 # same name as the Machine
@@ -634,7 +634,7 @@ No progress flags, timestamps or state. Those belong in status.
 Actions that aren't desired state (reboot, reset, re-apply) are **operation objects**, like a Job:
 
 ```yaml
-apiVersion: vitistack.io/v1alpha1
+apiVersion: vitistack.io/v1alpha3
 kind: MachineOperation
 metadata: { name: reboot-x2k4, namespace: tenant-a }
 spec:

@@ -38,7 +38,7 @@ Prior art: Metal3 (`BareMetalHost` claimed by `Metal3Machine` through a host sel
 Cluster-scoped and admin-owned. Tenants never see hosts or BMC credentials; they only use MachineClasses.
 
 ```yaml
-apiVersion: baremetal.vitistack.io/v1alpha1
+apiVersion: baremetal.vitistack.io/v1alpha3
 kind: PhysicalHost
 metadata:
   name: rack3-u12
@@ -74,14 +74,14 @@ status:
 ### 4.1 MachineClass
 
 ```yaml
-apiVersion: vitistack.io/v1alpha1
+apiVersion: vitistack.io/v1alpha3
 kind: MachineClass
 metadata: { name: bm-gpu }
 spec:
   controllerName: baremetal.vitistack.io/machine-controller
   parametersRef: { group: baremetal.vitistack.io, kind: BareMetalMachineParameters, name: gpu }
 ---
-apiVersion: baremetal.vitistack.io/v1alpha1
+apiVersion: baremetal.vitistack.io/v1alpha3
 kind: BareMetalMachineParameters
 metadata: { name: gpu }
 spec:
