@@ -1,0 +1,60 @@
+# PhysicalHost (baremetal.vitistack.io/v1alpha3) — future, physical-machines.md §3
+# Scope: cluster. Spec: platform admin; spec.consumerRef set and cleared by the bare-metal provider.
+# Status: bare-metal provider. Inventory of one server, claimed by a Machine (PersistentVolume pattern).
+# Tenants never see hosts or BMC credentials.
+
+# --- Full specification ---------------------------------------------------
+apiVersion: baremetal.vitistack.io/v1alpha3
+kind: PhysicalHost
+metadata:
+  name: rack3-u12
+  labels:
+    # Used by host selectors and topology spread.
+    vitistack.io/rack: r3
+    vitistack.io/zone: oslo-a
+    hardware.vitistack.io/gpu: a100
+spec:
+  bmc:
+    # Required. Redfish or IPMI address.
+    address: redfish+https://10.10.3.12/redfish/v1/Systems/1
+    # Required. Secret with BMC username and password, in an admin namespace.
+    credentialsSecretRef: { name: rack3-u12-bmc, namespace: baremetal-system }
+    # Skip TLS verification of the BMC. Default false.
+    disableCertificateVerification: false
+  # Required. MAC address the host boots from.
+  bootMACAddress: "3c:fd:fe:aa:bb:01"
+  # Optional. NIC to switch port mapping, for VLAN configuration.
+  networkPorts:
+    - { mac: "3c:fd:fe:aa:bb:01", switch: leaf-r3a, port: Ethernet12 }
+    - { mac: "3c:fd:fe:aa:bb:02", switch: leaf-r3b, port: Ethernet12 }
+  # Whether the host may be powered on. Default true.
+  online: true
+  # Machine that has claimed the host; set with optimistic locking by the bare-metal provider.
+  consumerRef: { apiVersion: vitistack.io/v1alpha3, kind: Machine, namespace: tenant-a, name: prod-a-bm-1 }
+  # What happens when released: Wipe | Retain.
+  reclaimPolicy: Wipe
+status:
+  # Registering | Inspecting | Available | Provisioning | Provisioned | Deprovisioning | Error
+  state: Provisioned
+  # On | Off
+  powerState: On
+  # From inspection at registration, before any claim.
+  hardware:
+    cpu: { model: EPYC 9354, cores: 64 }
+    memoryBytes: 549755813888
+    disks: [{ path: /dev/nvme0n1, serial: S6XXXX, sizeBytes: 3840755982336, rotational: false }]
+    interfaces: [{ name: enp65s0f0, mac: "3c:fd:fe:aa:bb:01", speedMbps: 25000 }]
+  conditions:
+    - { type: Inspected,    status: "True", reason: InspectionComplete }
+    - { type: BMCReachable, status: "True", reason: Reachable }
+---
+# --- Minimal ---------------------------------------------------------------
+apiVersion: baremetal.vitistack.io/v1alpha3
+kind: PhysicalHost
+metadata:
+  name: rack3-u13
+spec:
+  bmc:
+    address: redfish+https://10.10.3.13/redfish/v1/Systems/1
+    credentialsSecretRef: { name: rack3-u13-bmc, namespace: baremetal-system }
+  bootMACAddress: "3c:fd:fe:aa:bc:01"

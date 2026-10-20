@@ -1,0 +1,35 @@
+# BareMetalMachineParameters (baremetal.vitistack.io/v1alpha3) — future, physical-machines.md §4.1
+# Scope: cluster (referenced from cluster-scoped MachineClasses). Spec: platform admin. No status.
+# Bare-metal settings behind a MachineClass: which hosts may be claimed and how they boot.
+
+# --- Full specification ---------------------------------------------------
+apiVersion: baremetal.vitistack.io/v1alpha3
+kind: BareMetalMachineParameters
+metadata:
+  name: gpu
+spec:
+  # Required. Which PhysicalHosts may be claimed, by label.
+  hostSelector:
+    matchLabels: { hardware.vitistack.io/gpu: a100 }
+    matchExpressions:
+      - { key: vitistack.io/zone, operator: In, values: [oslo-a, oslo-b] }
+  # How the image is delivered: virtualMedia | pxe.
+  bootMethod: virtualMedia
+  # Bootstrap data formats this provider can deliver; checked against the OS config's status.dataFormat.
+  supportedBootstrapFormats: [nocloud, configDrive, kernelArgsURL]
+  # Default reclaim policy for claimed hosts: Wipe | Retain.
+  reclaimPolicy: Wipe
+  # Prefer the host of the Machine being replaced (keeps local storage and cabling): PreferPrevious | None.
+  hostAffinity: PreferPrevious
+  # Spread Machines of one pool or control plane across failure domains.
+  topologySpread:
+    - { topologyKey: vitistack.io/rack, maxSkew: 1 }
+---
+# --- Minimal ---------------------------------------------------------------
+apiVersion: baremetal.vitistack.io/v1alpha3
+kind: BareMetalMachineParameters
+metadata:
+  name: general
+spec:
+  hostSelector:
+    matchLabels: { vitistack.io/zone: oslo-a }

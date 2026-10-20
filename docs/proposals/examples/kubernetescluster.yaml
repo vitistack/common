@@ -1,0 +1,126 @@
+# KubernetesCluster (vitistack.io/v1alpha3)
+# Scope: namespace. Spec: user. Status: cluster provider; status.workers: topology controller.
+# A Kubernetes cluster. Contains nothing provider-specific. Main proposal §4.2.
+# Owns: generated NodePools, control-plane Machines, cluster Secrets.
+
+# --- Full specification ---------------------------------------------------
+apiVersion: vitistack.io/v1alpha3
+kind: KubernetesCluster
+metadata:
+  name: prod-a
+  namespace: tenant-a
+spec:
+  # Required. KubernetesClusterClass name. Immutable.
+  className: talos-standard
+  # Required. Kubernetes version. Changing it upgrades the cluster; it can't be lowered (§10).
+  version: v1.33.2
+  # OS version, interpreted by the OS provider. Defaulted from the class at creation; changing it upgrades (§10).
+  osVersion: v1.13.10
+  # Stops all child controllers from making changes. Default false.
+  paused: false
+  controlPlane:
+    # Required. Odd number, 1..7.
+    replicas: 3
+    # Required. MachineClass for control-plane Machines.
+    machineClassName: large
+    # Optional. Overrides the class controlPlane template; same namespace (§6.1).
+    machineConfig:
+      templateRef:
+        group: talos.vitistack.io
+        kind: TalosMachineConfigTemplate
+        name: prod-a-cp
+  workers:
+    # Optional. Overrides the class workers template for every pool; same namespace.
+    machineConfig:
+      templateRef:
+        group: talos.vitistack.io
+        kind: TalosMachineConfigTemplate
+        name: prod-a-worker
+    # Optional. Each entry generates a NodePool named <cluster>-<pool> (§4.4).
+    pools:
+      - # Required. Unique in the cluster; renaming = remove + add.
+        name: general
+        # Required. MachineClass for this pool.
+        machineClassName: medium
+        # Set exactly one of replicas (Fixed: the cluster owns the size) or autoscaling.
+        replicas: 3
+        # Optional. Labels added to the Nodes.
+        labels:
+          workload: general
+        # Optional. Rollout strategy copied to the NodePool; default RollingUpdate.
+        strategy:
+          type: RollingUpdate
+          rollingUpdate: { maxSurge: 1, maxUnavailable: 0 }
+      - name: gpu
+        machineClassName: gpu-xlarge
+        # Autoscaled: the NodePool owns its size within these bounds; initial size = minReplicas.
+        autoscaling:
+          minReplicas: 1
+          maxReplicas: 10
+        # Optional. Overrides the cluster-wide workers template for this pool.
+        machineConfig:
+          templateRef:
+            group: talos.vitistack.io
+            kind: TalosMachineConfigTemplate
+            name: gpu
+        # Optional. Taints added to the Nodes.
+        taints:
+          - { key: gpu, value: "true", effect: NoSchedule }
+        # Optional pins; unset follows spec.version / spec.osVersion (§10.4).
+        version: v1.33.2
+        osVersion: v1.14.0
+  network:
+    # Required. NetworkNamespace the Machines are attached to.
+    networkNamespaceName: tenant-a-net
+    # Pod and Service CIDRs. Immutable.
+    pods: 10.244.0.0/16
+    services: 10.96.0.0/12
+  # Optional. Replaces the class parametersRef; same namespace.
+  parametersRef:
+    group: talos.vitistack.io
+    kind: TalosClusterConfig
+    name: prod-a
+status:
+  observedGeneration: 12
+  # Lowest Kubernetes and OS versions on the control plane.
+  version: v1.33.2
+  osVersion: v1.13.10
+  # API server endpoint.
+  endpoint: { host: 10.0.0.10, port: 6443 }
+  # Secret with the admin kubeconfig.
+  kubeconfigSecretRef: { name: prod-a-kubeconfig }
+  controlPlane:
+    replicas: 3
+    readyReplicas: 3
+    updatedReplicas: 3
+    # Resolved template actually in use (§6.1).
+    machineConfigTemplateRef:
+      { group: talos.vitistack.io, kind: TalosMachineConfigTemplate, name: prod-a-cp, namespace: tenant-a }
+  # Written by the topology controller: generated and standalone pools.
+  workers:
+    pools:
+      - { name: general, nodePool: prod-a-general, replicas: 3, readyReplicas: 3, scalingMode: Fixed }
+      - { name: gpu,     nodePool: prod-a-gpu,     replicas: 6, readyReplicas: 6, scalingMode: Autoscaled, minReplicas: 1, maxReplicas: 10 }
+      - { name: batch,   nodePool: batch-team-x,   replicas: 2, readyReplicas: 2, scalingMode: Standalone }
+  conditions:
+    - { type: Accepted,          status: "True", reason: Accepted }
+    - { type: EndpointReady,     status: "True", reason: EndpointReady }
+    - { type: ControlPlaneReady, status: "True", reason: AllReplicasReady }
+    - { type: Upgrading,         status: "False", reason: UpToDate }
+    - { type: Ready,             status: "True", reason: Ready }
+---
+# --- Minimal ---------------------------------------------------------------
+# Control plane only; templates and osVersion come from the class.
+apiVersion: vitistack.io/v1alpha3
+kind: KubernetesCluster
+metadata:
+  name: dev-a
+  namespace: tenant-a
+spec:
+  className: talos-standard
+  version: v1.33.2
+  controlPlane:
+    replicas: 1
+    machineClassName: small
+  network:
+    networkNamespaceName: tenant-a-net
