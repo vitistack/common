@@ -78,16 +78,16 @@ func TestUnescapeMultilineAttrsRealWorld(t *testing.T) {
 
 func BenchmarkUnescapeMultilineAttrs(b *testing.B) {
 	input := []byte(`time=2025-10-23T19:29:28+02:00 level=DEBUG msg="Response Body" body="{\n  \"apiVersion\": \"v1\",\n  \"kind\": \"Pod\",\n  \"metadata\": {\n    \"name\": \"test\"\n  }\n}"` + "\n")
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+
+	for b.Loop() {
 		_ = unescapeMultilineAttrs(input)
 	}
 }
 
 func BenchmarkUnescapeMultilineAttrsNoEscapes(b *testing.B) {
 	input := []byte(`time=2025-10-23T19:29:28+02:00 level=INFO msg="Simple message" key=value` + "\n")
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+
+	for b.Loop() {
 		_ = unescapeMultilineAttrs(input)
 	}
 }

@@ -20,14 +20,14 @@ func sampleLine(single bool) []byte {
 
 func BenchmarkUnescapeSingleLine(b *testing.B) {
 	line := sampleLine(true)
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_ = unescapeMultilineAttrs(line)
 	}
 }
 
 func BenchmarkUnescapeMultiline(b *testing.B) {
 	line := sampleLine(false)
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_ = unescapeMultilineAttrs(line)
 	}
 }
@@ -38,7 +38,7 @@ func BenchmarkFullColorHandlerSingle(b *testing.B) {
 	rec := slog.NewRecord(testTime(), slog.LevelInfo, "hello world", 0)
 	b.ResetTimer()
 	ctx := context.Background()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_ = h.Handle(ctx, rec)
 	}
 }
@@ -50,7 +50,7 @@ func BenchmarkFullColorHandlerMultiline(b *testing.B) {
 	rec := slog.NewRecord(testTime(), slog.LevelInfo, msg, 0)
 	ctx := context.Background()
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_ = h.Handle(ctx, rec)
 	}
 }
