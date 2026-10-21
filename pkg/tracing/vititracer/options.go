@@ -46,7 +46,8 @@ func WithEndpoint(endpoint string) Option {
 }
 
 // WithInsecure disables TLS for the gRPC connection to the collector.
-// By default, TLS is disabled unless the endpoint port is 443.
+// With an explicit WithEndpoint, TLS is disabled unless the endpoint port is 443.
+// Otherwise, endpoint security is configured by the OTLP environment settings.
 func WithInsecure() Option {
 	return func(c *traceConfig) {
 		insecure := true
@@ -54,7 +55,7 @@ func WithInsecure() Option {
 	}
 }
 
-// WithSampler overrides the default sampler (ParentBased(AlwaysSample)).
+// WithSampler overrides OTEL_TRACES_SAMPLER and its default parentbased_always_on.
 func WithSampler(sampler sdktrace.Sampler) Option {
 	return func(c *traceConfig) {
 		c.sampler = sampler
