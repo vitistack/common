@@ -1,5 +1,7 @@
 # Build the manager binary
-FROM golang:1.24 AS builder
+# Override BASE_IMAGE to build from another registry, e.g. docker.io/library/golang:1.26
+ARG BASE_IMAGE=golang:1.26
+FROM ${BASE_IMAGE} AS builder
 ARG TARGETOS
 ARG TARGETARCH
 
@@ -11,10 +13,8 @@ COPY go.sum go.sum
 # and so that source changes don't invalidate our downloaded layer
 RUN go mod download
 
-# Copy the go source
-COPY cmd/main.go cmd/main.go
-COPY api/ api/
-COPY internal/ internal/
+# Copy the Go source (relies on .dockerignore to filter)
+COPY . .
 
 # Build
 # the GOARCH has no default value to allow the binary to be built according to the host where the command
