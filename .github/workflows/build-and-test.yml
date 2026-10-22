@@ -44,7 +44,9 @@ jobs:
           cache-dependency-path: go.sum
 
       - name: Lint
-        run: make lint
+        uses: golangci/golangci-lint-action@v8
+        with:
+          version: latest
 
   # Test runs in parallel
   test:
