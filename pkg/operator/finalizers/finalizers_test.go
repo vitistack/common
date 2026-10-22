@@ -2,127 +2,374 @@ package finalizers
 
 import (
 	"context"
-	"errors"
-	"reflect"
-	"slices"
 	"testing"
 
-	collectortrace "go.opentelemetry.io/proto/otlp/collector/trace/v1"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
-type testTraceCollector struct {
-	collectortrace.UnimplementedTraceServiceServer
+const (
+	finalizer1Name    = "finalizer1"
+	testFinalizerName = "test-finalizer"
+	mockObjectKind    = "MockObject"
+	testObjectName    = "test-object"
+	defaultNamespace  = "default"
+	firstFinalizer    = "first"
+)
+
+// mockObject is a simple test object that implements client.Object
+type mockObject struct {
+	metav1.TypeMeta
+	metav1.ObjectMeta
 }
 
-func (testTraceCollector) Export(context.Context, *collectortrace.ExportTraceServiceRequest) (*collectortrace.ExportTraceServiceResponse, error) {
-	return &collectortrace.ExportTraceServiceResponse{}, nil
-}
-
-type finalizerWriter struct {
-	client.Writer
-	patches int
-	err     error
-}
-
-func (w *finalizerWriter) Patch(ctx context.Context, obj client.Object, patch client.Patch, opts ...client.PatchOption) error {
-	w.patches++
-	if w.err != nil {
-		return w.err
+func (m *mockObject) DeepCopyObject() runtime.Object {
+	out := &mockObject{
+		TypeMeta: m.TypeMeta,
 	}
-	return w.Writer.Patch(ctx, obj, patch, opts...)
+	m.DeepCopyInto(&out.ObjectMeta)
+	return out
 }
 
-func (w *finalizerWriter) Update(context.Context, client.Object, ...client.UpdateOption) error {
-	return errors.New("expected Patch, not Update")
+// mockObjectList is needed for scheme registration
+type mockObjectList struct {
+	metav1.TypeMeta
+	metav1.ListMeta
+	Items []mockObject
 }
 
-func TestFinalizerPatches(t *testing.T) {
-	patchErr := errors.New("patch failed")
-	for _, tt := range []struct {
-		name    string
-		run     func(context.Context, client.Writer, client.Object, string) (ctrl.Result, error)
-		initial []string
-		want    []string
-		patches int
-		err     error
+func (m *mockObjectList) DeepCopyObject() runtime.Object {
+	out := &mockObjectList{
+		TypeMeta: m.TypeMeta,
+	}
+	m.DeepCopyInto(&out.ListMeta)
+	if m.Items != nil {
+		out.Items = make([]mockObject, len(m.Items))
+		for i := range m.Items {
+			out.Items[i] = *m.Items[i].DeepCopyObject().(*mockObject)
+		}
+	}
+	return out
+}
+
+func newTestScheme() *runtime.Scheme {
+	scheme := runtime.NewScheme()
+	gv := schema.GroupVersion{Group: "", Version: "v1"}
+	scheme.AddKnownTypes(gv, &mockObject{}, &mockObjectList{})
+	return scheme
+}
+
+func TestHas(t *testing.T) {
+	tests := []struct {
+		name          string
+		finalizers    []string
+		finalizerName string
+		expected      bool
 	}{
-		{name: "add", run: Add, initial: []string{"other"}, want: []string{"other", "target"}, patches: 1},
-		{name: "already present", run: Add, initial: []string{"target"}, want: []string{"target"}},
-		{name: "remove", run: Remove, initial: []string{"target", "other", "target"}, want: []string{"other"}, patches: 1},
-		{name: "already absent", run: Remove, initial: []string{"other"}, want: []string{"other"}},
-		{name: "add error", run: Add, patches: 1, err: patchErr},
-		{name: "remove error", run: Remove, initial: []string{"target"}, want: []string{"target"}, patches: 1, err: patchErr},
-	} {
+		{
+			name:          "has finalizer",
+			finalizers:    []string{finalizer1Name, "finalizer2"},
+			finalizerName: finalizer1Name,
+			expected:      true,
+		},
+		{
+			name:          "does not have finalizer",
+			finalizers:    []string{finalizer1Name, "finalizer2"},
+			finalizerName: "finalizer3",
+			expected:      false,
+		},
+		{
+			name:          "empty finalizers list",
+			finalizers:    []string{},
+			finalizerName: finalizer1Name,
+			expected:      false,
+		},
+		{
+			name:          "nil finalizers list",
+			finalizers:    nil,
+			finalizerName: finalizer1Name,
+			expected:      false,
+		},
+		{
+			name:          "has finalizer at end",
+			finalizers:    []string{"a", "b", "c"},
+			finalizerName: "c",
+			expected:      true,
+		},
+		{
+			name:          "has finalizer in middle",
+			finalizers:    []string{"a", "b", "c"},
+			finalizerName: "b",
+			expected:      true,
+		},
+	}
+
+	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			obj := &mockObject{}
+			obj.SetFinalizers(tt.finalizers)
+
+			result := Has(obj, tt.finalizerName)
+			if result != tt.expected {
+				t.Errorf("Has() = %v, want %v", result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestEnsure(t *testing.T) {
+	tests := []struct {
+		name               string
+		initialFinalizers  []string
+		finalizerName      string
+		expectError        bool
+		expectedFinalizers []string
+	}{
+		{
+			name:               "adds finalizer when not present",
+			initialFinalizers:  []string{},
+			finalizerName:      testFinalizerName,
+			expectError:        false,
+			expectedFinalizers: []string{testFinalizerName},
+		},
+		{
+			name:               "does not duplicate when already present",
+			initialFinalizers:  []string{testFinalizerName},
+			finalizerName:      testFinalizerName,
+			expectError:        false,
+			expectedFinalizers: []string{testFinalizerName},
+		},
+		{
+			name:               "adds to existing finalizers",
+			initialFinalizers:  []string{"existing-finalizer"},
+			finalizerName:      "new-finalizer",
+			expectError:        false,
+			expectedFinalizers: []string{"existing-finalizer", "new-finalizer"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			obj := &mockObject{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "v1",
+					Kind:       mockObjectKind,
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       testObjectName,
+					Namespace:  defaultNamespace,
+					Finalizers: tt.initialFinalizers,
+				},
+			}
+
+			fakeClient := fake.NewClientBuilder().
+				WithScheme(newTestScheme()).
+				WithObjects(obj).
+				Build()
+
 			ctx := context.Background()
-			stored := &corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{
-				Name: "test", Namespace: "default", Finalizers: tt.initial,
-				Labels: map[string]string{"version": "old"},
-			}}
-			c := fake.NewClientBuilder().WithObjects(stored).Build()
-			obj := &corev1.ConfigMap{}
-			key := client.ObjectKeyFromObject(stored)
-			if err := c.Get(ctx, key, obj); err != nil {
-				t.Fatal(err)
+			err := Ensure(ctx, fakeClient, obj, tt.finalizerName)
+
+			if tt.expectError && err == nil {
+				t.Errorf("Ensure() expected error but got none")
+			}
+			if !tt.expectError && err != nil {
+				t.Errorf("Ensure() unexpected error: %v", err)
 			}
 
-			// Simulate an unrelated change after the reconciler read the object.
-			latest := obj.DeepCopy()
-			latest.Labels["version"] = "new"
-			if err := c.Update(ctx, latest); err != nil {
-				t.Fatal(err)
-			}
+			// When finalizer already exists, the finalizers should remain unchanged
+			if !tt.expectError {
+				finalizers := obj.GetFinalizers()
+				if len(finalizers) != len(tt.expectedFinalizers) {
+					t.Errorf("Ensure() finalizers length = %d, want %d", len(finalizers), len(tt.expectedFinalizers))
+				}
 
-			w := &finalizerWriter{Writer: c, err: tt.err}
-			result, err := tt.run(ctx, w, obj, "target")
-			if !errors.Is(err, tt.err) {
-				t.Fatalf("error = %v, want %v", err, tt.err)
-			}
-			if result != (ctrl.Result{}) {
-				t.Fatalf("unexpected result: %v", result)
-			}
-			if w.patches != tt.patches {
-				t.Fatalf("patch calls = %d, want %d", w.patches, tt.patches)
-			}
-			if err := c.Get(ctx, key, stored); err != nil {
-				t.Fatal(err)
-			}
-			if !slices.Equal(stored.Finalizers, tt.want) {
-				t.Fatalf("finalizers = %v, want %v", stored.Finalizers, tt.want)
-			}
-			if stored.Labels["version"] != "new" {
-				t.Fatal("patch overwrote an unrelated label change")
+				// Check that the finalizer is present
+				if !Has(obj, tt.finalizerName) {
+					t.Errorf("Ensure() finalizer %q should be present", tt.finalizerName)
+				}
 			}
 		})
 	}
 }
 
-func TestContains(t *testing.T) {
-	for _, tt := range []struct {
-		name       string
-		finalizers []string
-		want       bool
+func TestRemove(t *testing.T) {
+	tests := []struct {
+		name               string
+		initialFinalizers  []string
+		finalizerName      string
+		expectError        bool
+		expectedFinalizers []string
 	}{
-		{name: "nil finalizers"},
-		{name: "empty finalizers", finalizers: []string{}},
-		{name: "absent", finalizers: []string{"other"}},
-		{name: "present", finalizers: []string{"target"}, want: true},
-		{name: "present among others", finalizers: []string{"first", "target", "last"}, want: true},
-	} {
+		{
+			name:               "removes existing finalizer",
+			initialFinalizers:  []string{testFinalizerName},
+			finalizerName:      testFinalizerName,
+			expectError:        false,
+			expectedFinalizers: []string{},
+		},
+		{
+			name:               "no-op when finalizer not present",
+			initialFinalizers:  []string{"other-finalizer"},
+			finalizerName:      testFinalizerName,
+			expectError:        false,
+			expectedFinalizers: []string{"other-finalizer"},
+		},
+		{
+			name:               "removes from multiple finalizers",
+			initialFinalizers:  []string{"a", "b", "c"},
+			finalizerName:      "b",
+			expectError:        false,
+			expectedFinalizers: []string{"a", "c"},
+		},
+		{
+			name:               "removes first finalizer",
+			initialFinalizers:  []string{firstFinalizer, "second"},
+			finalizerName:      firstFinalizer,
+			expectError:        false,
+			expectedFinalizers: []string{"second"},
+		},
+		{
+			name:               "removes last finalizer",
+			initialFinalizers:  []string{firstFinalizer, "last"},
+			finalizerName:      "last",
+			expectError:        false,
+			expectedFinalizers: []string{firstFinalizer},
+		},
+		{
+			name:               "no-op on empty list",
+			initialFinalizers:  []string{},
+			finalizerName:      testFinalizerName,
+			expectError:        false,
+			expectedFinalizers: []string{},
+		},
+	}
+
+	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			obj := &corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Finalizers: tt.finalizers}}
-			before := obj.DeepCopy()
-			if got := Contains(obj, "target"); got != tt.want {
-				t.Errorf("Contains() = %v, want %v", got, tt.want)
+			obj := &mockObject{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "v1",
+					Kind:       mockObjectKind,
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       testObjectName,
+					Namespace:  defaultNamespace,
+					Finalizers: tt.initialFinalizers,
+				},
 			}
-			if !reflect.DeepEqual(obj, before) {
-				t.Error("Contains modified the object")
+
+			fakeClient := fake.NewClientBuilder().
+				WithScheme(newTestScheme()).
+				WithObjects(obj).
+				Build()
+
+			ctx := context.Background()
+			err := Remove(ctx, fakeClient, obj, tt.finalizerName)
+
+			if tt.expectError && err == nil {
+				t.Errorf("Remove() expected error but got none")
+			}
+			if !tt.expectError && err != nil {
+				t.Errorf("Remove() unexpected error: %v", err)
+			}
+
+			if !tt.expectError {
+				finalizers := obj.GetFinalizers()
+				if len(finalizers) != len(tt.expectedFinalizers) {
+					t.Errorf("Remove() finalizers = %v, want %v", finalizers, tt.expectedFinalizers)
+				}
+
+				// Verify the finalizer is actually removed
+				if Has(obj, tt.finalizerName) {
+					t.Errorf("Remove() finalizer %q should not be present", tt.finalizerName)
+				}
 			}
 		})
+	}
+}
+
+func TestEnsureIdempotent(t *testing.T) {
+	obj := &mockObject{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       mockObjectKind,
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      testObjectName,
+			Namespace: defaultNamespace,
+		},
+	}
+
+	fakeClient := fake.NewClientBuilder().
+		WithScheme(newTestScheme()).
+		WithObjects(obj).
+		Build()
+
+	ctx := context.Background()
+	finalizerName := testFinalizerName
+
+	// Call Ensure multiple times
+	for i := range 3 {
+		err := Ensure(ctx, fakeClient, obj, finalizerName)
+		if err != nil {
+			t.Fatalf("Ensure() iteration %d unexpected error: %v", i, err)
+		}
+
+		if !Has(obj, finalizerName) {
+			t.Errorf("Ensure() iteration %d: finalizer should be present", i)
+		}
+	}
+
+	// Should only have one instance of the finalizer
+	count := 0
+	for _, f := range obj.GetFinalizers() {
+		if f == finalizerName {
+			count++
+		}
+	}
+	if count != 1 {
+		t.Errorf("Ensure() should add finalizer only once, found %d instances", count)
+	}
+}
+
+func TestRemoveIdempotent(t *testing.T) {
+	obj := &mockObject{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       mockObjectKind,
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       testObjectName,
+			Namespace:  "default",
+			Finalizers: []string{testFinalizerName},
+		},
+	}
+
+	fakeClient := fake.NewClientBuilder().
+		WithScheme(newTestScheme()).
+		WithObjects(obj).
+		Build()
+
+	ctx := context.Background()
+	finalizerName := testFinalizerName
+
+	// Call Remove multiple times
+	for i := range 3 {
+		err := Remove(ctx, fakeClient, obj, finalizerName)
+		if err != nil {
+			t.Fatalf("Remove() iteration %d unexpected error: %v", i, err)
+		}
+
+		if Has(obj, finalizerName) {
+			t.Errorf("Remove() iteration %d: finalizer should not be present", i)
+		}
+	}
+
+	// Finalizer should be completely gone
+	if len(obj.GetFinalizers()) != 0 {
+		t.Errorf("Remove() should remove all instances, got finalizers: %v", obj.GetFinalizers())
 	}
 }

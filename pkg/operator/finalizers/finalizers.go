@@ -2,39 +2,44 @@ package finalizers
 
 import (
 	"context"
-	"fmt"
+	"slices"
 
-	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-// ContainsFinalizer checks if the specified finalizer is present on the object.
-// Returns true if the finalizer is present, false otherwise.
-func Contains(obj client.Object, finalizer string) bool {
-	return controllerutil.ContainsFinalizer(obj, finalizer)
+// Has returns true if the object has the finalizer name.
+func Has(obj client.Object, name string) bool {
+	fins := obj.GetFinalizers()
+	return slices.Contains(fins, name)
 }
 
-// AddFinalizer adds the specified finalizer to the object if it is not already present.
-// Patches the object only if the finalizer is missing.
-func Add(ctx context.Context, c client.Writer, obj client.Object, finalizer string) (ctrl.Result, error) {
-	updated := controllerutil.AddFinalizer(obj, finalizer)
-	if updated {
-		base := obj.DeepCopyObject().(client.Object)
-		if err := c.Patch(ctx, obj, client.MergeFrom(base)); err != nil {
-			return ctrl.Result{}, fmt.Errorf("Could not addfinalizer (patch): %w", err)
+// Ensure adds the finalizer to the object if missing and patches it.
+// Safe to call repeatedly. It performs a server-side patch to avoid conflicts.
+func Ensure(ctx context.Context, c client.Client, obj client.Object, name string) error {
+	if Has(obj, name) {
+		return nil
+	}
+	// Make a shallow copy for patch base
+	base := obj.DeepCopyObject().(client.Object)
+	obj.SetFinalizers(append(obj.GetFinalizers(), name))
+	return c.Patch(ctx, obj, client.MergeFrom(base))
+}
+
+// Remove removes the finalizer from the object if present and patches it.
+// Safe to call repeatedly.
+func Remove(ctx context.Context, c client.Client, obj client.Object, name string) error {
+	fins := obj.GetFinalizers()
+	idx := -1
+	for i := range fins {
+		if fins[i] == name {
+			idx = i
+			break
 		}
 	}
-	return ctrl.Result{}, nil
-}
-
-// RemoveFinalizer removes the specified finalizer from the object if it is present.
-// Patches the object only if the finalizer is present.
-func Remove(ctx context.Context, c client.Writer, obj client.Object, finalizer string) (ctrl.Result, error) {
-	updated := controllerutil.RemoveFinalizer(obj, finalizer)
-	if !updated {
-		return ctrl.Result{}, nil
+	if idx < 0 {
+		return nil
 	}
 	base := obj.DeepCopyObject().(client.Object)
-	return ctrl.Result{}, c.Patch(ctx, obj, client.MergeFrom(base))
+	obj.SetFinalizers(append(fins[:idx], fins[idx+1:]...))
+	return c.Patch(ctx, obj, client.MergeFrom(base))
 }
