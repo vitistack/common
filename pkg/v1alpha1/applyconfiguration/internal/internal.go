@@ -274,7 +274,7 @@ var schemaYAML = typed.YAMLObject(`types:
         scalar: string
     - name: secret
       type:
-        namedType: com.github.vitistack.common.pkg.v1alpha1.secretStatus
+        namedType: com.github.vitistack.common.pkg.v1alpha1.SecretStatus
 - name: com.github.vitistack.common.pkg.v1alpha1.ControlPlaneConfig
   map:
     fields:
@@ -3068,6 +3068,18 @@ var schemaYAML = typed.YAMLObject(`types:
     - name: provider
       type:
         scalar: string
+- name: com.github.vitistack.common.pkg.v1alpha1.SecretStatus
+  map:
+    fields:
+    - name: condition
+      type:
+        scalar: string
+    - name: message
+      type:
+        scalar: string
+    - name: name
+      type:
+        scalar: string
 - name: com.github.vitistack.common.pkg.v1alpha1.ServiceAccountAuthConfig
   map:
     fields:
@@ -3909,18 +3921,6 @@ var schemaYAML = typed.YAMLObject(`types:
           elementType:
             namedType: com.github.vitistack.common.pkg.v1alpha1.VitistackSubnet
           elementRelationship: atomic
-- name: com.github.vitistack.common.pkg.v1alpha1.secretStatus
-  map:
-    fields:
-    - name: condition
-      type:
-        scalar: string
-    - name: message
-      type:
-        scalar: string
-    - name: name
-      type:
-        scalar: string
 - name: io.k8s.apimachinery.pkg.api.resource.Quantity
   scalar: untyped
   list:

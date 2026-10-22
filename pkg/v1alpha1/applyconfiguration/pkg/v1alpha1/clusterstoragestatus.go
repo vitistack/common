@@ -8,7 +8,7 @@ type ClusterStorageStatusApplyConfiguration struct {
 	Name          *string                                `json:"name,omitempty"`
 	Phase         *string                                `json:"phase,omitempty"`
 	Message       *string                                `json:"message,omitempty"`
-	Secret        *secretStatusApplyConfiguration        `json:"secret,omitempty"`
+	Secret        *SecretStatusApplyConfiguration        `json:"secret,omitempty"`
 	GuestResource *GuestResourceStatusApplyConfiguration `json:"guestResource,omitempty"`
 }
 
@@ -45,7 +45,7 @@ func (b *ClusterStorageStatusApplyConfiguration) WithMessage(value string) *Clus
 // WithSecret sets the Secret field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Secret field is set to the value of the last call.
-func (b *ClusterStorageStatusApplyConfiguration) WithSecret(value *secretStatusApplyConfiguration) *ClusterStorageStatusApplyConfiguration {
+func (b *ClusterStorageStatusApplyConfiguration) WithSecret(value *SecretStatusApplyConfiguration) *ClusterStorageStatusApplyConfiguration {
 	b.Secret = value
 	return b
 }

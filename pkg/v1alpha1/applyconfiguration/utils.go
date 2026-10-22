@@ -295,7 +295,7 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 	case v1alpha1.SchemeGroupVersion.WithKind("RuntimeSecurityConfig"):
 		return &pkgv1alpha1.RuntimeSecurityConfigApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("SecretStatus"):
-		return &pkgv1alpha1.secretStatusApplyConfiguration{}
+		return &pkgv1alpha1.SecretStatusApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("ServiceAccountAuthConfig"):
 		return &pkgv1alpha1.ServiceAccountAuthConfigApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("ServiceAccountConfig"):
