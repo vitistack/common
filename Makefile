@@ -54,7 +54,7 @@ generate: gen-deepcopy gen-manifests   ## Generate code and manifests.
 
 .PHONY: gen-manifests
 gen-manifests: controller-gen ## Generate manifests
-	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=crds
+	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." applyconfiguration output:crd:artifacts:config=crds
 	@hack/sanitize-crds.sh crds
 	@echo "Cleaning up charts/vitistack-crds/templates..."
 	@rm -f charts/vitistack-crds/templates/vitistack.io_*.yaml

@@ -11,6 +11,7 @@ import (
 // MachineClass is the Schema for the MachineClass API
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
+// +kubebuilder:ac:generate=true
 // +kubebuilder:resource:path=machineclasses,scope=Cluster,shortName=mc
 // +kubebuilder:printcolumn:name="Display Name",type=string,JSONPath=`.spec.displayName`
 // +kubebuilder:printcolumn:name="Category",type=string,JSONPath=`.spec.category`

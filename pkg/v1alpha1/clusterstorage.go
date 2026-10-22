@@ -10,6 +10,7 @@ import (
 // ClusterStorage is the Schema for the ClusterStorage API
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
+// +kubebuilder:ac:generate=true
 // +kubebuilder:resource:path=clusterstorages,scope=Namespaced,shortName=cls
 // +kubebuilder:printcolumn:name="ClusterId",type=string,JSONPath=`.spec.clusterId`
 // +kubebuilder:printcolumn:name="Type",type=string,JSONPath=`.spec.type`

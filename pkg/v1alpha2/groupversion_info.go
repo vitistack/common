@@ -17,6 +17,7 @@ limitations under the License.
 // Package v1alpha2 contains API Schema definitions for the vitistack.io v1alpha2 API group.
 // +kubebuilder:object:generate=true
 // +groupName=vitistack.io
+// +kubebuilder:ac:generate=true
 package v1alpha2
 
 import (
