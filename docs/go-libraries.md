@@ -478,7 +478,7 @@ func main() {
 
 ### crdcheck
 
-- **Panic on startup**: CRDs are not installed. Install them with `kubectl apply -f crds/` or Helm
+- **Panic on startup**: CRDs are not installed. Install the CRD Helm chart; the raw CRD schemas alone do not configure `NetworkNamespace` version conversion.
 - **Timeout errors**: Check cluster connectivity and increase context timeout
 
 ### dotenv

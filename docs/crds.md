@@ -24,21 +24,23 @@ Vitistack provides a comprehensive set of CRDs for declarative infrastructure ma
 ### Using Helm (Recommended)
 
 ```bash
-helm install vitistack-crds oci://ghcr.io/vitistack/vitistack-crds --version 0.1.0
+helm install vitistack-crds oci://ghcr.io/vitistack/helm/crds
 ```
 
-### Using kubectl
+Install cert-manager, including cainjector, before installing the chart. See
+the [chart installation guide](../charts/vitistack-crds/README.md).
 
-```bash
-kubectl apply -f https://github.com/vitistack/common/releases/download/v0.1.0/crds.yaml
-```
+The raw `crds.yaml` release asset contains CRD schemas only. Applying it does
+not deploy the conversion webhook or configure `spec.conversion`; do not use it
+as a complete installation when clients or stored objects use both
+`NetworkNamespace` API versions.
 
 ### From Source
 
 ```bash
 git clone https://github.com/vitistack/common
 cd common
-make install-crds
+helm install vitistack-crds ./charts/vitistack-crds
 ```
 
 ## CRD Reference

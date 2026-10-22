@@ -1,5 +1,20 @@
-# Makefile for the project
-# inspired by kubebuilder.io
+# Image URL to use all building/pushing image targets
+IMG ?= controller:latest
+# YEAR defines the year value used for substituting the YEAR placeholder in the boilerplate header.
+YEAR ?= $(shell date +%Y)
+
+# Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
+ifeq (,$(shell go env GOBIN))
+GOBIN=$(shell go env GOPATH)/bin
+else
+GOBIN=$(shell go env GOBIN)
+endif
+
+# CONTAINER_TOOL defines the container tool to be used for building images.
+# Be aware that the target commands are only tested with Docker which is
+# scaffolded by default. However, you might want to replace it to use other
+# tools. (i.e. podman)
+CONTAINER_TOOL ?= docker
 
 # Setting SHELL to bash allows bash commands to be executed by recipes.
 # Options are set to exit when a recipe line exits non-zero or a piped command fails.
@@ -171,7 +186,9 @@ helm-lint: ## Lint Helm charts
 
 ##@ kubernetes
 .PHONY: install-crds
-install-crds: manifests ## Install CRDs into a Kubernetes cluster.
+install-crds: manifests ## Apply CRD schemas only (does not install the conversion webhook).
+	@echo "WARNING: this applies CRD schemas only; it does not install the NetworkNamespace conversion webhook."
+	@echo "Use the Helm chart for a complete installation when using both NetworkNamespace API versions."
 	kubectl apply -f crds
 
 .PHONY: uninstall-crds
@@ -188,6 +205,11 @@ $(CONTROLLER_GEN): $(LOCALBIN)
 .PHONY: golangci-lint
 golangci-lint: $(LOCALBIN) ## Download golangci-lint locally if necessary.
 	$(call go-install-tool,$(GOLANGCI_LINT),github.com/golangci/golangci-lint/v2/cmd/golangci-lint,$(GOLANGCI_LINT_VERSION))
+	@test -f .custom-gcl.yml && { \
+		echo "Building custom golangci-lint with plugins..." && \
+		$(GOLANGCI_LINT) custom --destination $(LOCALBIN) --name golangci-lint-custom && \
+		mv -f $(LOCALBIN)/golangci-lint-custom $(GOLANGCI_LINT); \
+	} || true
 
 .PHONY: install-security-scanner
 install-security-scanner: $(LOCALBIN) ## Build gosec with the project's Go toolchain.

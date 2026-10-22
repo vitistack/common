@@ -65,19 +65,20 @@ guarantee that every scanner release supports every future Go export format.
 
 ### Install CRDs
 
+Install the chart to deploy the CRDs and the `NetworkNamespace` conversion
+webhook together. The webhook requires cert-manager (including cainjector) to
+be installed in the cluster first; see the
+[chart installation guide](./charts/vitistack-crds/README.md) for prerequisites
+and configuration.
+
 ```bash
-# Using Helm (recommended)
-# First, login to GitHub Container Registry
-# Username: your GitHub username
-# Password: a Personal Access Token (PAT) with `read:packages` scope
-# Create a PAT at: https://github.com/settings/tokens/new?scopes=read:packages
-helm registry login ghcr.io
-
 helm install vitistack-crds oci://ghcr.io/vitistack/helm/crds
-
-# Or using kubectl (no authentication required)
-kubectl apply -f https://github.com/vitistack/common/releases/latest/download/crds.yaml
 ```
+
+The downloadable `crds.yaml` and `make install-crds` apply CRD schemas only;
+they do not deploy or configure the conversion webhook. Do not use them as a
+complete installation when clients or stored objects use both
+`NetworkNamespace` API versions.
 
 ### Use Go Libraries
 

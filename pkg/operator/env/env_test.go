@@ -7,9 +7,9 @@ import (
 )
 
 const (
-	defaultValue              = "default"
-	returnsDefaultWhenNotSet  = "returns default when not set"
-	returnsDefaultForInvalid  = "returns default for invalid value"
+	defaultValue             = "default"
+	returnsDefaultWhenNotSet = "returns default when not set"
+	returnsDefaultForInvalid = "returns default for invalid value"
 )
 
 func TestGetString(t *testing.T) {

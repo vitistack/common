@@ -45,17 +45,18 @@ See the [examples directory](../examples/) for working examples.
 
 ## Installation
 
-### Install CRDs via Helm
+### Install CRDs and conversion webhook via Helm
 
 ```bash
-helm install vitistack-crds oci://ghcr.io/vitistack/vitistack-crds --version 0.1.0
+helm install vitistack-crds oci://ghcr.io/vitistack/helm/crds
 ```
 
-### Install CRDs via kubectl
+Install cert-manager (including cainjector) first. See the
+[chart installation guide](../charts/vitistack-crds/README.md) for details.
 
-```bash
-kubectl apply -f https://github.com/vitistack/common/releases/latest/download/crds.yaml
-```
+The raw `crds.yaml` release asset contains schemas only. It does not install or
+configure the `NetworkNamespace` conversion webhook, so it is not a complete
+installation when using both API versions.
 
 ### Use Go Library
 

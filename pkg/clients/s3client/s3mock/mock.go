@@ -114,7 +114,6 @@ func (m *MockS3Client) CreateBucket(ctx context.Context) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-
 	if m.CreateBucketErr != nil {
 		return m.CreateBucketErr
 	}
