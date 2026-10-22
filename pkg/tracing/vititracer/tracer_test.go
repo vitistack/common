@@ -2,6 +2,7 @@ package vititracer
 
 import (
 	"context"
+	"errors"
 	"net"
 	"strings"
 	"sync"
@@ -37,7 +38,7 @@ func startTestCollector(t *testing.T) (string, *testCollector) {
 	go func() { serveErr <- server.Serve(listener) }()
 	t.Cleanup(func() {
 		server.Stop()
-		if err := <-serveErr; err != nil {
+		if err := <-serveErr; err != nil && !errors.Is(err, grpc.ErrServerStopped) {
 			t.Errorf("serving collector: %v", err)
 		}
 	})
