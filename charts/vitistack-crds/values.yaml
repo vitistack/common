@@ -39,7 +39,13 @@ conversionWebhook:
   # cert-manager is used to provision TLS certificates for the webhook.
   certManager:
     enabled: true
+    # When unset, the chart bootstraps its own private CA (self-signed issuer
+    # -> CA certificate -> CA issuer) and issues the serving certificate from
+    # it, so the caBundle the apiserver trusts stays stable across renewals.
     issuerRef: {}
     #   name: my-issuer
     #   kind: ClusterIssuer
+    # Lifetime of that bootstrapped CA. Ignored when issuerRef is set.
+    caDuration: 87600h
+    caRenewBefore: 720h
 
