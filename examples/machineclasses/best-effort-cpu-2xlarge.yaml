@@ -1,0 +1,18 @@
+---
+apiVersion: vitistack.io/v1alpha1
+kind: MachineClass
+metadata:
+  name: best-effort-cpu-2xlarge
+spec:
+  displayName: Best Effort CPU 2XLarge
+  description: Best-effort instance with 16 cores and 32Gi memory (Tanzu best-effort-cpu-2xlarge)
+  enabled: true
+  default: false
+  category: CPU
+  cpu:
+    cores: 16
+    sockets: 1
+    threads: 1
+  memory:
+    quantity: 32Gi
+  machineProviders: []

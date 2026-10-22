@@ -1,0 +1,67 @@
+{{- if .Values.conversionWebhook.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "vitistack-crds.webhook.name" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "vitistack-crds.webhook.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.conversionWebhook.replicas }}
+  selector:
+    matchLabels:
+      {{- include "vitistack-crds.webhook.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "vitistack-crds.webhook.selectorLabels" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ include "vitistack-crds.webhook.name" . }}
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: conversion-webhook
+          image: "{{ .Values.conversionWebhook.image.repository }}:{{ .Values.conversionWebhook.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.conversionWebhook.image.pullPolicy }}
+          args:
+            - --port={{ .Values.conversionWebhook.port }}
+            - --cert-dir=/tmp/k8s-webhook-server/serving-certs
+            - --cert-name=tls.crt
+            - --key-name=tls.key
+          ports:
+            - name: https
+              containerPort: {{ .Values.conversionWebhook.port }}
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: {{ .Values.conversionWebhook.port }}
+              scheme: HTTPS
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: {{ .Values.conversionWebhook.port }}
+              scheme: HTTPS
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            {{- toYaml .Values.conversionWebhook.resources | nindent 12 }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: serving-certs
+              mountPath: /tmp/k8s-webhook-server/serving-certs
+              readOnly: true
+      volumes:
+        - name: serving-certs
+          secret:
+            secretName: {{ include "vitistack-crds.webhook.name" . }}-tls
+{{- end }}

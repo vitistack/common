@@ -1,0 +1,18 @@
+---
+apiVersion: vitistack.io/v1alpha1
+kind: MachineClass
+metadata:
+  name: small
+spec:
+  displayName: Small
+  description: Small instance with 2 cores and 8Gi memory
+  enabled: true
+  default: false
+  category: Standard
+  cpu:
+    cores: 2
+    sockets: 1
+    threads: 1
+  memory:
+    quantity: 8Gi
+  machineProviders: []
