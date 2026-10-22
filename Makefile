@@ -186,7 +186,9 @@ helm-lint: ## Lint Helm charts
 
 ##@ kubernetes
 .PHONY: install-crds
-install-crds: manifests ## Install CRDs into a Kubernetes cluster.
+install-crds: manifests ## Apply CRD schemas only (does not install the conversion webhook).
+	@echo "WARNING: this applies CRD schemas only; it does not install the NetworkNamespace conversion webhook."
+	@echo "Use the Helm chart for a complete installation when using both NetworkNamespace API versions."
 	kubectl apply -f crds
 
 .PHONY: uninstall-crds

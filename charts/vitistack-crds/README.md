@@ -12,8 +12,9 @@ operator.
 - The conversion webhook requires [cert-manager](https://cert-manager.io/)
   (including its `cainjector`) installed in the cluster **before** this chart.
   cert-manager provisions the webhook's TLS certificate and injects the CA bundle
-  into the CRD's `spec.conversion`. If you do not run cert-manager, install CRDs
-  only by disabling the webhook: `--set conversionWebhook.enabled=false`.
+  into the CRD's `spec.conversion`. Do not disable the webhook for a complete
+  installation: without it, the CRD schemas do not convert between
+  `NetworkNamespace` API versions.
 
 ## Installing cert-manager (required dependency)
 
@@ -132,6 +133,12 @@ helm install vitistack-crds ./charts/vitistack-crds \
 ```
 
 ### Install CRDs only (no conversion webhook)
+
+This is a schema-only mode for exceptional cases where no conversion between
+`NetworkNamespace` API versions is needed. The CRD still serves both versions,
+but Kubernetes will not translate objects between them. Reads or writes through
+the non-storage version can expose the wrong shape or lose version-specific
+fields. This is **not** a complete or recommended installation.
 
 ```bash
 helm install vitistack-crds oci://ghcr.io/vitistack/helm/crds \

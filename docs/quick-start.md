@@ -10,11 +10,16 @@ This guide will help you get started with Vitistack CRDs for infrastructure mana
 
 ## Installation
 
-### Install CRDs
+### Install CRDs and conversion webhook
 
 ```bash
-helm install vitistack-crds oci://ghcr.io/vitistack/vitistack-crds --version 0.1.0
+helm install vitistack-crds oci://ghcr.io/vitistack/helm/crds
 ```
+
+Install cert-manager (including cainjector) first; see the
+[chart installation guide](../charts/vitistack-crds/README.md) for details.
+The raw `crds.yaml` is schema-only and does not configure `NetworkNamespace`
+version conversion.
 
 Verify installation:
 
