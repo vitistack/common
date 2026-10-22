@@ -17,12 +17,18 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v7
 
-      - name: Run gosec security scan
-        uses: securego/gosec@master
-        env:
-          GOTOOLCHAIN: auto
+      - name: Setup Go
+        uses: actions/setup-go@v6
         with:
-          args: ./...
+          go-version-file: go.mod
+          cache-dependency-path: go.sum
+
+      # The gosec action image cannot read Go 1.27 export data yet.
+      - name: Install gosec
+        run: go install github.com/securego/gosec/v2/cmd/gosec@master
+
+      - name: Run gosec security scan
+        run: gosec ./...
 
       - name: Run govulncheck vulnerability scan
         uses: golang/govulncheck-action@v1.1.0
