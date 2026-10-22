@@ -43,6 +43,26 @@ Small, focused libraries for cloud-native applications:
 
 ## Quick Start
 
+### Security scans
+
+The CI and scheduled Security Scan workflows build gosec from upstream `master`
+and use `golang/govulncheck-action` to scan all packages. Both use the Go
+version from `go.mod`. The current gosec source includes support for Go 1.27
+export data, which the current Gosec Security Checker action image cannot read.
+
+Run `make gosec` and `make govulncheck` to scan the project. These targets
+install the scanners using the Go version declared in `go.mod` before each run,
+so existing binaries are not reused after a Go upgrade. Go's build cache avoids
+unnecessary recompilation.
+
+Scanner versions default to `latest`. Set `GOSEC_VERSION` and
+`GOVULNCHECK_VERSION` to pin releases for reproducible builds. Installation
+failures are reported without falling back to a different release.
+
+New Go releases can also require newer scanner analysis dependencies. Building
+with the matching Go toolchain prevents stale-binary mismatches, but does not
+guarantee that every scanner release supports every future Go export format.
+
 ### Install CRDs
 
 ```bash

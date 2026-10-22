@@ -44,7 +44,9 @@ jobs:
           cache-dependency-path: go.sum
 
       - name: Lint
-        run: make lint
+        uses: golangci/golangci-lint-action@v8
+        with:
+          version: latest
 
   # Test runs in parallel
   test:
@@ -101,11 +103,20 @@ jobs:
         uses: actions/setup-go@v6
         with:
           go-version-file: ${{ env.GO_VERSION_FILE }}
-          cache: true
           cache-dependency-path: go.sum
 
+      # The gosec action image cannot read Go 1.27 export data yet.
+      - name: Install gosec
+        run: go install github.com/securego/gosec/v2/cmd/gosec@master
+
       - name: Run gosec
-        run: make gosec
+        run: gosec ./...
 
       - name: Run govulncheck
-        run: make govulncheck
+        uses: golang/govulncheck-action@v1.1.0
+        with:
+          repo-checkout: false
+          go-version-input: ''
+          go-version-file: ${{ env.GO_VERSION_FILE }}
+          cache-dependency-path: go.sum
+          go-package: ./...

@@ -190,41 +190,21 @@ golangci-lint: $(LOCALBIN) ## Download golangci-lint locally if necessary.
 	$(call go-install-tool,$(GOLANGCI_LINT),github.com/golangci/golangci-lint/v2/cmd/golangci-lint,$(GOLANGCI_LINT_VERSION))
 
 .PHONY: install-security-scanner
-install-security-scanner: $(GOSEC) ## Install gosec security scanner locally (static analysis for security issues)
-$(GOSEC): $(LOCALBIN)
-	@set -e; echo "Attempting to install gosec $(GOSEC_VERSION)"; \
-	if ! GOBIN=$(LOCALBIN) go install github.com/securego/gosec/v2/cmd/gosec@$(GOSEC_VERSION) 2>/dev/null; then \
-		echo "Primary install failed, attempting install from @main (compatibility fallback)"; \
-		if ! GOBIN=$(LOCALBIN) go install github.com/securego/gosec/v2/cmd/gosec@main; then \
-			echo "gosec installation failed for versions $(GOSEC_VERSION) and @main"; \
-			exit 1; \
-		fi; \
-	fi; \
-	echo "gosec installed at $(GOSEC)"; \
-	chmod +x $(GOSEC)
+install-security-scanner: $(LOCALBIN) ## Build gosec with the project's Go toolchain.
+	GOTOOLCHAIN=$(GO_TOOLCHAIN) GOBIN=$(LOCALBIN) go install github.com/securego/gosec/v2/cmd/gosec@$(GOSEC_VERSION)
 
 .PHONY: install-govulncheck
-install-govulncheck: $(GOVULNCHECK) ## Install govulncheck locally (vulnerability scanner for Go)
-$(GOVULNCHECK): $(LOCALBIN)
-	@set -e; echo "Attempting to install govulncheck $(GOVULNCHECK_VERSION)"; \
-	if ! GOBIN=$(LOCALBIN) go install golang.org/x/vuln/cmd/govulncheck@$(GOVULNCHECK_VERSION) 2>/dev/null; then \
-		echo "Primary install failed, attempting install from @latest (compatibility fallback)"; \
-		if ! GOBIN=$(LOCALBIN) go install golang.org/x/vuln/cmd/govulncheck@latest; then \
-			echo "govulncheck installation failed for versions $(GOVULNCHECK_VERSION) and @latest"; \
-			exit 1; \
-		fi; \
-	fi; \
-	echo "govulncheck installed at $(GOVULNCHECK)"; \
-	chmod +x $(GOVULNCHECK)
+install-govulncheck: $(LOCALBIN) ## Build govulncheck with the project's Go toolchain.
+	GOTOOLCHAIN=$(GO_TOOLCHAIN) GOBIN=$(LOCALBIN) go install golang.org/x/vuln/cmd/govulncheck@$(GOVULNCHECK_VERSION)
 
 ##@ Security
 .PHONY: gosec
 gosec: install-security-scanner ## Run gosec security scan (fails on findings)
-	$(GOSEC) ./...
+	GOTOOLCHAIN=$(GO_TOOLCHAIN) $(GOSEC) ./...
 
 .PHONY: govulncheck
 govulncheck: install-govulncheck ## Run govulncheck vulnerability scan (fails on findings)
-	$(GOVULNCHECK) ./...
+	GOTOOLCHAIN=$(GO_TOOLCHAIN) $(GOVULNCHECK) ./...
 # go-install-tool will 'go install' any package with custom target and name of binary, if it doesn't exist
 # $1 - target path with name of binary
 # $2 - package url which can be installed
