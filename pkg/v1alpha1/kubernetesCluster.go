@@ -11,6 +11,7 @@ import (
 // KubernetesCluster is the Schema for the Machines API
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
+// +kubebuilder:ac:generate=true
 // +kubebuilder:resource:path=kubernetesclusters,scope=Namespaced,shortName=kc
 // +kubebuilder:printcolumn:name="Phase",type=string,JSONPath=`.status.phase`,description="The phase of the Kubernetes cluster"
 // +kubebuilder:printcolumn:name="Provider",type=string,JSONPath=`.spec.data.provider`,description="The cloud provider of the Kubernetes cluster"

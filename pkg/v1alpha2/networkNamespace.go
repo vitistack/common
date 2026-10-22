@@ -15,6 +15,7 @@ import (
 //
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
+// +kubebuilder:ac:generate=true
 // +kubebuilder:resource:path=networknamespaces,scope=Namespaced,shortName=nn
 // +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Provisioning",type=string,JSONPath=`.spec.networkProvisioning.provider`
@@ -127,7 +128,11 @@ type NetworkNamespaceIPAllocation struct {
 
 // NetworkNamespaceStatus defines the observed state of a NetworkNamespace.
 type NetworkNamespaceStatus struct {
-	Conditions []metav1.Condition `json:"conditions,omitempty"`
+	// +patchMergeKey=type
+	// +patchStrategy=merge
+	// +listType=map
+	// +listMapKey=type
+	Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type"`
 	Phase      string             `json:"phase,omitempty"`
 	Status     string             `json:"status,omitempty"`
 	Message    string             `json:"message,omitempty"`
