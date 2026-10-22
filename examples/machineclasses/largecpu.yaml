@@ -1,0 +1,18 @@
+---
+apiVersion: vitistack.io/v1alpha1
+kind: MachineClass
+metadata:
+  name: largecpu
+spec:
+  displayName: Large CPU
+  description: CPU-optimized instance with 4 cores and 8Gi memory, optimized for compute-intensive workloads
+  enabled: false
+  default: false
+  category: CPU
+  cpu:
+    cores: 4
+    sockets: 1
+    threads: 1
+  memory:
+    quantity: 8Gi
+  machineProviders: []

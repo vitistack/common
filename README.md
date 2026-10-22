@@ -1,121 +1,252 @@
-# common
-// TODO(user): Add simple overview of use/purpose
+# Vitistack Common
 
-## Description
-// TODO(user): An in-depth paragraph about your project and overview of use
+[![Build and Test](https://github.com/vitistack/common/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/vitistack/common/actions/workflows/build-and-test.yml)
+[![Security Scan](https://github.com/vitistack/common/actions/workflows/security-scan.yml/badge.svg)](https://github.com/vitistack/common/actions/workflows/security-scan.yml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/vitistack/common)](https://goreportcard.com/report/github.com/vitistack/common)
+[![Go Reference](https://pkg.go.dev/badge/github.com/vitistack/common.svg)](https://pkg.go.dev/github.com/vitistack/common)
 
-## Getting Started
+Shared infrastructure management components for Kubernetes-native platforms.
 
-### Prerequisites
-- go version v1.24.6+
-- docker version 17.03+.
-- kubectl version v1.11.3+.
-- Access to a Kubernetes v1.11.3+ cluster.
+## What's Included
 
-### To Deploy on the cluster
-**Build and push your image to the location specified by `IMG`:**
+### 🎯 Custom Resource Definitions (CRDs)
 
-```sh
-make docker-build docker-push IMG=<some-registry>/common:tag
+Kubernetes-native APIs for declarative infrastructure management:
+
+- **Machine** - Virtual machine provisioning and lifecycle
+- **MachineProvider** - Multi-cloud provider configuration (Proxmox, KubeVirt)
+- **MachineClass** - Machine size and resource presets
+- **NetworkConfiguration** - Network topology and VLANs
+- **NetworkNamespace** - Network isolation and segmentation
+- **KubernetesCluster** - Kubernetes cluster management
+- **KubernetesProvider** - Kubernetes cluster provider configuration
+- **ControlPlaneVirtualSharedIP** - Shared IP management for control planes
+- **EtcdBackup** - Etcd backup configuration and scheduling
+- **VitiStack** - Infrastructure stack definition with auto-discovery of providers and clusters
+- **ProxmoxConfig** - Proxmox-specific configuration
+- **KubevirtConfig** - KubeVirt-specific configuration
+
+📖 **[View full CRD documentation →](docs/crds.md)**
+
+### 📦 Go Libraries
+
+Small, focused libraries for cloud-native applications:
+
+- **`vlog`** - Structured logging with Zap and logr adapter
+- **`serialize`** - JSON helpers for quick serialization
+- **`k8sclient`** - Kubernetes client initialization
+- **`S3client`** - General s3 client
+- **`crdcheck`** - CRD prerequisite validation
+- **`dotenv`** - Smart environment configuration
+
+📖 **[View Go library documentation →](docs/go-libraries.md)**
+
+## Quick Start
+
+### Security scans
+
+The CI and scheduled Security Scan workflows build gosec from upstream `master`
+and use `golang/govulncheck-action` to scan all packages. Both use the Go
+version from `go.mod`. The current gosec source includes support for Go 1.27
+export data, which the current Gosec Security Checker action image cannot read.
+
+Run `make gosec` and `make govulncheck` to scan the project. These targets
+install the scanners using the Go version declared in `go.mod` before each run,
+so existing binaries are not reused after a Go upgrade. Go's build cache avoids
+unnecessary recompilation.
+
+Scanner versions default to `latest`. Set `GOSEC_VERSION` and
+`GOVULNCHECK_VERSION` to pin releases for reproducible builds. Installation
+failures are reported without falling back to a different release.
+
+New Go releases can also require newer scanner analysis dependencies. Building
+with the matching Go toolchain prevents stale-binary mismatches, but does not
+guarantee that every scanner release supports every future Go export format.
+
+### Install CRDs
+
+```bash
+# Using Helm (recommended)
+# First, login to GitHub Container Registry
+# Username: your GitHub username
+# Password: a Personal Access Token (PAT) with `read:packages` scope
+# Create a PAT at: https://github.com/settings/tokens/new?scopes=read:packages
+helm registry login ghcr.io
+
+helm install vitistack-crds oci://ghcr.io/vitistack/helm/crds
+
+# Or using kubectl (no authentication required)
+kubectl apply -f https://github.com/vitistack/common/releases/latest/download/crds.yaml
 ```
 
-**NOTE:** This image ought to be published in the personal registry you specified.
-And it is required to have access to pull the image from the working environment.
-Make sure you have the proper permission to the registry if the above commands don’t work.
+### Use Go Libraries
 
-**Install the CRDs into the cluster:**
 
-```sh
-make install
+```bash
+go get github.com/vitistack/common@latest
 ```
 
-**Deploy the Manager to the cluster with the image specified by `IMG`:**
+#### k8sclient
 
-```sh
-make deploy IMG=<some-registry>/common:tag
+```go
+import (
+    "github.com/vitistack/common/pkg/loggers/vlog"
+    "github.com/vitistack/common/pkg/clients/k8sclient"
+)
+
+func main() {
+    vlog.Setup(vlog.Options{Level: "info", JSON: true})
+    defer vlog.Sync()
+
+    k8sclient.Init()
+    vlog.Info("connected to kubernetes")
+}
 ```
 
-> **NOTE**: If you encounter RBAC errors, you may need to grant yourself cluster-admin
-privileges or be logged in as admin.
+#### s3Client
 
-**Create instances of your solution**
-You can apply the samples (examples) from the config/sample:
+```go
+package main
 
-```sh
-kubectl apply -k config/samples/
+import (
+    "github.com/vitistack/common/pkg/loggers/vlog"
+    "github.com/vitistack/common/pkg/clients/s3client/s3interface"
+    "github.com/vitistack/common/pkg/clients/s3client/s3minioclient"
+)
+
+func main() {
+  vlog.Setup(vlog.Options{Level: "info", JSON: true})
+  defer vlog.Sync()
+
+  s3, err := s3minioclient.NewS3Client(
+	  s3interface.WithAccessKey("accesskey"),
+	  s3interface.WithSecretKey("secretkey"),
+	  s3interface.WithEndpoint("your-endpoint"),
+	  s3interface.WithRegion("your region"),
+	  s3interface.WithSecure(false),
+  )
+  vlog.Info("s3 client created")
+}
 ```
 
->**NOTE**: Ensure that the samples has default values to test it out.
+## Documentation
 
-### To Uninstall
-**Delete the instances (CRs) from the cluster:**
+| Resource              | Link                                                         |
+| --------------------- | ------------------------------------------------------------ |
+| 🚀 Quick Start Guide  | [docs/quick-start.md](docs/quick-start.md)                   |
+| 📚 CRD Reference      | [docs/crds.md](docs/crds.md)                                 |
+| 💻 Go Libraries       | [docs/go-libraries.md](docs/go-libraries.md)                 |
+| 📖 Full Documentation | [docs/](docs/)                                               |
+| 🔍 API Reference      | [pkg.go.dev](https://pkg.go.dev/github.com/vitistack/common) |
+| 💡 Examples           | [examples/](examples/)                                       |
 
-```sh
-kubectl delete -k config/samples/
+## Examples
+
+### Provision a Virtual Machine
+
+```yaml
+apiVersion: vitistack.io/v1alpha1
+kind: Machine
+metadata:
+  name: web-server
+spec:
+  providerRef:
+    name: my-proxmox
+  instanceType: medium
+  cpu:
+    cores: 4
+  memory: 8192
+  os:
+    distribution: ubuntu
+    version: "22.04"
 ```
 
-**Delete the APIs(CRDs) from the cluster:**
+### Create a Kubernetes Cluster
 
-```sh
-make uninstall
+```yaml
+apiVersion: vitistack.io/v1alpha1
+kind: KubernetesCluster
+metadata:
+  name: production
+spec:
+  topology:
+    controlPlane:
+      replicas: 3
+      machineClass: medium
+    workers:
+      nodePools:
+        - name: general
+          replicas: 5
+          autoscaling:
+            enabled: true
+            minReplicas: 3
+            maxReplicas: 10
 ```
 
-**UnDeploy the controller from the cluster:**
+### Use Go Libraries
 
-```sh
-make undeploy
+```go
+package main
+
+import (
+    "github.com/vitistack/common/pkg/loggers/vlog"
+    "github.com/vitistack/common/pkg/settings/dotenv"
+)
+
+func main() {
+    dotenv.LoadDotEnv()
+    vlog.Setup(vlog.Options{Level: "info"})
+    defer vlog.Sync()
+
+    vlog.With("app", "myapp").Info("starting application")
+}
 ```
 
-## Project Distribution
+## Development
 
-Following the options to release and provide this solution to the users.
+```bash
+# Clone repository
+git clone https://github.com/vitistack/common
+cd common
 
-### By providing a bundle with all YAML files
+# Install dependencies
+make deps
 
-1. Build the installer for the image built and published in the registry:
+# Run tests
+make test
 
-```sh
-make build-installer IMG=<some-registry>/common:tag
+# Generate CRDs
+make generate
+
+# Build
+make build
+
+# Lint code
+make lint
 ```
-
-**NOTE:** The makefile target mentioned above generates an 'install.yaml'
-file in the dist directory. This file contains all the resources built
-with Kustomize, which are necessary to install this project without its
-dependencies.
-
-2. Using the installer
-
-Users can just run 'kubectl apply -f <URL for YAML BUNDLE>' to install
-the project, i.e.:
-
-```sh
-kubectl apply -f https://raw.githubusercontent.com/<org>/common/<tag or branch>/dist/install.yaml
-```
-
-### By providing a Helm Chart
-
-1. Build the chart using the optional helm plugin
-
-```sh
-kubebuilder edit --plugins=helm/v2-alpha
-```
-
-2. See that a chart was generated under 'dist/chart', and users
-can obtain this solution from there.
-
-**NOTE:** If you change the project, you need to update the Helm Chart
-using the same command above to sync the latest changes. Furthermore,
-if you create webhooks, you need to use the above command with
-the '--force' flag and manually ensure that any custom configuration
-previously added to 'dist/chart/values.yaml' or 'dist/chart/manager/manager.yaml'
-is manually re-applied afterwards.
 
 ## Contributing
-// TODO(user): Add detailed information on how you would like others to contribute to this project
 
-**NOTE:** Run `make help` for more information on all potential `make` targets
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
-More information can be found via the [Kubebuilder Documentation](https://book.kubebuilder.io/introduction.html)
+### Adding New Features
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## Support
+
+- 📖 [Documentation](docs/)
+- 🐛 [Issue Tracker](https://github.com/vitistack/common/issues)
+- 💬 [Discussions](https://github.com/vitistack/common/discussions)
 
 ## License
 
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
+
+---
+
+**Built with ❤️ by the Vitistack Team**

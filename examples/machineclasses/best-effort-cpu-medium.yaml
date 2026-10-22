@@ -1,0 +1,18 @@
+---
+apiVersion: vitistack.io/v1alpha1
+kind: MachineClass
+metadata:
+  name: best-effort-cpu-medium
+spec:
+  displayName: Best Effort CPU Medium
+  description: Best-effort instance with 4 cores and 8Gi memory (Tanzu best-effort-cpu-medium)
+  enabled: true
+  default: false
+  category: CPU
+  cpu:
+    cores: 4
+    sockets: 1
+    threads: 1
+  memory:
+    quantity: 8Gi
+  machineProviders: []

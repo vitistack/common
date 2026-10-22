@@ -5,7 +5,7 @@
 cliVersion: 4.16.0
 domain: vitistack.io
 layout:
-- go.kubebuilder.io/v4
+  - go.kubebuilder.io/v4
 projectName: common
 repo: github.com/vitistack/common
 version: "3"
