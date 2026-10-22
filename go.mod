@@ -5,7 +5,7 @@ go 1.27.3
 require (
 	github.com/go-logr/logr v1.4.4
 	github.com/joho/godotenv v1.5.1
-	github.com/minio/minio-go/v7 v7.3.0
+	github.com/minio/minio-go/v7 v7.4.1
 	go.opentelemetry.io/otel v1.45.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.45.0
 	go.opentelemetry.io/otel/sdk v1.45.0
