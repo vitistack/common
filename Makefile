@@ -50,7 +50,7 @@ help: ## Display this help.
 manifests: generate ## Generate CRD manifests
 	
 .PHONY: generate
-generate: gen-deepcopy gen-manifests   ## Generate code and manifests.
+generate: gen-deepcopy gen-manifests gen-statusupdaters   ## Generate code and manifests.
 
 .PHONY: gen-manifests
 gen-manifests: controller-gen ## Generate manifests
@@ -65,6 +65,11 @@ gen-manifests: controller-gen ## Generate manifests
 	@hack/inject-annotations.sh charts/vitistack-crds/templates
 	@echo "CRDs copied successfully!"
 	@$(MAKE) gen-crds-yaml
+
+.PHONY: gen-statusupdaters
+gen-statusupdaters: gen-manifests ## Generate <Kind>StatusUpdater helpers (runs after the apply configurations)
+	go run ./cmd/statusapply-gen -dir pkg/v1alpha1/applyconfiguration/pkg/v1alpha1 -api github.com/vitistack/common/pkg/v1alpha1
+	go run ./cmd/statusapply-gen -dir pkg/v1alpha2/applyconfiguration/pkg/v1alpha2 -api github.com/vitistack/common/pkg/v1alpha2
 
 .PHONY: gen-crds-yaml
 gen-crds-yaml: ## Generate combined crds.yaml from individual CRD files
