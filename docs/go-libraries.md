@@ -305,6 +305,7 @@ err := patch.Apply(ctx, r.Client, client.FieldOwner("my-controller"), client.For
 - Multiple `Status()`/`SetCondition` calls are merged; conditions are de-duplicated by `Type`
 - `ObservedGeneration` on conditions defaults to the object's generation
 - `LastTransitionTime` is kept when a condition's status is unchanged (read from the object's current conditions)
+- `Get`/`Has` look up a condition, preferring ones recorded in the patch over the object's current ones (same semantics as `conditions/v2`)
 - `Apply` is a no-op when nothing was recorded, and it requires a `client.FieldOwner`
 
 ### Notes

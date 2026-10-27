@@ -29,6 +29,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/vitistack/common/pkg/operator/conditions/v2"
 )
 
 // ErrNoFieldOwner is returned by Apply when no client.FieldOwner option is given.
@@ -105,6 +107,22 @@ func (p *Patch[S]) RemoveCondition(condType string) *Patch[S] {
 		}
 	}
 	return p
+}
+
+// Get returns the condition of the given type. A condition recorded with
+// SetCondition wins over the one currently on the object.
+func (p *Patch[S]) Get(condType string) (metav1.Condition, bool) {
+	if c, ok := conditions.Get(p.conditions, condType); ok {
+		return c, true
+	}
+	return conditions.Get(p.existing, condType)
+}
+
+// Has reports whether a condition of the given type is recorded in the Patch
+// or present on the object.
+func (p *Patch[S]) Has(condType string) bool {
+	_, ok := p.Get(condType)
+	return ok
 }
 
 // HasChanges reports whether any status field or condition was recorded.

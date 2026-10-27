@@ -167,3 +167,25 @@ func TestApplyRequiresFieldOwner(t *testing.T) {
 		t.Errorf("err = %v, want statusapply.ErrNoFieldOwner", err)
 	}
 }
+
+func TestGetAndHas(t *testing.T) {
+	nn := newNN()
+	nn.Status.Conditions = []metav1.Condition{{Type: "Ready", Status: metav1.ConditionTrue, Reason: "Old"}}
+	p := ac.NetworkNamespaceStatusUpdater(nn)
+
+	if c, ok := p.Get("Ready"); !ok || c.Reason != "Old" {
+		t.Errorf("Get(Ready) = %+v, %v, want object's condition", c, ok)
+	}
+	if p.Has("Synced") {
+		t.Error("Has(Synced) = true, want false")
+	}
+
+	p.SetCondition(metav1.Condition{Type: "Ready", Status: metav1.ConditionFalse, Reason: "New"})
+	p.SetCondition(metav1.Condition{Type: "Synced", Status: metav1.ConditionTrue, Reason: "Ok"})
+	if c, _ := p.Get("Ready"); c.Reason != "New" {
+		t.Errorf("Get(Ready).Reason = %q, want recorded value New", c.Reason)
+	}
+	if !p.Has("Synced") {
+		t.Error("Has(Synced) = false, want true")
+	}
+}
