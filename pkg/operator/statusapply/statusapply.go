@@ -109,19 +109,19 @@ func (p *Patch[S]) RemoveCondition(condType string) *Patch[S] {
 	return p
 }
 
-// Get returns the condition of the given type. A condition recorded with
+// GetCondition returns the condition of the given type. A condition recorded with
 // SetCondition wins over the one currently on the object.
-func (p *Patch[S]) Get(condType string) (metav1.Condition, bool) {
+func (p *Patch[S]) GetCondition(condType string) (metav1.Condition, bool) {
 	if c, ok := conditions.Get(p.conditions, condType); ok {
 		return c, true
 	}
 	return conditions.Get(p.existing, condType)
 }
 
-// Has reports whether a condition of the given type is recorded in the Patch
+// HasCondition reports whether a condition of the given type is recorded in the Patch
 // or present on the object.
-func (p *Patch[S]) Has(condType string) bool {
-	_, ok := p.Get(condType)
+func (p *Patch[S]) HasCondition(condType string) bool {
+	_, ok := p.GetCondition(condType)
 	return ok
 }
 
