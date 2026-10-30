@@ -10,6 +10,7 @@ import (
 // ClusterStorageClass is the Schema for the ClusterStorageClass API
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
+// +kubebuilder:ac:generate=true
 // +kubebuilder:resource:path=clusterstorageclasses,scope=Cluster,shortName=csc
 // +kubebuilder:printcolumn:name="Type",type=string,JSONPath=`.spec.type`
 // +kubebuilder:printcolumn:name="Enabled",type=string,JSONPath=`.spec.enabled`

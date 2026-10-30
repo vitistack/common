@@ -10,6 +10,7 @@ import (
 // Machine is the Schema for the Machines API
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
+// +kubebuilder:ac:generate=true
 // +kubebuilder:resource:path=machines,scope=Namespaced,shortName=m
 // +kubebuilder:printcolumn:name="Phase",type=string,JSONPath=`.status.phase`
 // +kubebuilder:printcolumn:name="State",type=string,JSONPath=`.status.state`
