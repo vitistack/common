@@ -8,7 +8,7 @@ import (
 )
 
 // ClusterStorageStatusUpdater starts a status Patch for obj. See statusapply.For.
-func ClusterStorageStatusUpdater(obj *apiv1alpha1.ClusterStorage) *statusapply.Patch[*ClusterStorageStatusApplyConfiguration] {
+func ClustatusterStorageSUpdater(obj *apiv1alpha1.ClusterStorage) *statusapply.Patch[*ClusterStorageStatusApplyConfiguration] {
 	return statusapply.For(obj, ClusterStorageStatus())
 }
 
