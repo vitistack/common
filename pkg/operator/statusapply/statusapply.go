@@ -9,8 +9,8 @@
 //		return ctrl.Result{}, err
 //	}
 //	patch.Status().WithPhase("Ready").WithMessage("ok")
-//	patch.SetCondition(metav1.Condition{Type: "Ready", Status: metav1.ConditionTrue, Reason: "Success"})
-//	patch.SetCondition(metav1.Condition{Type: "Synced", Status: metav1.ConditionTrue, Reason: "Success"})
+//	patch.SetCondition(&metav1.Condition{Type: "Ready", Status: metav1.ConditionTrue, Reason: "Success"})
+//	patch.SetCondition(&metav1.Condition{Type: "Synced", Status: metav1.ConditionTrue, Reason: "Success"})
 //	return ctrl.Result{}, patch.Apply(ctx, r.Client,
 //		client.FieldOwner("my-controller"), client.ForceOwnership)
 //
@@ -88,25 +88,27 @@ func (p *Patch[S]) Status() S {
 	return p.status
 }
 
-// SetCondition adds or replaces (by Type) a condition in the Patch.
+// SetCondition adds or replaces (by Type) a condition in the Patch. The Patch
+// stores a copy; cond itself is not modified.
 // ObservedGeneration defaults to the object's generation, and LastTransitionTime
 // is kept from the object's condition when its status is unchanged, otherwise
 // it is set to now.
-func (p *Patch[S]) SetCondition(cond metav1.Condition) *Patch[S] {
-	if cond.ObservedGeneration == 0 {
-		cond.ObservedGeneration = p.obj.GetGeneration()
+func (p *Patch[S]) SetCondition(cond *metav1.Condition) *Patch[S] {
+	c := *cond
+	if c.ObservedGeneration == 0 {
+		c.ObservedGeneration = p.obj.GetGeneration()
 	}
-	if cond.LastTransitionTime.IsZero() {
-		cond.LastTransitionTime = p.transitionTime(cond)
+	if c.LastTransitionTime.IsZero() {
+		c.LastTransitionTime = p.transitionTime(c.Type, c.Status)
 	}
 	p.dirty = true
 	for i := range p.conditions {
-		if p.conditions[i].Type == cond.Type {
-			p.conditions[i] = cond
+		if p.conditions[i].Type == c.Type {
+			p.conditions[i] = c
 			return p
 		}
 	}
-	p.conditions = append(p.conditions, cond)
+	p.conditions = append(p.conditions, c)
 	return p
 }
 
@@ -198,9 +200,9 @@ func (p *Patch[S]) build(gvk schema.GroupVersionKind) (*unstructured.Unstructure
 	return u, nil
 }
 
-func (p *Patch[S]) transitionTime(cond metav1.Condition) metav1.Time {
-	if e := meta.FindStatusCondition(p.existing, cond.Type); e != nil &&
-		e.Status == cond.Status && !e.LastTransitionTime.IsZero() {
+func (p *Patch[S]) transitionTime(condType string, status metav1.ConditionStatus) metav1.Time {
+	if e := meta.FindStatusCondition(p.existing, condType); e != nil &&
+		e.Status == status && !e.LastTransitionTime.IsZero() {
 		return e.LastTransitionTime
 	}
 	return metav1.NewTime(p.now().Truncate(time.Second))

@@ -86,7 +86,7 @@ func TestApplyKeepsOwnedStatus(t *testing.T) {
 	withOwnedStatus(nn)
 
 	p := updater(t, nn)
-	p.SetCondition(metav1.Condition{Type: "Deleting", Status: metav1.ConditionTrue, Reason: "R"})
+	p.SetCondition(&metav1.Condition{Type: "Deleting", Status: metav1.ConditionTrue, Reason: "R"})
 
 	c := &fakeClient{}
 	if err := p.Apply(context.Background(), c, client.FieldOwner("ctrl")); err != nil {
@@ -174,9 +174,9 @@ func TestApplyBatchesFieldsAndConditions(t *testing.T) {
 	p := updater(t, nn)
 	p.Status().WithPhase("Pending")
 	p.Status().WithPhase("Ready").WithVlanID(42)
-	p.SetCondition(metav1.Condition{Type: "Ready", Status: metav1.ConditionFalse, Reason: "First"})
-	p.SetCondition(metav1.Condition{Type: "Synced", Status: metav1.ConditionTrue, Reason: "Ok"})
-	p.SetCondition(metav1.Condition{Type: "Ready", Status: metav1.ConditionTrue, Reason: "Success"})
+	p.SetCondition(&metav1.Condition{Type: "Ready", Status: metav1.ConditionFalse, Reason: "First"})
+	p.SetCondition(&metav1.Condition{Type: "Synced", Status: metav1.ConditionTrue, Reason: "Ok"})
+	p.SetCondition(&metav1.Condition{Type: "Ready", Status: metav1.ConditionTrue, Reason: "Success"})
 
 	c := &fakeClient{}
 	if err := p.Apply(context.Background(), c, client.FieldOwner("ctrl"), client.ForceOwnership); err != nil {
@@ -220,22 +220,22 @@ func TestTransitionTimeUpdatedOnStatusChange(t *testing.T) {
 	nn.Status.Conditions = []metav1.Condition{{Type: "Ready", Status: metav1.ConditionTrue, LastTransitionTime: old}}
 
 	p := updater(t, nn)
-	p.SetCondition(metav1.Condition{Type: "Ready", Status: metav1.ConditionFalse, Reason: "Broken"})
+	p.SetCondition(&metav1.Condition{Type: "Ready", Status: metav1.ConditionFalse, Reason: "Broken"})
 
 	c := &fakeClient{}
 	if err := p.Apply(context.Background(), c, client.FieldOwner("ctrl")); err != nil {
 		t.Fatal(err)
 	}
 	got := sent(t, c).Status.Conditions[0].LastTransitionTime
-	if got.Time.Year() < 2026 {
+	if got.Year() < 2026 {
 		t.Errorf("transition time = %v, want now", got)
 	}
 }
 
 func TestRemoveCondition(t *testing.T) {
 	p := updater(t, newNN())
-	p.SetCondition(metav1.Condition{Type: "A", Status: metav1.ConditionTrue, Reason: "R"})
-	p.SetCondition(metav1.Condition{Type: "B", Status: metav1.ConditionTrue, Reason: "R"})
+	p.SetCondition(&metav1.Condition{Type: "A", Status: metav1.ConditionTrue, Reason: "R"})
+	p.SetCondition(&metav1.Condition{Type: "B", Status: metav1.ConditionTrue, Reason: "R"})
 	p.RemoveCondition("A")
 
 	c := &fakeClient{}
@@ -278,8 +278,8 @@ func TestGetAndHas(t *testing.T) {
 		t.Error("Has(Synced) = true, want false")
 	}
 
-	p.SetCondition(metav1.Condition{Type: "Ready", Status: metav1.ConditionFalse, Reason: "New"})
-	p.SetCondition(metav1.Condition{Type: "Synced", Status: metav1.ConditionTrue, Reason: "Ok"})
+	p.SetCondition(&metav1.Condition{Type: "Ready", Status: metav1.ConditionFalse, Reason: "New"})
+	p.SetCondition(&metav1.Condition{Type: "Synced", Status: metav1.ConditionTrue, Reason: "Ok"})
 	if c, _ := p.GetCondition("Ready"); c.Reason != "New" {
 		t.Errorf("Get(Ready).Reason = %q, want recorded value New", c.Reason)
 	}
