@@ -195,6 +195,7 @@ func (p *Patch[S]) build(gvk schema.GroupVersionKind) (*unstructured.Unstructure
 	}
 	u := &unstructured.Unstructured{Object: map[string]any{"status": status}}
 	u.SetGroupVersionKind(gvk)
+	u.SetResourceVersion(p.obj.GetResourceVersion())
 	u.SetName(p.obj.GetName())
 	u.SetNamespace(p.obj.GetNamespace())
 	return u, nil
