@@ -46,6 +46,104 @@ func newNN() *v1alpha2.NetworkNamespace {
 	return nn
 }
 
+func updater(t *testing.T, nn *v1alpha2.NetworkNamespace) *statusapply.Patch[*ac.NetworkNamespaceStatusApplyConfiguration] {
+	t.Helper()
+	p, err := ac.NetworkNamespaceStatusUpdater(nn, "ctrl")
+	if err != nil {
+		t.Fatal(err)
+	}
+	return p
+}
+
+// withOwnedStatus gives nn status fields owned by two managers: "ctrl" owns
+// vlanId and the Ready condition, "other" owns phase and the Synced condition.
+func withOwnedStatus(nn *v1alpha2.NetworkNamespace) {
+	old := metav1.NewTime(time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC))
+	nn.Status.VlanID = 42
+	nn.Status.Phase = "Ready"
+	nn.Status.Conditions = []metav1.Condition{
+		{Type: "Ready", Status: metav1.ConditionTrue, Reason: "Ok", LastTransitionTime: old},
+		{Type: "Synced", Status: metav1.ConditionTrue, Reason: "Ok", LastTransitionTime: old},
+	}
+	field := func(manager, fields string) metav1.ManagedFieldsEntry {
+		return metav1.ManagedFieldsEntry{
+			Manager:     manager,
+			Operation:   metav1.ManagedFieldsOperationApply,
+			APIVersion:  "vitistack.io/v1alpha2",
+			FieldsType:  "FieldsV1",
+			FieldsV1:    metav1.NewFieldsV1(fields),
+			Subresource: "status",
+		}
+	}
+	nn.ManagedFields = []metav1.ManagedFieldsEntry{
+		field("ctrl", `{"f:status":{"f:vlanId":{},"f:conditions":{"k:{\"type\":\"Ready\"}":{".":{},"f:type":{},"f:status":{},"f:reason":{},"f:message":{},"f:lastTransitionTime":{}}}}}`),
+		field("other", `{"f:status":{"f:phase":{},"f:conditions":{"k:{\"type\":\"Synced\"}":{".":{},"f:type":{},"f:status":{},"f:reason":{},"f:message":{},"f:lastTransitionTime":{}}}}}`),
+	}
+}
+
+func TestApplyKeepsOwnedStatus(t *testing.T) {
+	nn := newNN()
+	withOwnedStatus(nn)
+
+	p := updater(t, nn)
+	p.SetCondition(metav1.Condition{Type: "Deleting", Status: metav1.ConditionTrue, Reason: "R"})
+
+	c := &fakeClient{}
+	if err := p.Apply(context.Background(), c, client.FieldOwner("ctrl")); err != nil {
+		t.Fatal(err)
+	}
+	got := sent(t, c).Status
+	if got.VlanID != 42 {
+		t.Errorf("vlanId = %d, want owned value 42 kept", got.VlanID)
+	}
+	if got.Phase != "" {
+		t.Errorf("phase = %q, want none (owned by other)", got.Phase)
+	}
+	types := make([]string, 0, len(got.Conditions))
+	for _, cond := range got.Conditions {
+		types = append(types, cond.Type)
+	}
+	if len(types) != 2 || types[0] != "Ready" || types[1] != "Deleting" {
+		t.Errorf("condition types = %v, want [Ready Deleting]", types)
+	}
+	if got.Conditions[0].Reason != "Ok" {
+		t.Errorf("Ready = %+v, want kept as on the object", got.Conditions[0])
+	}
+}
+
+func TestApplyOwnedStatusAloneIsNoChange(t *testing.T) {
+	nn := newNN()
+	withOwnedStatus(nn)
+
+	c := &fakeClient{}
+	if err := updater(t, nn).Apply(context.Background(), c, client.FieldOwner("ctrl")); err != nil {
+		t.Fatal(err)
+	}
+	if c.calls != 0 {
+		t.Errorf("calls = %d, want 0", c.calls)
+	}
+}
+
+func TestRemoveOwnedCondition(t *testing.T) {
+	nn := newNN()
+	withOwnedStatus(nn)
+
+	p := updater(t, nn)
+	p.RemoveCondition("Ready")
+
+	c := &fakeClient{}
+	if err := p.Apply(context.Background(), c, client.FieldOwner("ctrl")); err != nil {
+		t.Fatal(err)
+	}
+	got := sent(t, c).Status
+	if len(got.Conditions) != 0 {
+		t.Errorf("conditions = %+v, want none", got.Conditions)
+	}
+	if got.VlanID != 42 {
+		t.Errorf("vlanId = %d, want owned value 42 kept", got.VlanID)
+	}
+}
+
 // sent decodes the request captured by the fake client.
 func sent(t *testing.T, c *fakeClient) (out struct {
 	APIVersion string `json:"apiVersion"`
@@ -73,7 +171,7 @@ func TestApplyBatchesFieldsAndConditions(t *testing.T) {
 	nn := newNN()
 	nn.Status.Conditions = []metav1.Condition{{Type: "Ready", Status: metav1.ConditionTrue, LastTransitionTime: old}}
 
-	p := ac.NetworkNamespaceStatusUpdater(nn)
+	p := updater(t, nn)
 	p.Status().WithPhase("Pending")
 	p.Status().WithPhase("Ready").WithVlanID(42)
 	p.SetCondition(metav1.Condition{Type: "Ready", Status: metav1.ConditionFalse, Reason: "First"})
@@ -121,7 +219,7 @@ func TestTransitionTimeUpdatedOnStatusChange(t *testing.T) {
 	nn := newNN()
 	nn.Status.Conditions = []metav1.Condition{{Type: "Ready", Status: metav1.ConditionTrue, LastTransitionTime: old}}
 
-	p := ac.NetworkNamespaceStatusUpdater(nn)
+	p := updater(t, nn)
 	p.SetCondition(metav1.Condition{Type: "Ready", Status: metav1.ConditionFalse, Reason: "Broken"})
 
 	c := &fakeClient{}
@@ -135,7 +233,7 @@ func TestTransitionTimeUpdatedOnStatusChange(t *testing.T) {
 }
 
 func TestRemoveCondition(t *testing.T) {
-	p := ac.NetworkNamespaceStatusUpdater(newNN())
+	p := updater(t, newNN())
 	p.SetCondition(metav1.Condition{Type: "A", Status: metav1.ConditionTrue, Reason: "R"})
 	p.SetCondition(metav1.Condition{Type: "B", Status: metav1.ConditionTrue, Reason: "R"})
 	p.RemoveCondition("A")
@@ -152,7 +250,7 @@ func TestRemoveCondition(t *testing.T) {
 
 func TestApplySkipsWhenNoChanges(t *testing.T) {
 	c := &fakeClient{}
-	if err := ac.NetworkNamespaceStatusUpdater(newNN()).Apply(context.Background(), c, client.FieldOwner("ctrl")); err != nil {
+	if err := updater(t, newNN()).Apply(context.Background(), c, client.FieldOwner("ctrl")); err != nil {
 		t.Fatal(err)
 	}
 	if c.calls != 0 {
@@ -161,7 +259,7 @@ func TestApplySkipsWhenNoChanges(t *testing.T) {
 }
 
 func TestApplyRequiresFieldOwner(t *testing.T) {
-	p := ac.NetworkNamespaceStatusUpdater(newNN())
+	p := updater(t, newNN())
 	p.Status().WithPhase("Ready")
 	if err := p.Apply(context.Background(), &fakeClient{}); !errors.Is(err, statusapply.ErrNoFieldOwner) {
 		t.Errorf("err = %v, want statusapply.ErrNoFieldOwner", err)
@@ -171,7 +269,7 @@ func TestApplyRequiresFieldOwner(t *testing.T) {
 func TestGetAndHas(t *testing.T) {
 	nn := newNN()
 	nn.Status.Conditions = []metav1.Condition{{Type: "Ready", Status: metav1.ConditionTrue, Reason: "Old"}}
-	p := ac.NetworkNamespaceStatusUpdater(nn)
+	p := updater(t, nn)
 
 	if c, ok := p.GetCondition("Ready"); !ok || c.Reason != "Old" {
 		t.Errorf("Get(Ready) = %+v, %v, want object's condition", c, ok)

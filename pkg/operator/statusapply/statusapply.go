@@ -4,7 +4,10 @@
 // Status changes (fields and conditions) are collected in a Patch during the
 // reconcile and sent to the API server in a single apply request at the end.
 //
-//	patch := ac.NetworkNamespaceStatusUpdater(&nn) // generated; wraps statusapply.For
+//	patch, err := ac.NetworkNamespaceStatusUpdater(&nn, "my-controller") // generated; wraps statusapply.For
+//	if err != nil {
+//		return ctrl.Result{}, err
+//	}
 //	patch.Status().WithPhase("Ready").WithMessage("ok")
 //	patch.SetCondition(metav1.Condition{Type: "Ready", Status: metav1.ConditionTrue, Reason: "Success"})
 //	patch.SetCondition(metav1.Condition{Type: "Synced", Status: metav1.ConditionTrue, Reason: "Success"})
@@ -13,8 +16,10 @@
 //
 // SSA semantics: each apply declares the complete set of status fields owned by
 // the field manager. Fields (and conditions) this manager applied previously but
-// omits now are removed unless another manager also owns them. Always describe
-// the full status this controller is responsible for in a single Patch.
+// omits now are removed unless another manager also owns them. The generated
+// updaters therefore start the Patch from what the field manager already owns,
+// so a reconcile only sets what changed. To remove a field, set it to nil on
+// Status(); to remove a condition, use RemoveCondition.
 package statusapply
 
 import (
@@ -54,16 +59,25 @@ type Patch[S any] struct {
 	now        func() time.Time
 }
 
-// For starts a new Patch for obj. status is an empty status apply
-// configuration from the generated constructor, e.g. ac.FooStatus().
+// For starts a new Patch for obj. status is the starting status apply
+// configuration: the part of obj's status the field manager owns, from the
+// generated Extract<Kind>Status, or an empty one from ac.FooStatus().
 // Name, namespace, generation and the current conditions are read from obj.
+// The conditions in status are kept as they are on obj. Starting a Patch
+// records no changes.
 func For[S any](obj client.Object, status S) *Patch[S] {
-	return &Patch[S]{
+	p := &Patch[S]{
 		obj:      obj,
 		status:   status,
 		existing: currentConditions(obj),
 		now:      time.Now,
 	}
+	for _, t := range conditionTypes(status) {
+		if c, ok := conditions.Get(p.existing, t); ok {
+			p.conditions = append(p.conditions, c)
+		}
+	}
+	return p
 }
 
 // Status returns the status apply configuration so its generated With* methods
@@ -163,6 +177,9 @@ func (p *Patch[S]) build(gvk schema.GroupVersionKind) (*unstructured.Unstructure
 	if err != nil {
 		return nil, fmt.Errorf("converting status apply configuration: %w", err)
 	}
+	// The Patch keeps the conditions, so ones removed with RemoveCondition
+	// must not come back from the starting status.
+	delete(status, "conditions")
 	if len(p.conditions) > 0 {
 		conds := make([]any, 0, len(p.conditions))
 		for i := range p.conditions {
@@ -187,6 +204,28 @@ func (p *Patch[S]) transitionTime(cond metav1.Condition) metav1.Time {
 		return e.LastTransitionTime
 	}
 	return metav1.NewTime(p.now().Truncate(time.Second))
+}
+
+// conditionTypes returns the types of the conditions in a status apply
+// configuration, or nil if it has none.
+func conditionTypes(status any) []string {
+	u, err := runtime.DefaultUnstructuredConverter.ToUnstructured(status)
+	if err != nil {
+		return nil
+	}
+	var s struct {
+		Conditions []struct {
+			Type string `json:"type"`
+		} `json:"conditions"`
+	}
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(u, &s); err != nil {
+		return nil
+	}
+	types := make([]string, 0, len(s.Conditions))
+	for _, c := range s.Conditions {
+		types = append(types, c.Type)
+	}
+	return types
 }
 
 // currentConditions reads status.conditions from obj, or nil if it has none.
