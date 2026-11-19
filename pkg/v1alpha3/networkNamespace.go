@@ -210,18 +210,13 @@ type NetworkNamespaceStatus struct {
 	IPv6Prefix           string `json:"ipv6Prefix,omitempty"`
 	VlanID               int    `json:"vlanId,omitempty"`
 
-	// Egress reports the egress addresses assigned to the namespace, per
-	// network. Includes networks not requested through spec (e.g. hnet).
+	// Egress reports the egress addresses assigned to the namespace
 	// +kubebuilder:validation:Optional
 	// +listType=map
 	// +listMapKey=network
 	Egress []EgressStatus `json:"egress,omitempty"`
 
-	// TODO: this should be removed from the status
-	//AssociatedKubernetesClusterIDs []string `json:"associatedKubernetesClusterIds,omitempty"`
-
 	// IPAllocationSummary reports aggregate IP allocation state. This is a
-	// projection computed from IPAllocation resources, not the source of truth.
 	// +kubebuilder:validation:Optional
 	IPAllocationSummary *IPAllocationSummary `json:"ipAllocationSummary,omitempty"`
 }
