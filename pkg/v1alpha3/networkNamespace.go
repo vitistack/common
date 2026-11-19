@@ -61,51 +61,24 @@ type NetworkNamespaceSpec struct {
 	Egress []EgressRequest `json:"egress,omitempty"`
 }
 
-// EgressNetwork names an egress network. It is an open string so providers can
-// define their own networks without a schema change. Well-known values are
-// "inet" and "hnet".
-// +kubebuilder:validation:MinLength=1
-// +kubebuilder:validation:MaxLength=32
-// +kubebuilder:validation:Pattern=`^[a-z0-9]([a-z0-9-]*[a-z0-9])?$`
-type EgressNetwork string
-
 // EgressRequest requests egress addresses on one network.
 // +kubebuilder:validation:XValidation:rule="has(self.ipv4) || has(self.ipv6)",message="at least one of ipv4 or ipv6 must be set"
 // +kubebuilder:validation:XValidation:rule="!has(self.ipv4) || !has(self.ipv4.fixedAddresses) || self.ipv4.fixedAddresses.all(a, isIP(a) && ip(a).family() == 4)",message="ipv4.fixedAddresses must contain IPv4 addresses"
 // +kubebuilder:validation:XValidation:rule="!has(self.ipv6) || !has(self.ipv6.fixedAddresses) || self.ipv6.fixedAddresses.all(a, isIP(a) && ip(a).family() == 6)",message="ipv6.fixedAddresses must contain IPv6 addresses"
 type EgressRequest struct {
-	// Network is the egress network the addresses are requested on.
-	// +kubebuilder:validation:Required
-	Network EgressNetwork `json:"network"`
 
-	// IPv4 requests IPv4 egress addresses.
-	// +kubebuilder:validation:Optional
-	IPv4 *EgressAddressRequest `json:"ipv4,omitempty"`
+	// +kubebuilder:validation:optional
+	RequestType EgressRequestType `json:"type,omitempty"`
 
-	// IPv6 requests IPv6 egress addresses.
-	// +kubebuilder:validation:Optional
-	IPv6 *EgressAddressRequest `json:"ipv6,omitempty"`
-}
+	// +kubebuilder:validation:optional
+	DynamicIPv4 *int32 `json:"dynamicIPv4,omitempty"`
+	// +kubebuilder:validation:optional
+	DynamicIPv6 *int32 `json:"dynamicIPv6,omitempty"`
 
-// EgressAddressRequest requests egress addresses of one IP family.
-// Exactly one of dynamicAddresses or fixedAddresses must be set.
-// +kubebuilder:validation:XValidation:rule="has(self.dynamicAddresses) != has(self.fixedAddresses)",message="exactly one of dynamicAddresses or fixedAddresses must be set"
-type EgressAddressRequest struct {
-	// DynamicAddresses is the number of egress addresses to allocate.
-	// A pointer so that 0 differs from unset.
-	// +kubebuilder:validation:Optional
-	// +kubebuilder:validation:Minimum=0
-	// +kubebuilder:validation:Maximum=4
-	DynamicAddresses *int32 `json:"dynamicAddresses,omitempty"`
-
-	// FixedAddresses are specific egress addresses to use. They must lie within
-	// the datacenter's egress ranges; the provider checks this and reports
-	// violations through the EgressReady condition.
-	// +kubebuilder:validation:Optional
-	// +kubebuilder:validation:MaxItems=4
-	// +kubebuilder:validation:items:MaxLength=45
-	// +listType=set
-	FixedAddresses []string `json:"fixedAddresses,omitempty"`
+	// +kubebuilder:validation:optional
+	IPv4 []string `json:"ipv4,omitempty"`
+	// +kubebuilder:validation:optional
+	IPv6 []string `json:"ipv6,omitempty"`
 }
 
 // NetworkProvisioning configures the source of the network segment.
