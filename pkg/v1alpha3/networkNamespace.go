@@ -68,7 +68,7 @@ type NetworkNamespaceSpec struct {
 type EgressRequest struct {
 
 	// +kubebuilder:validation:optional
-	RequestType EgressRequestType `json:"type,omitempty"`
+	RequestType string `json:"type,omitempty"`
 
 	// +kubebuilder:validation:optional
 	DynamicIPv4 *int32 `json:"dynamicIPv4,omitempty"`
