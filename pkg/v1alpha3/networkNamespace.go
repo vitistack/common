@@ -7,9 +7,9 @@ import (
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// NetworkNamespace is the Schema for the NetworkNamespace API (v1alpha2).
+// NetworkNamespace is the Schema for the NetworkNamespace API (v1alpha3).
 //
-// v1alpha2 separates network provisioning (where does the IP prefix come from?)
+// v1alpha3 separates network provisioning (where does the IP prefix come from?)
 // from IP allocation (how are individual IPs assigned?). This enables pluggable
 // IPAM back-ends and explicit provisioning readiness gating.
 //
@@ -39,6 +39,31 @@ type NetworkNamespaceList struct {
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []NetworkNamespace `json:"items"`
 }
+
+// IPAllocationType specifies the method used for IP address allocation
+// within a NetworkNamespace.
+// +kubebuilder:validation:Enum=dhcp;static
+type IPAllocationType string
+
+const (
+	IPAllocationTypeDHCP   IPAllocationType = "dhcp"
+	IPAllocationTypeStatic IPAllocationType = "static"
+)
+
+// NetworkProvisioningType identifies the system that provisions network
+// segments (IP prefixes + VLANs) for a NetworkNamespace. Open string: the
+// constants below are well-known values, not an exhaustive list.
+type NetworkProvisioningType string
+
+// ProvisioningPhase represents the lifecycle state of network provisioning.
+// +kubebuilder:validation:Enum=Pending;Ready;Error
+type ProvisioningPhase string
+
+const (
+	ProvisioningPhasePending ProvisioningPhase = "Pending"
+	ProvisioningPhaseReady   ProvisioningPhase = "Ready"
+	ProvisioningPhaseError   ProvisioningPhase = "Error"
+)
 
 // NetworkNamespaceSpec defines the desired state of a NetworkNamespace.
 type NetworkNamespaceSpec struct {
@@ -93,7 +118,7 @@ type NetworkProvisioning struct {
 	// +kubebuilder:validation:MaxLength=32
 	// +kubebuilder:validation:Pattern=`^[A-Za-z0-9_-]+$`
 	// +kubebuilder:default=nam
-	Provider NetworkProvisioningType `json:"provider"`
+	Provider string `json:"provider"`
 
 	// NAM contains configuration specific to NAM-based provisioning.
 	// Reserved for future NAM-specific overrides.
@@ -144,14 +169,49 @@ type NetworkNamespaceIPAllocation struct {
 	// +kubebuilder:validation:Pattern=`^[A-Za-z0-9_-]+$`
 	Provider string `json:"provider,omitempty"`
 
-	// Static contains the IP pool configuration for static allocation.
-	// Required when type is "static".
+	// Static contains optional configuration for static allocation within the
+	// provisioned network. When omitted, defaults apply.
 	// +kubebuilder:validation:Optional
 	Static *StaticIPAllocationConfig `json:"static,omitempty"`
 
 	// DHCP contains optional configuration overrides for DHCP-based allocation.
 	// +kubebuilder:validation:Optional
 	DHCP *DHCPAllocationConfig `json:"dhcp,omitempty"`
+}
+
+// StaticIPAllocationConfig configures static IP assignment within the
+// provisioned network (status.ipv4Prefix). The subnet, gateway and VLAN
+// come from networkProvisioning, not from here.
+type StaticIPAllocationConfig struct {
+	// IPv4RangeStart is the first allocatable address. Must be inside the
+	// provisioned prefix. Defaults to the network address + 4.
+	// +kubebuilder:validation:Optional
+	IPv4RangeStart string `json:"ipv4RangeStart,omitempty"`
+
+	// IPv4RangeEnd is the last allocatable address. Must be inside the
+	// provisioned prefix. Defaults to the last usable address.
+	// +kubebuilder:validation:Optional
+	IPv4RangeEnd string `json:"ipv4RangeEnd,omitempty"`
+
+	// DNS is a list of DNS server addresses for machines in this pool.
+	// +kubebuilder:validation:Optional
+	DNS []string `json:"dns,omitempty"`
+
+	// TTLSeconds is the time-to-live for IP allocations in seconds.
+	// After this period, unused allocations may be reclaimed by the operator.
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:validation:Minimum=60
+	// +kubebuilder:default=3600
+	TTLSeconds int32 `json:"ttlSeconds,omitempty"`
+}
+
+// DHCPAllocationConfig provides optional configuration overrides when using
+// DHCP-based IP allocation.
+type DHCPAllocationConfig struct {
+	// RequireClientClasses specifies Kea DHCP client classes that must be
+	// matched for lease allocation.
+	// +kubebuilder:validation:Optional
+	RequireClientClasses []string `json:"requireClientClasses,omitempty"`
 }
 
 // NetworkNamespaceStatus defines the observed state of a NetworkNamespace.
@@ -173,7 +233,6 @@ type NetworkNamespaceStatus struct {
 	// successfully provisioned. Downstream operators (kea, static-ip)
 	// must wait for "Ready" before acting.
 	// +kubebuilder:validation:Optional
-	// +kubebuilder:validation:Enum=Pending;Ready;Error
 	ProvisioningPhase ProvisioningPhase `json:"provisioningPhase,omitempty"`
 
 	// Network fields populated by the provisioning layer.
@@ -198,7 +257,7 @@ type NetworkNamespaceStatus struct {
 type EgressStatus struct {
 	// Network is the egress network.
 	// +kubebuilder:validation:Required
-	Network EgressNetwork `json:"network"`
+	Network string `json:"network"`
 
 	// IPv4 are the assigned IPv4 egress addresses, in provider order.
 	// +kubebuilder:validation:Optional
