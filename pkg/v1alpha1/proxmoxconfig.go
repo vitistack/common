@@ -10,6 +10,7 @@ import (
 // ProxmoxConfig is the Schema for the ProxmoxConfig API
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
+// +kubebuilder:ac:generate=true
 // +kubebuilder:resource:path=proxmoxconfigs,scope=Cluster,shortName=pxc
 // +kubebuilder:printcolumn:name="Name",type=string,JSONPath=`.spec.name`
 // +kubebuilder:printcolumn:name="Endpoint",type=string,JSONPath=`.spec.endpoint`

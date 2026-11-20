@@ -22,6 +22,7 @@ const (
 //
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
+// +kubebuilder:ac:generate=true
 // +kubebuilder:resource:path=ipallocations,scope=Namespaced,shortName=ipa
 // +kubebuilder:printcolumn:name="Address",type=string,JSONPath=`.status.address`
 // +kubebuilder:printcolumn:name="NetworkNamespace",type=string,JSONPath=`.spec.networkNamespaceName`

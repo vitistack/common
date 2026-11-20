@@ -10,6 +10,7 @@ import (
 // ControlPlaneVirtualSharedIP is the Schema for the ControlPlaneVirtualSharedIP API
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
+// +kubebuilder:ac:generate=true
 // +kubebuilder:resource:path=controlplanevirtualsharedips,scope=Namespaced,shortName=lb
 // +kubebuilder:printcolumn:name="DatacenterIdentifier",type=string,JSONPath=`.spec.datacenterIdentifier`
 // +kubebuilder:printcolumn:name="ClusterIdentifier",type=string,JSONPath=`.spec.clusterIdentifier`
