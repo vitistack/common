@@ -32,7 +32,7 @@ type NetworkNamespaceStatusApplyConfiguration struct {
 	VlanID               *int    `json:"vlanId,omitempty"`
 	// Egress reports the egress addresses assigned to the namespace
 	Egress []EgressStatusApplyConfiguration `json:"egress,omitempty"`
-	// IPAllocationSummary reports aggregate IP allocation state. This is a
+	// IPAllocationSummary reports aggregate IP allocation state.
 	IPAllocationSummary *IPAllocationSummaryApplyConfiguration `json:"ipAllocationSummary,omitempty"`
 }
 

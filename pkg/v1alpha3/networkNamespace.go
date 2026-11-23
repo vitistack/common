@@ -264,7 +264,7 @@ type NetworkNamespaceStatus struct {
 	// +listMapKey=network
 	Egress []EgressStatus `json:"egress,omitempty"`
 
-	// IPAllocationSummary reports aggregate IP allocation state. This is a
+	// IPAllocationSummary reports aggregate IP allocation state.
 	// +kubebuilder:validation:Optional
 	IPAllocationSummary *IPAllocationSummary `json:"ipAllocationSummary,omitempty"`
 }

@@ -974,7 +974,6 @@ spec:
                 x-kubernetes-list-type: map
               ipAllocationSummary:
                 description: IPAllocationSummary reports aggregate IP allocation state.
-                  This is a
                 properties:
                   allocatedCount:
                     description: AllocatedCount is the number of IP addresses currently
