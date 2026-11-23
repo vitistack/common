@@ -13,8 +13,7 @@ type NetworkNamespaceSpecApplyConfiguration struct {
 	// IPAllocation defines how individual IP addresses are assigned within the
 	// provisioned network. When not set, defaults to DHCP-based allocation.
 	IPAllocation *NetworkNamespaceIPAllocationApplyConfiguration `json:"ipAllocation,omitempty"`
-	// Egress requests egress addresses for the namespace, one entry per egress
-	// network. Mutable; providers reconcile changes. A provider that cannot
+	// Egress requests egress addresses for the namespace.
 	Egress []EgressRequestApplyConfiguration `json:"egress,omitempty"`
 }
 

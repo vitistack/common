@@ -53,7 +53,7 @@ var schemaYAML = typed.YAMLObject(`types:
           elementType:
             scalar: string
           elementRelationship: atomic
-    - name: type
+    - name: network
       type:
         scalar: string
 - name: com.github.vitistack.common.pkg.v1alpha3.EgressStatus

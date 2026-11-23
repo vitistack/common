@@ -19,8 +19,6 @@ import (
 // v1alpha3 separates network provisioning (where does the IP prefix come from?)
 // from IP allocation (how are individual IPs assigned?). This enables pluggable
 // IPAM back-ends and explicit provisioning readiness gating.
-//
-// // +kubebuilder:storageversion
 type NetworkNamespaceApplyConfiguration struct {
 	v1.TypeMetaApplyConfiguration    `json:""`
 	*v1.ObjectMetaApplyConfiguration `json:"metadata,omitempty"`

@@ -17,9 +17,8 @@ import (
 // +kubebuilder:subresource:status
 // +kubebuilder:ac:generate=true
 // +kubebuilder:resource:path=networknamespaces,scope=Namespaced,shortName=nn
-// // +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Provisioning",type=string,JSONPath=`.spec.networkProvisioning.provider`
-// +kubebuilder:printcolumn:name="DatacenterIdentifier",type=string,JSONPath=`.spec.datacenterIdentifier`
+// +kubebuilder:printcolumn:name="DatacenterIdentifier",type=string,JSONPath=`.status.datacenterIdentifier`
 // +kubebuilder:printcolumn:name="ProvisioningPhase",type=string,JSONPath=`.status.provisioningPhase`
 // +kubebuilder:printcolumn:name="Phase",type=string,JSONPath=`.status.phase`
 // +kubebuilder:printcolumn:name="Status",type=string,JSONPath=`.status.status`
@@ -40,8 +39,7 @@ type NetworkNamespaceList struct {
 	Items           []NetworkNamespace `json:"items"`
 }
 
-// IPAllocationType specifies the method used for IP address allocation
-// within a NetworkNamespace.
+// IPAllocationType specifies the method used for IP address allocation within a NetworkNamespace.
 // +kubebuilder:validation:Enum=dhcp;static
 type IPAllocationType string
 
@@ -77,8 +75,7 @@ type NetworkNamespaceSpec struct {
 	// +kubebuilder:validation:Optional
 	IPAllocation *NetworkNamespaceIPAllocation `json:"ipAllocation,omitempty"`
 
-	// Egress requests egress addresses for the namespace, one entry per egress
-	// network. Mutable; providers reconcile changes. A provider that cannot
+	// Egress requests egress addresses for the namespace.
 	// +kubebuilder:validation:Optional
 	// +listType=map
 	// +listMapKey=network
@@ -87,22 +84,41 @@ type NetworkNamespaceSpec struct {
 }
 
 // EgressRequest requests egress addresses on one network.
-// +kubebuilder:validation:XValidation:rule="has(self.ipv4) || has(self.ipv6)",message="at least one of ipv4 or ipv6 must be set"
-// +kubebuilder:validation:XValidation:rule="!has(self.ipv4) || !has(self.ipv4.fixedAddresses) || self.ipv4.fixedAddresses.all(a, isIP(a) && ip(a).family() == 4)",message="ipv4.fixedAddresses must contain IPv4 addresses"
-// +kubebuilder:validation:XValidation:rule="!has(self.ipv6) || !has(self.ipv6.fixedAddresses) || self.ipv6.fixedAddresses.all(a, isIP(a) && ip(a).family() == 6)",message="ipv6.fixedAddresses must contain IPv6 addresses"
+// +kubebuilder:validation:XValidation:rule="has(self.ipv4) || has(self.ipv6) || has(self.dynamicIPv4) || has(self.dynamicIPv6)",message="at least one of ipv4, ipv6, dynamicIPv4 or dynamicIPv6 must be set"
+// +kubebuilder:validation:XValidation:rule="!has(self.ipv4) || self.ipv4.all(a, isIP(a) && ip(a).family() == 4)",message="ipv4 must contain IPv4 addresses"
+// +kubebuilder:validation:XValidation:rule="!has(self.ipv6) || self.ipv6.all(a, isIP(a) && ip(a).family() == 6)",message="ipv6 must contain IPv6 addresses"
 type EgressRequest struct {
 
-	// +kubebuilder:validation:optional
-	RequestType string `json:"type,omitempty"`
+	// Network is the egress network, e.g. "hnet" or "inet".
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=32
+	Network string `json:"network"`
 
-	// +kubebuilder:validation:optional
+	// DynamicIPv4 is how many IPv4 addresses the provider should pick.
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:validation:Minimum=0
+	// +kubebuilder:validation:Maximum=16
 	DynamicIPv4 *int32 `json:"dynamicIPv4,omitempty"`
-	// +kubebuilder:validation:optional
+
+	// DynamicIPv6 is how many IPv6 addresses the provider should pick.
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:validation:Minimum=0
+	// +kubebuilder:validation:Maximum=16
 	DynamicIPv6 *int32 `json:"dynamicIPv6,omitempty"`
 
-	// +kubebuilder:validation:optional
+	// IPv4 are specific IPv4 addresses to request.
+	// +kubebuilder:validation:Optional
+	// +listType=atomic
+	// +kubebuilder:validation:MaxItems=16
+	// +kubebuilder:validation:items:MaxLength=15
 	IPv4 []string `json:"ipv4,omitempty"`
-	// +kubebuilder:validation:optional
+
+	// IPv6 are specific IPv6 addresses to request.
+	// +kubebuilder:validation:Optional
+	// +listType=atomic
+	// +kubebuilder:validation:MaxItems=16
+	// +kubebuilder:validation:items:MaxLength=39
 	IPv6 []string `json:"ipv6,omitempty"`
 }
 

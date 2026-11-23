@@ -643,7 +643,7 @@ spec:
     - jsonPath: .spec.networkProvisioning.provider
       name: Provisioning
       type: string
-    - jsonPath: .spec.datacenterIdentifier
+    - jsonPath: .status.datacenterIdentifier
       name: DatacenterIdentifier
       type: string
     - jsonPath: .status.provisioningPhase
@@ -668,8 +668,6 @@ spec:
           v1alpha3 separates network provisioning (where does the IP prefix come from?)
           from IP allocation (how are individual IPs assigned?). This enables pluggable
           IPAM back-ends and explicit provisioning readiness gating.
-
-          // +kubebuilder:storageversion
         properties:
           apiVersion:
             description: |-
@@ -692,36 +690,57 @@ spec:
             description: NetworkNamespaceSpec defines the desired state of a NetworkNamespace.
             properties:
               egress:
-                description: |-
-                  Egress requests egress addresses for the namespace, one entry per egress
-                  network. Mutable; providers reconcile changes. A provider that cannot
+                description: Egress requests egress addresses for the namespace.
                 items:
                   description: EgressRequest requests egress addresses on one network.
                   properties:
                     dynamicIPv4:
+                      description: DynamicIPv4 is how many IPv4 addresses the provider
+                        should pick.
+                      maximum: 16
+                      minimum: 0
                       type: integer
                     dynamicIPv6:
+                      description: DynamicIPv6 is how many IPv6 addresses the provider
+                        should pick.
+                      maximum: 16
+                      minimum: 0
                       type: integer
                     ipv4:
+                      description: IPv4 are specific IPv4 addresses to request.
                       items:
+                        maxLength: 15
                         type: string
+                      maxItems: 16
                       type: array
+                      x-kubernetes-list-type: atomic
                     ipv6:
+                      description: IPv6 are specific IPv6 addresses to request.
                       items:
+                        maxLength: 39
                         type: string
+                      maxItems: 16
                       type: array
-                    type:
+                      x-kubernetes-list-type: atomic
+                    network:
+                      description: Network is the egress network, e.g. "hnet" or "inet".
+                      maxLength: 32
+                      minLength: 1
                       type: string
+                  required:
+                  - network
                   type: object
                   x-kubernetes-validations:
-                  - message: at least one of ipv4 or ipv6 must be set
-                    rule: has(self.ipv4) || has(self.ipv6)
-                  - message: ipv4.fixedAddresses must contain IPv4 addresses
-                    rule: '!has(self.ipv4) || !has(self.ipv4.fixedAddresses) || self.ipv4.fixedAddresses.all(a,
-                      isIP(a) && ip(a).family() == 4)'
-                  - message: ipv6.fixedAddresses must contain IPv6 addresses
-                    rule: '!has(self.ipv6) || !has(self.ipv6.fixedAddresses) || self.ipv6.fixedAddresses.all(a,
-                      isIP(a) && ip(a).family() == 6)'
+                  - message: at least one of ipv4, ipv6, dynamicIPv4 or dynamicIPv6
+                      must be set
+                    rule: has(self.ipv4) || has(self.ipv6) || has(self.dynamicIPv4)
+                      || has(self.dynamicIPv6)
+                  - message: ipv4 must contain IPv4 addresses
+                    rule: '!has(self.ipv4) || self.ipv4.all(a, isIP(a) && ip(a).family()
+                      == 4)'
+                  - message: ipv6 must contain IPv6 addresses
+                    rule: '!has(self.ipv6) || self.ipv6.all(a, isIP(a) && ip(a).family()
+                      == 6)'
                 maxItems: 8
                 type: array
                 x-kubernetes-list-map-keys:

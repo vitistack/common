@@ -7,11 +7,16 @@ package v1alpha3
 //
 // EgressRequest requests egress addresses on one network.
 type EgressRequestApplyConfiguration struct {
-	RequestType *string  `json:"type,omitempty"`
-	DynamicIPv4 *int32   `json:"dynamicIPv4,omitempty"`
-	DynamicIPv6 *int32   `json:"dynamicIPv6,omitempty"`
-	IPv4        []string `json:"ipv4,omitempty"`
-	IPv6        []string `json:"ipv6,omitempty"`
+	// Network is the egress network, e.g. "hnet" or "inet".
+	Network *string `json:"network,omitempty"`
+	// DynamicIPv4 is how many IPv4 addresses the provider should pick.
+	DynamicIPv4 *int32 `json:"dynamicIPv4,omitempty"`
+	// DynamicIPv6 is how many IPv6 addresses the provider should pick.
+	DynamicIPv6 *int32 `json:"dynamicIPv6,omitempty"`
+	// IPv4 are specific IPv4 addresses to request.
+	IPv4 []string `json:"ipv4,omitempty"`
+	// IPv6 are specific IPv6 addresses to request.
+	IPv6 []string `json:"ipv6,omitempty"`
 }
 
 // EgressRequestApplyConfiguration constructs a declarative configuration of the EgressRequest type for use with
@@ -20,11 +25,11 @@ func EgressRequest() *EgressRequestApplyConfiguration {
 	return &EgressRequestApplyConfiguration{}
 }
 
-// WithRequestType sets the RequestType field in the declarative configuration to the given value
+// WithNetwork sets the Network field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the RequestType field is set to the value of the last call.
-func (b *EgressRequestApplyConfiguration) WithRequestType(value string) *EgressRequestApplyConfiguration {
-	b.RequestType = &value
+// If called multiple times, the Network field is set to the value of the last call.
+func (b *EgressRequestApplyConfiguration) WithNetwork(value string) *EgressRequestApplyConfiguration {
+	b.Network = &value
 	return b
 }
 
