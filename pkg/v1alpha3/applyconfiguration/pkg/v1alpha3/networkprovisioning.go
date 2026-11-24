@@ -2,10 +2,6 @@
 
 package v1alpha3
 
-import (
-	pkgv1alpha3 "github.com/vitistack/common/pkg/v1alpha3"
-)
-
 // NetworkProvisioningApplyConfiguration represents a declarative configuration of the NetworkProvisioning type for use
 // with apply.
 //
@@ -18,9 +14,6 @@ type NetworkProvisioningApplyConfiguration struct {
 	// change — each operator claims the NetworkNamespaces whose provider it owns.
 	// Mirrors the open-string convention already used by ipAllocation.provider.
 	Provider *string `json:"provider,omitempty"`
-	// NAM contains configuration specific to NAM-based provisioning.
-	// Reserved for future NAM-specific overrides.
-	NAM *pkgv1alpha3.NAMProvisioningConfig `json:"nam,omitempty"`
 	// Manual contains user-supplied network configuration.
 	// Required when provider is "manual".
 	Manual *ManualProvisioningConfigApplyConfiguration `json:"manual,omitempty"`
@@ -37,14 +30,6 @@ func NetworkProvisioning() *NetworkProvisioningApplyConfiguration {
 // If called multiple times, the Provider field is set to the value of the last call.
 func (b *NetworkProvisioningApplyConfiguration) WithProvider(value string) *NetworkProvisioningApplyConfiguration {
 	b.Provider = &value
-	return b
-}
-
-// WithNAM sets the NAM field in the declarative configuration to the given value
-// and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the NAM field is set to the value of the last call.
-func (b *NetworkProvisioningApplyConfiguration) WithNAM(value pkgv1alpha3.NAMProvisioningConfig) *NetworkProvisioningApplyConfiguration {
-	b.NAM = &value
 	return b
 }
 

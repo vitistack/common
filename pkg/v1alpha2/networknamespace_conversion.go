@@ -12,6 +12,7 @@ import (
 
 // hubData holds v1alpha3 fields that v1alpha2 cannot represent. It is stashed
 // on v1alpha2 objects in nnconversion.HubDataAnnotation.
+// +kubebuilder:object:generate=false
 type hubData struct {
 	Egress       []v1alpha3.EgressRequest `json:"egress,omitempty"`
 	StatusEgress []v1alpha3.EgressStatus  `json:"statusEgress,omitempty"`
@@ -19,6 +20,7 @@ type hubData struct {
 
 // spokeData holds v1alpha2 fields that v1alpha3 cannot represent. It is
 // stashed on v1alpha3 objects in nnconversion.V1alpha2DataAnnotation.
+// +kubebuilder:object:generate=false
 type spokeData struct {
 	// Static is ipAllocation.static's network when it differs from
 	// networkProvisioning.manual.

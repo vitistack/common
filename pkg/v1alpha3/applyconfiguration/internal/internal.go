@@ -109,18 +109,6 @@ var schemaYAML = typed.YAMLObject(`types:
     - name: vlanId
       type:
         scalar: numeric
-- name: com.github.vitistack.common.pkg.v1alpha3.NAMProvisioningConfig
-  map:
-    elementType:
-      scalar: untyped
-      list:
-        elementType:
-          namedType: __untyped_atomic_
-        elementRelationship: atomic
-      map:
-        elementType:
-          namedType: __untyped_deduced_
-        elementRelationship: separable
 - name: com.github.vitistack.common.pkg.v1alpha3.NetworkNamespace
   map:
     fields:
@@ -235,9 +223,6 @@ var schemaYAML = typed.YAMLObject(`types:
     - name: manual
       type:
         namedType: com.github.vitistack.common.pkg.v1alpha3.ManualProvisioningConfig
-    - name: nam
-      type:
-        namedType: com.github.vitistack.common.pkg.v1alpha3.NAMProvisioningConfig
     - name: provider
       type:
         scalar: string

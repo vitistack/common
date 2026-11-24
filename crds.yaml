@@ -4936,7 +4936,7 @@ spec:
             type: object
         type: object
     served: true
-    storage: true
+    storage: false
     subresources:
       status: {}
   - additionalPrinterColumns:
@@ -5137,11 +5137,6 @@ spec:
                     required:
                     - ipv4CIDR
                     type: object
-                  nam:
-                    description: |-
-                      NAM contains configuration specific to NAM-based provisioning.
-                      Reserved for future NAM-specific overrides.
-                    type: object
                   provider:
                     default: nam
                     description: |-
@@ -5311,7 +5306,7 @@ spec:
             type: object
         type: object
     served: true
-    storage: false
+    storage: true
     subresources:
       status: {}
 ---

@@ -20,6 +20,7 @@ const (
 
 // hubData holds v1alpha3 fields that v1alpha1 cannot represent. It is stashed
 // on v1alpha1 objects in nnconversion.HubDataAnnotation.
+// +kubebuilder:object:generate=false
 type hubData struct {
 	Egress       []v1alpha3.EgressRequest `json:"egress,omitempty"`
 	StatusEgress []v1alpha3.EgressStatus  `json:"statusEgress,omitempty"`
@@ -36,12 +37,14 @@ type hubData struct {
 }
 
 // provisioningStash wraps the hub's networkProvisioning so that nil survives.
+// +kubebuilder:object:generate=false
 type provisioningStash struct {
 	Value *v1alpha3.NetworkProvisioning `json:"value"`
 }
 
 // spokeData holds v1alpha1 fields that v1alpha3 cannot represent. It is
 // stashed on v1alpha3 objects in nnconversion.V1alpha1DataAnnotation.
+// +kubebuilder:object:generate=false
 type spokeData struct {
 	// Static is ipAllocation.static's network when provisioning is not
 	// manual, so it cannot live in networkProvisioning.manual.

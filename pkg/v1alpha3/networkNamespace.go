@@ -137,20 +137,11 @@ type NetworkProvisioning struct {
 	// +kubebuilder:default=nam
 	Provider string `json:"provider"`
 
-	// NAM contains configuration specific to NAM-based provisioning.
-	// Reserved for future NAM-specific overrides.
-	// +kubebuilder:validation:Optional
-	NAM *NAMProvisioningConfig `json:"nam,omitempty"`
-
 	// Manual contains user-supplied network configuration.
 	// Required when provider is "manual".
 	// +kubebuilder:validation:Optional
 	Manual *ManualProvisioningConfig `json:"manual,omitempty"`
 }
-
-// NAMProvisioningConfig holds configuration specific to NAM-based network
-// provisioning. Currently empty; reserved for future overrides.
-type NAMProvisioningConfig struct{}
 
 // ManualProvisioningConfig holds user-supplied network segment configuration.
 type ManualProvisioningConfig struct {
