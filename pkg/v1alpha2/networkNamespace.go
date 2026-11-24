@@ -17,7 +17,6 @@ import (
 // +kubebuilder:subresource:status
 // +kubebuilder:ac:generate=true
 // +kubebuilder:resource:path=networknamespaces,scope=Namespaced,shortName=nn
-// +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Provisioning",type=string,JSONPath=`.spec.networkProvisioning.provider`
 // +kubebuilder:printcolumn:name="DatacenterIdentifier",type=string,JSONPath=`.spec.datacenterIdentifier`
 // +kubebuilder:printcolumn:name="ProvisioningPhase",type=string,JSONPath=`.status.provisioningPhase`
