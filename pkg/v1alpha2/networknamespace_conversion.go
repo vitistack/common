@@ -51,20 +51,20 @@ func (src *NetworkNamespace) ConvertTo(dstRaw conversion.Hub) error {
 
 	s := src.Status
 	dst.Status = v1alpha3.NetworkNamespaceStatus{
-		Conditions:           slices.Clone(s.Conditions),
-		Phase:                s.Phase,
-		Status:               s.Status,
-		Message:              s.Message,
-		Created:              s.Created,
-		ObservedGeneration:   s.ObservedGeneration,
-		RetryCount:           s.RetryCount,
-		ProvisioningPhase:    v1alpha3.ProvisioningPhase(s.ProvisioningPhase),
-		DataCenterIdentifier: s.DataCenterIdentifier,
-		NamespaceID:          s.NamespaceID,
-		IPv4Prefix:           s.IPv4Prefix,
-		IPv6Prefix:           s.IPv6Prefix,
-		VlanID:               s.VlanID,
-		Egress:               nnconversion.MergeLegacyEgress(hub.StatusEgress, s.IPv4EgressIP, s.IPv6EgressIP),
+		Conditions:         slices.Clone(s.Conditions),
+		Phase:              s.Phase,
+		Status:             s.Status,
+		Message:            s.Message,
+		Created:            s.Created,
+		ObservedGeneration: s.ObservedGeneration,
+		RetryCount:         s.RetryCount,
+		ProvisioningPhase:  v1alpha3.ProvisioningPhase(s.ProvisioningPhase),
+		DataCenterID:       s.DataCenterIdentifier,
+		NamespaceID:        s.NamespaceID,
+		IPv4Prefix:         s.IPv4Prefix,
+		IPv6Prefix:         s.IPv6Prefix,
+		VlanID:             s.VlanID,
+		Egress:             nnconversion.MergeLegacyEgress(hub.StatusEgress, s.IPv4EgressIP, s.IPv6EgressIP),
 	}
 	if sum := s.IPAllocationSummary; sum != nil {
 		dst.Status.IPAllocationSummary = &v1alpha3.IPAllocationSummary{
@@ -119,7 +119,7 @@ func (dst *NetworkNamespace) ConvertFrom(srcRaw conversion.Hub) error {
 		ObservedGeneration:             s.ObservedGeneration,
 		RetryCount:                     s.RetryCount,
 		ProvisioningPhase:              ProvisioningPhase(s.ProvisioningPhase),
-		DataCenterIdentifier:           s.DataCenterIdentifier,
+		DataCenterIdentifier:           s.DataCenterID,
 		NamespaceID:                    s.NamespaceID,
 		IPv4Prefix:                     s.IPv4Prefix,
 		IPv6Prefix:                     s.IPv6Prefix,
@@ -150,9 +150,6 @@ func provisioningToHub(p *NetworkProvisioning) *v1alpha3.NetworkProvisioning {
 		return nil
 	}
 	out := &v1alpha3.NetworkProvisioning{Provider: string(p.Provider)}
-	if p.NAM != nil {
-		out.NAM = &v1alpha3.NAMProvisioningConfig{}
-	}
 	if m := p.Manual; m != nil {
 		out.Manual = &v1alpha3.ManualProvisioningConfig{
 			IPv4CIDR:    m.IPv4CIDR,
@@ -169,9 +166,6 @@ func provisioningFromHub(p *v1alpha3.NetworkProvisioning) *NetworkProvisioning {
 		return nil
 	}
 	out := &NetworkProvisioning{Provider: NetworkProvisioningType(p.Provider)}
-	if p.NAM != nil {
-		out.NAM = &NAMProvisioningConfig{}
-	}
 	if m := p.Manual; m != nil {
 		out.Manual = &ManualProvisioningConfig{
 			IPv4CIDR:    m.IPv4CIDR,

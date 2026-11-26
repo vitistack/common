@@ -18,12 +18,13 @@ import (
 // +kubebuilder:ac:generate=true
 // +kubebuilder:resource:path=networknamespaces,scope=Namespaced,shortName=nn
 // +kubebuilder:storageversion
-// +kubebuilder:printcolumn:name="Provisioning",type=string,JSONPath=`.spec.networkProvisioning.provider`
-// +kubebuilder:printcolumn:name="DatacenterIdentifier",type=string,JSONPath=`.status.datacenterIdentifier`
-// +kubebuilder:printcolumn:name="ProvisioningPhase",type=string,JSONPath=`.status.provisioningPhase`
-// +kubebuilder:printcolumn:name="Phase",type=string,JSONPath=`.status.phase`
-// +kubebuilder:printcolumn:name="Status",type=string,JSONPath=`.status.status`
-// +kubebuilder:printcolumn:name="Created",type=string,JSONPath=`.status.created`,description="Creation Timestamp"
+// +kubebuilder:printcolumn:name="Provider",type=string,JSONPath=`.spec.networkProvisioning.provider`
+// +kubebuilder:printcolumn:name="DatacenterID",type=string,JSONPath=`.status.datacenterID`
+// +kubebuilder:printcolumn:name="VLANID",type=string,JSONPath=`.status.vlanId`
+// +kubebuilder:printcolumn:name="IPv4Prefix",type=string,JSONPath=`.status.ipv4Prefix`
+// +kubebuilder:printcolumn:name="Ready",type=string,JSONPath=`.status.conditions[?@.type=="NetworkProvisioned")].status`
+// +kubebuilder:printcolumn:name="Created",type=string,JSONPath=`.metadata.created`,description="Creation Timestamp"
+// vlanid, ipv4pre
 type NetworkNamespace struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -89,7 +90,6 @@ type NetworkNamespaceSpec struct {
 // +kubebuilder:validation:XValidation:rule="!has(self.ipv4) || self.ipv4.all(a, isIP(a) && ip(a).family() == 4)",message="ipv4 must contain IPv4 addresses"
 // +kubebuilder:validation:XValidation:rule="!has(self.ipv6) || self.ipv6.all(a, isIP(a) && ip(a).family() == 6)",message="ipv6 must contain IPv6 addresses"
 type EgressRequest struct {
-
 	// Network is the egress network, e.g. "hnet" or "inet".
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:MinLength=1
@@ -244,11 +244,11 @@ type NetworkNamespaceStatus struct {
 	ProvisioningPhase ProvisioningPhase `json:"provisioningPhase,omitempty"`
 
 	// Network fields populated by the provisioning layer.
-	DataCenterIdentifier string `json:"datacenterIdentifier,omitempty"`
-	NamespaceID          string `json:"namespaceId,omitempty"`
-	IPv4Prefix           string `json:"ipv4Prefix,omitempty"`
-	IPv6Prefix           string `json:"ipv6Prefix,omitempty"`
-	VlanID               int    `json:"vlanId,omitempty"`
+	DataCenterID string `json:"datacenterId,omitempty"`
+	NamespaceID  string `json:"namespaceId,omitempty"`
+	IPv4Prefix   string `json:"ipv4Prefix,omitempty"`
+	IPv6Prefix   string `json:"ipv6Prefix,omitempty"`
+	VlanID       int    `json:"vlanId,omitempty"`
 
 	// Egress reports the egress addresses assigned to the namespace
 	// +kubebuilder:validation:Optional

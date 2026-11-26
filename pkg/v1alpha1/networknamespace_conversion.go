@@ -98,20 +98,20 @@ func (src *NetworkNamespace) ConvertTo(dstRaw conversion.Hub) error {
 
 	s := src.Status
 	dst.Status = v1alpha3.NetworkNamespaceStatus{
-		Conditions:           slices.Clone(s.Conditions),
-		Phase:                s.Phase,
-		Status:               s.Status,
-		Message:              s.Message,
-		Created:              s.Created,
-		ObservedGeneration:   s.ObservedGeneration,
-		RetryCount:           s.RetryCount,
-		ProvisioningPhase:    provisioningPhaseToHub(s.ProvisioningPhase, s.Phase, hub.ProvisioningPhaseUnset),
-		DataCenterIdentifier: s.DataCenterIdentifier,
-		NamespaceID:          s.NamespaceID,
-		IPv4Prefix:           s.IPv4Prefix,
-		IPv6Prefix:           s.IPv6Prefix,
-		VlanID:               s.VlanID,
-		Egress:               nnconversion.MergeLegacyEgress(hub.StatusEgress, s.IPv4EgressIP, s.IPv6EgressIP),
+		Conditions:         slices.Clone(s.Conditions),
+		Phase:              s.Phase,
+		Status:             s.Status,
+		Message:            s.Message,
+		Created:            s.Created,
+		ObservedGeneration: s.ObservedGeneration,
+		RetryCount:         s.RetryCount,
+		ProvisioningPhase:  provisioningPhaseToHub(s.ProvisioningPhase, s.Phase, hub.ProvisioningPhaseUnset),
+		DataCenterID:       s.DataCenterIdentifier,
+		NamespaceID:        s.NamespaceID,
+		IPv4Prefix:         s.IPv4Prefix,
+		IPv6Prefix:         s.IPv6Prefix,
+		VlanID:             s.VlanID,
+		Egress:             nnconversion.MergeLegacyEgress(hub.StatusEgress, s.IPv4EgressIP, s.IPv6EgressIP),
 	}
 
 	spoke := spokeData{AssociatedKubernetesClusterIDs: slices.Clone(s.AssociatedKubernetesClusterIDs)}
@@ -189,7 +189,7 @@ func (dst *NetworkNamespace) ConvertFrom(srcRaw conversion.Hub) error {
 		ObservedGeneration:             s.ObservedGeneration,
 		RetryCount:                     s.RetryCount,
 		ProvisioningPhase:              string(s.ProvisioningPhase),
-		DataCenterIdentifier:           s.DataCenterIdentifier,
+		DataCenterIdentifier:           s.DataCenterID,
 		SupervisorIdentifier:           supervisor,
 		NamespaceID:                    s.NamespaceID,
 		IPv4Prefix:                     s.IPv4Prefix,
