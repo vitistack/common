@@ -30,10 +30,6 @@ spec:
     - jsonPath: .spec.clusterIdentifier
       name: Cluster ID
       type: string
-    - description: Creation Timestamp
-      jsonPath: .status.created
-      name: Created
-      type: string
     - jsonPath: .status.conditions[?(@.type=="ClusterProvisioned")].status
       name: Ready
       type: string
