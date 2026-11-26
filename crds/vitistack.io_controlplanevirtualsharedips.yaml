@@ -21,10 +21,10 @@ spec:
     - jsonPath: .spec.provider
       name: Provider
       type: string
-    - jsonPath: .spec.datacenterIdentifier
+    - jsonPath: .status.datacenterIdentifier
       name: Datacenter ID
       type: string
-    - jsonPath: .spec.loadBalancerIps[*]
+    - jsonPath: .status.loadBalancerIps[*]
       name: Control Plane VIP
       type: string
     - jsonPath: .spec.clusterIdentifier
