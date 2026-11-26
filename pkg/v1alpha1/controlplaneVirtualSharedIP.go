@@ -11,13 +11,17 @@ import (
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:ac:generate=true
-// +kubebuilder:resource:path=controlplanevirtualsharedips,scope=Namespaced,shortName=lb
-// +kubebuilder:printcolumn:name="DatacenterIdentifier",type=string,JSONPath=`.spec.datacenterIdentifier`
-// +kubebuilder:printcolumn:name="ClusterIdentifier",type=string,JSONPath=`.spec.clusterIdentifier`
+// +kubebuilder:resource:path=controlplanevirtualsharedips,scope=Namespaced,shortName=lb;cpvip
 // +kubebuilder:printcolumn:name="Provider",type=string,JSONPath=`.spec.provider`
-// +kubebuilder:printcolumn:name="Phase",type=string,JSONPath=`.status.phase`
-// +kubebuilder:printcolumn:name="Status",type=string,JSONPath=`.status.status`
+// +kubebuilder:printcolumn:name="Datacenter ID",type=string,JSONPath=`.spec.datacenterIdentifier`
+// +kubebuilder:printcolumn:name="Control Plane VIP",type=string,JSONPath=`.spec.loadBalancerIps[*]`
+// +kubebuilder:printcolumn:name="Cluster ID",type=string,JSONPath=`.spec.clusterIdentifier`
 // +kubebuilder:printcolumn:name="Created",type=string,JSONPath=`.status.created`,description="Creation Timestamp"
+// +kubebuilder:printcolumn:name="Ready",type=string,JSONPath=`.status.conditions[?(@.type=="ClusterProvisioned")].status`
+// +kubebuilder:printcolumn:name="Created",type=date,JSONPath=`.metadata.creationTimestamp`,description="Creation Timestamp"
+// +kubebuilder:printcolumn:name="Reason",type=string,JSONPath=`.status.conditions[?(@.type=="ClusterProvisioned")].reason`,priority=1
+// +kubebuilder:printcolumn:name="Message",type=string,JSONPath=`.status.conditions[?(@.type=="ClusterProvisioned")].message`,priority=1
+// +kubebuilder:printcolumn:name="Transition time",type=date,JSONPath=`.status.conditions[?(@.type=="ClusterProvisioned")].lastTransitionTime`,priority=1
 type ControlPlaneVirtualSharedIP struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

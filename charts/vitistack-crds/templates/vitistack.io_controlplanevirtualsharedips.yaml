@@ -14,29 +14,46 @@ spec:
     plural: controlplanevirtualsharedips
     shortNames:
     - lb
+    - cpvip
     singular: controlplanevirtualsharedip
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
-    - jsonPath: .spec.datacenterIdentifier
-      name: DatacenterIdentifier
-      type: string
-    - jsonPath: .spec.clusterIdentifier
-      name: ClusterIdentifier
-      type: string
     - jsonPath: .spec.provider
       name: Provider
       type: string
-    - jsonPath: .status.phase
-      name: Phase
+    - jsonPath: .spec.datacenterIdentifier
+      name: Datacenter ID
       type: string
-    - jsonPath: .status.status
-      name: Status
+    - jsonPath: .spec.loadBalancerIps[*]
+      name: Control Plane VIP
+      type: string
+    - jsonPath: .spec.clusterIdentifier
+      name: Cluster ID
       type: string
     - description: Creation Timestamp
       jsonPath: .status.created
       name: Created
       type: string
+    - jsonPath: .status.conditions[?(@.type=="ClusterProvisioned")].status
+      name: Ready
+      type: string
+    - description: Creation Timestamp
+      jsonPath: .metadata.creationTimestamp
+      name: Created
+      type: date
+    - jsonPath: .status.conditions[?(@.type=="ClusterProvisioned")].reason
+      name: Reason
+      priority: 1
+      type: string
+    - jsonPath: .status.conditions[?(@.type=="ClusterProvisioned")].message
+      name: Message
+      priority: 1
+      type: string
+    - jsonPath: .status.conditions[?(@.type=="ClusterProvisioned")].lastTransitionTime
+      name: Transition time
+      priority: 1
+      type: date
     name: v1alpha1
     schema:
       openAPIV3Schema:
