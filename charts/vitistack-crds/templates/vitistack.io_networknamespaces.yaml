@@ -660,22 +660,22 @@ spec:
     - jsonPath: .spec.networkProvisioning.provider
       name: Provider
       type: string
-    - jsonPath: .status.datacenterID
+    - jsonPath: .status.datacenterId
       name: Datacenter ID
       type: string
     - jsonPath: .status.vlanId
       name: VLAN ID
       type: string
     - jsonPath: .status.ipv4Prefix
-      name: IPv4Prefix
+      name: IPv4 Prefix
       type: string
-    - jsonPath: .status.conditions[?@.type=="NetworkProvisioned")].status
+    - jsonPath: .status.conditions[?(@.type=="NetworkProvisioned")].status
       name: Ready
       type: string
     - description: Creation Timestamp
-      jsonPath: .metadata.created
+      jsonPath: .metadata.creationTimestamp
       name: Created
-      type: string
+      type: date
     name: v1alpha3
     schema:
       openAPIV3Schema:
@@ -685,8 +685,6 @@ spec:
           v1alpha3 separates network provisioning (where does the IP prefix come from?)
           from IP allocation (how are individual IPs assigned?). This enables pluggable
           IPAM back-ends and explicit provisioning readiness gating.
-
-          vlanid, ipv4pre
         properties:
           apiVersion:
             description: |-
