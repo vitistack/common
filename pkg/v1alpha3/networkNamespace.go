@@ -24,6 +24,9 @@ import (
 // +kubebuilder:printcolumn:name="IPv4 Prefix",type=string,JSONPath=`.status.ipv4Prefix`
 // +kubebuilder:printcolumn:name="Ready",type=string,JSONPath=`.status.conditions[?(@.type=="NetworkProvisioned")].status`
 // +kubebuilder:printcolumn:name="Created",type=date,JSONPath=`.metadata.creationTimestamp`,description="Creation Timestamp"
+// +kubebuilder:printcolumn:name="Reason",type=string,JSONPath=`.status.conditions[?(@.type=="NetworkProvisioned")].reason`,priority=1
+// +kubebuilder:printcolumn:name="Message",type=string,JSONPath=`.status.conditions[?(@.type=="NetworkProvisioned")].message`,priority=1
+// +kubebuilder:printcolumn:name="Transition time",type=date,JSONPath=`.status.conditions[?(@.type=="NetworkProvisioned")].lastTransitionTime`,priority=1
 type NetworkNamespace struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
