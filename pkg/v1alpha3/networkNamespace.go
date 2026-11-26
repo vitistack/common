@@ -19,12 +19,11 @@ import (
 // +kubebuilder:resource:path=networknamespaces,scope=Namespaced,shortName=nn
 // +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Provider",type=string,JSONPath=`.spec.networkProvisioning.provider`
-// +kubebuilder:printcolumn:name="DatacenterID",type=string,JSONPath=`.status.datacenterID`
-// +kubebuilder:printcolumn:name="VLANID",type=string,JSONPath=`.status.vlanId`
+// +kubebuilder:printcolumn:name="Datacenter ID",type=string,JSONPath=`.status.datacenterID`
+// +kubebuilder:printcolumn:name="VLAN ID",type=string,JSONPath=`.status.vlanId`
 // +kubebuilder:printcolumn:name="IPv4Prefix",type=string,JSONPath=`.status.ipv4Prefix`
 // +kubebuilder:printcolumn:name="Ready",type=string,JSONPath=`.status.conditions[?@.type=="NetworkProvisioned")].status`
 // +kubebuilder:printcolumn:name="Created",type=string,JSONPath=`.metadata.created`,description="Creation Timestamp"
-// vlanid, ipv4pre
 type NetworkNamespace struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

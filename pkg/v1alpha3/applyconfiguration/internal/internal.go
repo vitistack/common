@@ -173,7 +173,7 @@ var schemaYAML = typed.YAMLObject(`types:
     - name: created
       type:
         namedType: io.k8s.apimachinery.pkg.apis.meta.v1.Time
-    - name: datacenterIdentifier
+    - name: datacenterId
       type:
         scalar: string
     - name: egress

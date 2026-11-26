@@ -641,22 +641,22 @@ spec:
       status: {}
   - additionalPrinterColumns:
     - jsonPath: .spec.networkProvisioning.provider
-      name: Provisioning
+      name: Provider
       type: string
-    - jsonPath: .status.datacenterIdentifier
-      name: DatacenterIdentifier
+    - jsonPath: .status.datacenterID
+      name: Datacenter ID
       type: string
-    - jsonPath: .status.provisioningPhase
-      name: ProvisioningPhase
+    - jsonPath: .status.vlanId
+      name: VLAN ID
       type: string
-    - jsonPath: .status.phase
-      name: Phase
+    - jsonPath: .status.ipv4Prefix
+      name: IPv4Prefix
       type: string
-    - jsonPath: .status.status
-      name: Status
+    - jsonPath: .status.conditions[?@.type=="NetworkProvisioned")].status
+      name: Ready
       type: string
     - description: Creation Timestamp
-      jsonPath: .status.created
+      jsonPath: .metadata.created
       name: Created
       type: string
     name: v1alpha3
@@ -668,6 +668,8 @@ spec:
           v1alpha3 separates network provisioning (where does the IP prefix come from?)
           from IP allocation (how are individual IPs assigned?). This enables pluggable
           IPAM back-ends and explicit provisioning readiness gating.
+
+          vlanid, ipv4pre
         properties:
           apiVersion:
             description: |-
@@ -917,7 +919,7 @@ spec:
               created:
                 format: date-time
                 type: string
-              datacenterIdentifier:
+              datacenterId:
                 description: Network fields populated by the provisioning layer.
                 type: string
               egress:

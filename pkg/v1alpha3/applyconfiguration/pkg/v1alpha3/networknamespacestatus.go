@@ -25,11 +25,11 @@ type NetworkNamespaceStatusApplyConfiguration struct {
 	// must wait for "Ready" before acting.
 	ProvisioningPhase *pkgv1alpha3.ProvisioningPhase `json:"provisioningPhase,omitempty"`
 	// Network fields populated by the provisioning layer.
-	DataCenterIdentifier *string `json:"datacenterIdentifier,omitempty"`
-	NamespaceID          *string `json:"namespaceId,omitempty"`
-	IPv4Prefix           *string `json:"ipv4Prefix,omitempty"`
-	IPv6Prefix           *string `json:"ipv6Prefix,omitempty"`
-	VlanID               *int    `json:"vlanId,omitempty"`
+	DataCenterID *string `json:"datacenterId,omitempty"`
+	NamespaceID  *string `json:"namespaceId,omitempty"`
+	IPv4Prefix   *string `json:"ipv4Prefix,omitempty"`
+	IPv6Prefix   *string `json:"ipv6Prefix,omitempty"`
+	VlanID       *int    `json:"vlanId,omitempty"`
 	// Egress reports the egress addresses assigned to the namespace
 	Egress []EgressStatusApplyConfiguration `json:"egress,omitempty"`
 	// IPAllocationSummary reports aggregate IP allocation state.
@@ -111,11 +111,11 @@ func (b *NetworkNamespaceStatusApplyConfiguration) WithProvisioningPhase(value p
 	return b
 }
 
-// WithDataCenterIdentifier sets the DataCenterIdentifier field in the declarative configuration to the given value
+// WithDataCenterID sets the DataCenterID field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the DataCenterIdentifier field is set to the value of the last call.
-func (b *NetworkNamespaceStatusApplyConfiguration) WithDataCenterIdentifier(value string) *NetworkNamespaceStatusApplyConfiguration {
-	b.DataCenterIdentifier = &value
+// If called multiple times, the DataCenterID field is set to the value of the last call.
+func (b *NetworkNamespaceStatusApplyConfiguration) WithDataCenterID(value string) *NetworkNamespaceStatusApplyConfiguration {
+	b.DataCenterID = &value
 	return b
 }
 
