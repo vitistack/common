@@ -206,7 +206,7 @@ func TestV1alpha2EgressEdit(t *testing.T) {
 	}
 }
 
-func TestV1alpha1ToHub(t *testing.T) {
+func TestV1alpha1ToHub(t *testing.T) { //nolint:gocognit,funlen
 	tests := []struct {
 		name string
 		src  *v1alpha1.NetworkNamespace
