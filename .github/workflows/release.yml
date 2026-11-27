@@ -56,7 +56,7 @@ jobs:
         uses: docker/build-push-action@v7
         with:
           context: .
-          file: Dockerfile.webhook
+          file: Dockerfile.networknamespace-webhook
           labels: ${{ steps.meta.outputs.labels }}
           platforms: ${{ matrix.platform }}
           cache-from: type=gha,scope=${{ matrix.platform }}

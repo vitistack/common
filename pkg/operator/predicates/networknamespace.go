@@ -1,7 +1,7 @@
 package predicates
 
 import (
-	vitistackv1alpha2 "github.com/vitistack/common/pkg/v1alpha2"
+	vitistackv1alpha3 "github.com/vitistack/common/pkg/v1alpha3"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
@@ -10,9 +10,9 @@ import (
 // NetworkNamespaceProviderPredicate admits NetworkNamespace events owned by
 // the specified network provisioning provider. Updates pass when either the
 // old or new object matches, so changing providers still triggers reconciliation.
-func NetworkNamespaceProviderPredicate(provider vitistackv1alpha2.NetworkProvisioningType) predicate.Predicate {
+func NetworkNamespaceProviderPredicate(provider string) predicate.Predicate {
 	matches := func(obj client.Object) bool {
-		nn, ok := obj.(*vitistackv1alpha2.NetworkNamespace)
+		nn, ok := obj.(*vitistackv1alpha3.NetworkNamespace)
 		return ok &&
 			nn.Spec.NetworkProvisioning != nil &&
 			nn.Spec.NetworkProvisioning.Provider == provider

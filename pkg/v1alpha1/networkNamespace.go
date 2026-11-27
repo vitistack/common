@@ -10,6 +10,7 @@ import (
 // NetworkNamespace is the Schema for the NetworkNamespace API
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
+// +kubebuilder:ac:generate=true
 // +kubebuilder:resource:path=networknamespaces,scope=Namespaced,shortName=nn
 // +kubebuilder:printcolumn:name="Name",type=string,JSONPath=`.spec.clusterIdentifier`
 // +kubebuilder:printcolumn:name="DatacenterIdentifier",type=string,JSONPath=`.spec.datacenterIdentifier`

@@ -3,7 +3,7 @@ package predicates
 import (
 	"testing"
 
-	vitistackv1alpha2 "github.com/vitistack/common/pkg/v1alpha2"
+	vitistackv1alpha3 "github.com/vitistack/common/pkg/v1alpha3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 )
@@ -11,23 +11,23 @@ import (
 func TestNetworkNamespaceProviderPredicate(t *testing.T) {
 	t.Parallel()
 
-	networkNamespace := func(provider vitistackv1alpha2.NetworkProvisioningType) *vitistackv1alpha2.NetworkNamespace {
-		return &vitistackv1alpha2.NetworkNamespace{
+	networkNamespace := func(provider string) *vitistackv1alpha3.NetworkNamespace {
+		return &vitistackv1alpha3.NetworkNamespace{
 			ObjectMeta: metav1.ObjectMeta{Name: "test", Namespace: "default"},
-			Spec: vitistackv1alpha2.NetworkNamespaceSpec{
-				NetworkProvisioning: &vitistackv1alpha2.NetworkProvisioning{Provider: provider},
+			Spec: vitistackv1alpha3.NetworkNamespaceSpec{
+				NetworkProvisioning: &vitistackv1alpha3.NetworkProvisioning{Provider: provider},
 			},
 		}
 	}
 
-	const selectedProvider = vitistackv1alpha2.NetworkProvisioningNAM
-	otherProvider := vitistackv1alpha2.NetworkProvisioningType("other")
+	const selectedProvider = "nam"
+	otherProvider := "other"
 	filter := NetworkNamespaceProviderPredicate(selectedProvider)
 
 	tests := []struct {
 		name string
-		old  *vitistackv1alpha2.NetworkNamespace
-		new  *vitistackv1alpha2.NetworkNamespace
+		old  *vitistackv1alpha3.NetworkNamespace
+		new  *vitistackv1alpha3.NetworkNamespace
 		want bool
 	}{
 		{name: "update remains selected", old: networkNamespace(selectedProvider), new: networkNamespace(selectedProvider), want: true},
@@ -59,7 +59,7 @@ func TestNetworkNamespaceProviderPredicate(t *testing.T) {
 
 	t.Run("unset provisioning does not match", func(t *testing.T) {
 		t.Parallel()
-		nn := &vitistackv1alpha2.NetworkNamespace{}
+		nn := &vitistackv1alpha3.NetworkNamespace{}
 		if filter.Create(event.CreateEvent{Object: nn}) {
 			t.Error("Create() = true, want false")
 		}

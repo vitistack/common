@@ -10,6 +10,7 @@ import (
 // EtcdBackup is the Schema for the EtcdBackup API
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
+// +kubebuilder:ac:generate=true
 // +kubebuilder:resource:path=etcdbackups,scope=Namespaced,shortName=eb
 // +kubebuilder:printcolumn:name="Cluster",type=string,JSONPath=`.spec.clusterName`,description="Target cluster name"
 // +kubebuilder:printcolumn:name="Storage",type=string,JSONPath=`.spec.storageLocation.type`,description="Storage type"

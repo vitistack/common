@@ -10,6 +10,7 @@ import (
 // NetworkConfiguration is the Schema for the NetworkConfiguration API
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
+// +kubebuilder:ac:generate=true
 // +kubebuilder:resource:path=networkconfigurations,scope=Namespaced,shortName=nc
 // +kubebuilder:printcolumn:name="Name",type=string,JSONPath=`.spec.name`
 // +kubebuilder:printcolumn:name="Phase",type=string,JSONPath=`.status.phase`
